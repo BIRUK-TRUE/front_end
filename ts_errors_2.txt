@@ -1,0 +1,5 @@
+src/features/academics/components/AcademicYearModal.tsx(23,8): error TS2307: Cannot find module '@/components/ui/form' or its corresponding type declarations.
+src/features/academics/components/ClassModal.tsx(23,8): error TS2307: Cannot find module '@/components/ui/form' or its corresponding type declarations.
+src/features/academics/components/SectionModal.tsx(23,8): error TS2307: Cannot find module '@/components/ui/form' or its corresponding type declarations.
+src/features/academics/components/SubjectModal.tsx(23,8): error TS2307: Cannot find module '@/components/ui/form' or its corresponding type declarations.
+src/features/academics/components/TermModal.tsx(23,8): error TS2307: Cannot find module '@/components/ui/form' or its corresponding type declarations.
