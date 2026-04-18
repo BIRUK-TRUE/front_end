@@ -10,8 +10,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Link } from '@/i18n/navigation';
-import { ArrowLeft, Pencil, Mail, Phone, MapPin, Calendar, Briefcase, GraduationCap, AlertTriangle, Building } from 'lucide-react';
+import { ArrowLeft, Pencil, Mail, Phone, MapPin, Calendar, Briefcase, GraduationCap, AlertTriangle, Building, User, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TimetableGrid } from '@/features/schedule/components/TimetableGrid';
+import { useTeacherSchedule } from '@/features/schedule/api/useSchedule';
+import { useAcademicYears } from '@/features/academics/api/useAcademicYears';
+import { useTerms } from '@/features/academics/api/useTerms';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EmptyState } from '@/components/shared/empty-state';
+import { useState } from 'react';
 
 export default function TeacherDetailPage() {
   const t = useTranslations('teachers');
@@ -25,6 +33,13 @@ export default function TeacherDetailPage() {
 
   const initials = teacher.full_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
+  const [yearId, setYearId] = useState<string>('');
+  const [termId, setTermId] = useState<string>('');
+
+  const { data: years } = useAcademicYears(1, 50);
+  const { data: terms } = useTerms(yearId);
+  const { data: scheduleData, isLoading: isLoadingSchedule } = useTeacherSchedule(id, termId);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
@@ -37,44 +52,103 @@ export default function TeacherDetailPage() {
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
-          <CardContent className="p-6 text-center">
-            <Avatar className="h-20 w-20 mx-auto mb-4"><AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">{initials}</AvatarFallback></Avatar>
-            <h2 className="text-xl font-semibold">{teacher.full_name}</h2>
-            <p className="text-sm font-mono text-muted-foreground mt-1">{teacher.employee_id || '—'}</p>
-            <div className="mt-3"><StatusBadge status={teacher.status || 'active'} /></div>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="profile" className="space-y-6">
+        <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+          <TabsTrigger value="profile" className="gap-2">
+            <User className="h-4 w-4" />
+            Profile
+          </TabsTrigger>
+          <TabsTrigger value="timetable" className="gap-2">
+            <CalendarDays className="h-4 w-4" />
+            Timetable
+          </TabsTrigger>
+        </TabsList>
 
-        <Card className="lg:col-span-2">
-          <CardHeader><CardTitle>{tc('details')}</CardTitle></CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <InfoRow icon={Mail} label={tc('email')} value={teacher.email} />
-              <InfoRow icon={Phone} label={tc('phone')} value={teacher.phone_number || '—'} />
-              <InfoRow icon={MapPin} label={tc('address')} value={teacher.address || '—'} />
-              <InfoRow icon={Calendar} label={t('hireDate')} value={teacher.hire_date ? format(new Date(teacher.hire_date), 'MMM d, yyyy') : '—'} />
-              <InfoRow icon={Calendar} label={ts('dateOfBirth')} value={teacher.date_of_birth ? format(new Date(teacher.date_of_birth), 'MMM d, yyyy') : '—'} />
-              <InfoRow icon={GraduationCap} label={t('qualification')} value={teacher.qualification || '—'} />
-              <InfoRow icon={Briefcase} label={t('specialization')} value={teacher.specialization || '—'} />
-              <InfoRow icon={Building} label={t('officeLocation')} value={teacher.office_location || '—'} />
-            </div>
-          </CardContent>
-        </Card>
+        <TabsContent value="profile" className="space-y-6 outline-none">
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Card className="lg:col-span-1">
+              <CardContent className="p-6 text-center">
+                <Avatar className="h-20 w-20 mx-auto mb-4"><AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">{initials}</AvatarFallback></Avatar>
+                <h2 className="text-xl font-semibold">{teacher.full_name}</h2>
+                <p className="text-sm font-mono text-muted-foreground mt-1">{teacher.employee_id || '—'}</p>
+                <div className="mt-3"><StatusBadge status={teacher.status || 'active'} /></div>
+              </CardContent>
+            </Card>
 
-        {(teacher.emergency_contact_name || teacher.emergency_contact_phone) && (
-          <Card className="lg:col-span-3">
-            <CardHeader><CardTitle className="flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Emergency Contact</CardTitle></CardHeader>
-            <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <InfoRow icon={Phone} label={t('emergencyContactName')} value={teacher.emergency_contact_name || '—'} />
-                <InfoRow icon={Phone} label={t('emergencyContactPhone')} value={teacher.emergency_contact_phone || '—'} />
+            <Card className="lg:col-span-2">
+              <CardHeader><CardTitle>{tc('details')}</CardTitle></CardHeader>
+              <CardContent>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <InfoRow icon={Mail} label={tc('email')} value={teacher.email} />
+                  <InfoRow icon={Phone} label={tc('phone')} value={teacher.phone_number || '—'} />
+                  <InfoRow icon={MapPin} label={tc('address')} value={teacher.address || '—'} />
+                  <InfoRow icon={Calendar} label={t('hireDate')} value={teacher.hire_date ? format(new Date(teacher.hire_date), 'MMM d, yyyy') : '—'} />
+                  <InfoRow icon={Calendar} label={ts('dateOfBirth')} value={teacher.date_of_birth ? format(new Date(teacher.date_of_birth), 'MMM d, yyyy') : '—'} />
+                  <InfoRow icon={GraduationCap} label={t('qualification')} value={teacher.qualification || '—'} />
+                  <InfoRow icon={Briefcase} label={t('specialization')} value={teacher.specialization || '—'} />
+                  <InfoRow icon={Building} label={t('officeLocation')} value={teacher.office_location || '—'} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {(teacher.emergency_contact_name || teacher.emergency_contact_phone) && (
+              <Card className="lg:col-span-3">
+                <CardHeader><CardTitle className="flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Emergency Contact</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <InfoRow icon={Phone} label={t('emergencyContactName')} value={teacher.emergency_contact_name || '—'} />
+                    <InfoRow icon={Phone} label={t('emergencyContactPhone')} value={teacher.emergency_contact_phone || '—'} />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="timetable" className="space-y-6 outline-none">
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <CardTitle>Teaching Timetable</CardTitle>
               </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Select value={yearId} onValueChange={(v) => { setYearId(v); setTermId(''); }}>
+                  <SelectTrigger className="w-full sm:w-[150px]">
+                    <SelectValue placeholder="Academic Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years?.items?.map((y: any) => (
+                      <SelectItem key={y.id} value={y.id}>{y.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={termId} onValueChange={setTermId} disabled={!yearId}>
+                  <SelectTrigger className="w-full sm:w-[150px]">
+                    <SelectValue placeholder="Term" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {terms?.items?.map((t: any) => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {!termId ? (
+                <EmptyState
+                  icon={CalendarDays}
+                  title="Select an Academic Term"
+                  description="Choose a year and term to view this teacher's scheduled classes."
+                />
+              ) : (
+                <TimetableGrid entries={scheduleData || []} isLoading={isLoadingSchedule} />
+              )}
             </CardContent>
           </Card>
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

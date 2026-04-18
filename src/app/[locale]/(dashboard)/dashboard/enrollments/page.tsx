@@ -8,14 +8,8 @@ import { useAcademicYears } from '@/features/academics/api/useAcademicYears';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
+import { DataTable } from '@/components/shared/data-table';
+import { ColumnDef } from '@tanstack/react-table';
 import { 
   Select, 
   SelectContent, 
@@ -79,6 +73,115 @@ export default function EnrollmentsPage() {
     setStatusFilter('all');
     setPage(1);
   };
+
+  const columns: ColumnDef<any>[] = [
+    {
+      id: 'student',
+      header: 'Student',
+      cell: ({ row }) => (
+        <div className="flex flex-col">
+          <span className="font-semibold text-foreground text-base">
+            {row.original.student_name}
+          </span>
+          <span className="text-xs text-muted-foreground font-mono">
+            ID: {row.original.id.split('-')[0].toUpperCase()}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'academic_year_name',
+      header: 'Academic Year',
+      cell: ({ row }) => (
+        <Badge variant="outline" className="font-medium bg-primary/5 text-primary border-primary/20">
+          {row.original.academic_year_name}
+        </Badge>
+      ),
+    },
+    {
+      id: 'class_section',
+      header: 'Class & Section',
+      cell: ({ row }) => (
+        <div className="flex flex-col gap-0.5">
+          <span className="font-medium">{row.original.class_name}</span>
+          <span className="text-sm text-muted-foreground">Section: {row.original.section_name}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'enrollment_date',
+      header: 'Enrollment Date',
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {format(new Date(row.original.enrollment_date), 'MMM d, yyyy')}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <Badge 
+          className="capitalize"
+          variant={
+            row.original.status === 'active' ? 'default' : 
+            row.original.status === 'withdrawn' ? 'destructive' : 
+            'secondary'
+          }
+        >
+          {row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      id: 'actions',
+      header: () => <span className="sr-only">Actions</span>,
+      cell: ({ row }) => {
+        const enrollment = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/students/${enrollment.student_id}`} className="flex items-center gap-2">
+                  <History className="h-4 w-4" />
+                  Student History
+                </Link>
+              </DropdownMenuItem>
+              {enrollment.status === 'active' && (
+                <>
+                  <DropdownMenuItem 
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      setSelectedEnrollment(enrollment);
+                      setIsTransferModalOpen(true);
+                    }}
+                  >
+                    <ArrowRightLeft className="h-4 w-4" />
+                    {t('transferStudent')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="flex items-center gap-2 text-destructive focus:text-destructive"
+                    onClick={() => {
+                      setSelectedEnrollment(enrollment);
+                      setIsWithdrawModalOpen(true);
+                    }}
+                  >
+                    <UserMinus className="h-4 w-4" />
+                    {t('withdrawStudent')}
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -153,121 +256,34 @@ export default function EnrollmentsPage() {
       </div>
 
       <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
-        {isLoading ? (
-          <div className="flex h-64 flex-col items-center justify-center gap-2">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground uppercase tracking-widest font-medium">Loading Enrollments...</p>
-          </div>
-        ) : !enrollmentsData?.items?.length ? (
-          <EmptyState
-            icon={History}
-            title={t('noEnrollments')}
-            description="No student enrollments found matching your filters."
-            action={
-              <Button variant="outline" onClick={handleResetFilters}>
-                Clear All Filters
-              </Button>
+        <DataTable
+          columns={columns}
+          data={enrollmentsData?.items || []}
+          isLoading={isLoading}
+          manualPagination
+          pageCount={enrollmentsData?.pages || 1}
+          pagination={{ pageIndex: page - 1, pageSize: 20 }}
+          onPaginationChange={(updater) => {
+            if (typeof updater === 'function') {
+              const newState = updater({ pageIndex: page - 1, pageSize: 20 });
+              setPage(newState.pageIndex + 1);
+            } else {
+              setPage(updater.pageIndex + 1);
             }
-          />
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-muted/50">
-                <TableRow>
-                  <TableHead className="font-bold py-4">Student</TableHead>
-                  <TableHead className="font-bold py-4">Academic Year</TableHead>
-                  <TableHead className="font-bold py-4">Class & Section</TableHead>
-                  <TableHead className="font-bold py-4">Enrollment Date</TableHead>
-                  <TableHead className="font-bold py-4">Status</TableHead>
-                  <TableHead className="font-bold py-4 text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {enrollmentsData.items.map((enrollment) => (
-                  <TableRow key={enrollment.id} className="hover:bg-muted/30 transition-colors">
-                    <TableCell className="py-4">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-foreground text-base">
-                          {enrollment.student_name}
-                        </span>
-                        <span className="text-xs text-muted-foreground font-mono">
-                          ID: {enrollment.id.split('-')[0].toUpperCase()}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <Badge variant="outline" className="font-medium bg-primary/5 text-primary border-primary/20">
-                        {enrollment.academic_year_name}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-medium">{enrollment.class_name}</span>
-                        <span className="text-sm text-muted-foreground">Section: {enrollment.section_name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-4 text-muted-foreground">
-                      {format(new Date(enrollment.enrollment_date), 'MMM d, yyyy')}
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <Badge 
-                        className="capitalize"
-                        variant={
-                          enrollment.status === 'active' ? 'default' : 
-                          enrollment.status === 'withdrawn' ? 'destructive' : 
-                          'secondary'
-                        }
-                      >
-                        {enrollment.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-4 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/students/${enrollment.student_id}`} className="flex items-center gap-2">
-                              <History className="h-4 w-4" />
-                              Student History
-                            </Link>
-                          </DropdownMenuItem>
-                          {enrollment.status === 'active' && (
-                            <>
-                              <DropdownMenuItem 
-                                className="flex items-center gap-2"
-                                onClick={() => {
-                                  setSelectedEnrollment(enrollment);
-                                  setIsTransferModalOpen(true);
-                                }}
-                              >
-                                <ArrowRightLeft className="h-4 w-4" />
-                                {t('transferStudent')}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                className="flex items-center gap-2 text-destructive focus:text-destructive"
-                                onClick={() => {
-                                  setSelectedEnrollment(enrollment);
-                                  setIsWithdrawModalOpen(true);
-                                }}
-                              >
-                                <UserMinus className="h-4 w-4" />
-                                {t('withdrawStudent')}
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+          }}
+          emptyState={
+            <EmptyState
+              icon={History}
+              title={t('noEnrollments')}
+              description="No student enrollments found matching your filters."
+              action={
+                <Button variant="outline" onClick={handleResetFilters}>
+                  Clear All Filters
+                </Button>
+              }
+            />
+          }
+        />
       </div>
 
       <TransferModal

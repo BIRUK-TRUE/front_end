@@ -13,14 +13,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { DataTable } from '@/components/shared/data-table';
+import { ColumnDef } from '@tanstack/react-table';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Link } from '@/i18n/navigation';
 import { Plus, Search, MoreHorizontal, Eye, Pencil, Trash2, RotateCcw, GraduationCap } from 'lucide-react';
 import { format } from 'date-fns';
@@ -52,6 +51,74 @@ export default function StudentsPage() {
       deleteStudent.mutate(deleteId, { onSuccess: () => setDeleteId(null) });
     }
   };
+
+  const columns: ColumnDef<any>[] = [
+    {
+      accessorKey: 'registration_number',
+      header: t('registrationNumber'),
+      cell: ({ row }) => <span className="font-mono text-sm">{row.original.registration_number}</span>,
+    },
+    {
+      accessorKey: 'full_name',
+      header: tc('name'),
+      cell: ({ row }) => <span className="font-medium">{row.original.full_name}</span>,
+    },
+    {
+      accessorKey: 'sex',
+      header: t('sex'),
+      cell: ({ row }) => <span>{row.original.sex === 'M' ? t('male') : t('female')}</span>,
+    },
+    {
+      accessorKey: 'status',
+      header: tc('status'),
+      cell: ({ row }) => <StatusBadge status={row.original.status || 'active'} />,
+    },
+    {
+      accessorKey: 'admission_date',
+      header: t('admissionDate'),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {row.original.admission_date ? format(new Date(row.original.admission_date), 'MMM d, yyyy') : '—'}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: () => <span className="sr-only">{tc('actions')}</span>,
+      cell: ({ row }) => {
+        const student = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/students/${student.id}`} className="flex items-center gap-2">
+                  <Eye className="h-4 w-4" aria-hidden="true" />{tc('view')}
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/students/${student.id}/edit`} className="flex items-center gap-2">
+                  <Pencil className="h-4 w-4" aria-hidden="true" />{tc('edit')}
+                </Link>
+              </DropdownMenuItem>
+              {student.status === 'inactive' && (
+                <DropdownMenuItem onClick={() => restoreStudent.mutate(student.id)} className="flex items-center gap-2">
+                  <RotateCcw className="h-4 w-4" aria-hidden="true" />{tc('restore')}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => setDeleteId(student.id)} className="text-destructive focus:text-destructive flex items-center gap-2">
+                <Trash2 className="h-4 w-4" aria-hidden="true" />{tc('delete')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -109,92 +176,33 @@ export default function StudentsPage() {
       </Card>
 
       {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="py-16"><LoadingSpinner text={tc('loading')} /></div>
-          ) : !data?.items?.length ? (
-            <EmptyState
-              icon={GraduationCap}
-              title={t('noStudents')}
-              action={canManageStudents ? (
-                <Link href="/dashboard/students/create">
-                  <Button className="gap-2"><Plus className="h-4 w-4" aria-hidden="true" />{t('createStudent')}</Button>
-                </Link>
-              ) : undefined}
-            />
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('registrationNumber')}</TableHead>
-                      <TableHead>{tc('name')}</TableHead>
-                      <TableHead className="hidden md:table-cell">{t('sex')}</TableHead>
-                      <TableHead>{tc('status')}</TableHead>
-                      <TableHead className="hidden lg:table-cell">{t('admissionDate')}</TableHead>
-                      <TableHead className="w-[60px]"><span className="sr-only">{tc('actions')}</span></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.items.map((student: any) => (
-                      <TableRow key={student.id}>
-                        <TableCell className="font-mono text-sm">{student.registration_number}</TableCell>
-                        <TableCell className="font-medium">{student.full_name}</TableCell>
-                        <TableCell className="hidden md:table-cell">{student.sex === 'M' ? t('male') : t('female')}</TableCell>
-                        <TableCell><StatusBadge status={student.status || 'active'} /></TableCell>
-                        <TableCell className="hidden lg:table-cell text-muted-foreground">
-                          {student.admission_date ? format(new Date(student.admission_date), 'MMM d, yyyy') : '—'}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-9 w-9 p-0" aria-label={`${tc('actions')} for ${student.full_name}`}>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem asChild>
-                                <Link href={`/dashboard/students/${student.id}`} className="flex items-center gap-2">
-                                  <Eye className="h-4 w-4" aria-hidden="true" />{tc('view')}
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <Link href={`/dashboard/students/${student.id}/edit`} className="flex items-center gap-2">
-                                  <Pencil className="h-4 w-4" aria-hidden="true" />{tc('edit')}
-                                </Link>
-                              </DropdownMenuItem>
-                              {student.status === 'inactive' && (
-                                <DropdownMenuItem onClick={() => restoreStudent.mutate(student.id)} className="flex items-center gap-2">
-                                  <RotateCcw className="h-4 w-4" aria-hidden="true" />{tc('restore')}
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuItem onClick={() => setDeleteId(student.id)} className="text-destructive focus:text-destructive flex items-center gap-2">
-                                <Trash2 className="h-4 w-4" aria-hidden="true" />{tc('delete')}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              {data.pages > 1 && (
-                <div className="flex items-center justify-between border-t px-4 py-3">
-                  <p className="text-sm text-muted-foreground">{tc('showing')} {(data.page - 1) * data.size + 1}–{Math.min(data.page * data.size, data.total)} {tc('of')} {data.total}</p>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="min-h-[44px]">{tc('previous')}</Button>
-                    <span className="text-sm">{tc('page')} {data.page} {tc('of')} {data.pages}</span>
-                    <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page >= data.pages} className="min-h-[44px]">{tc('next')}</Button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+      <DataTable
+        columns={columns}
+        data={data?.items || []}
+        isLoading={isLoading}
+        manualPagination
+        pageCount={data?.pages || 1}
+        pagination={{ pageIndex: page - 1, pageSize: 20 }}
+        onPaginationChange={(updater) => {
+          if (typeof updater === 'function') {
+            const newState = updater({ pageIndex: page - 1, pageSize: 20 });
+            setPage(newState.pageIndex + 1);
+          } else {
+            setPage(updater.pageIndex + 1);
+          }
+        }}
+        emptyState={
+          <EmptyState
+            icon={GraduationCap}
+            title={t('noStudents')}
+            action={canManageStudents ? (
+              <Link href="/dashboard/students/create">
+                <Button className="gap-2"><Plus className="h-4 w-4" aria-hidden="true" />{t('createStudent')}</Button>
+              </Link>
+            ) : undefined}
+          />
+        }
+      />
 
       <ConfirmDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)} onConfirm={handleDelete} isLoading={deleteStudent.isPending} />
     </div>

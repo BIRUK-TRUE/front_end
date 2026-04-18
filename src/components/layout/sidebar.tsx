@@ -18,6 +18,9 @@ import {
   X,
   Building2,
   History,
+  ClipboardCheck,
+  Award,
+  CalendarClock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -93,6 +96,12 @@ export function Sidebar({
       show: canManageEnrollments,
     },
     {
+      href: '/dashboard/schedule',
+      label: 'Schedule',
+      icon: CalendarClock,
+      show: canManageStudents || canManageAcademics,
+    },
+    {
       href: '/dashboard/teachers',
       label: t('teachers'),
       icon: BookOpen,
@@ -103,6 +112,18 @@ export function Sidebar({
       label: t('guardians'),
       icon: UserCheck,
       show: canManageGuardians,
+    },
+    {
+      href: '/dashboard/attendance',
+      label: t('attendance'),
+      icon: ClipboardCheck,
+      show: canManageStudents || canManageTeachers,
+    },
+    {
+      href: '/dashboard/grades',
+      label: t('grades'),
+      icon: Award,
+      show: canManageStudents || canManageTeachers,
     },
   ];
 

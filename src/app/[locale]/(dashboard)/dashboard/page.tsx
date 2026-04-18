@@ -12,6 +12,8 @@ import { StatsCard } from '@/components/shared/stats-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
+import { EnrollmentChart } from '@/components/shared/enrollment-chart';
+import { ActivityFeed } from '@/components/shared/activity-feed';
 import {
   Users,
   GraduationCap,
@@ -81,6 +83,14 @@ export default function DashboardPage() {
               description={guardianLoading ? tc('loading') : `${guardianStats?.active || 0} verified`}
             />
           )}
+        </div>
+      )}
+
+      {/* Analytics & Charts */}
+      {isStaff && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+          <EnrollmentChart />
+          <ActivityFeed />
         </div>
       )}
 

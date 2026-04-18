@@ -102,7 +102,11 @@
     "guardians": "ሞግዚቶች",
     "myProfile": "የእኔ መገለጫ",
     "settings": "ቅንብሮች",
-    "mainNavigation": "ዋና ማሰሻ"
+    "mainNavigation": "ዋና ማሰሻ",
+    "enrollments": "ምዝገባዎች",
+    "attendance": "ቅድመ ትምህርት",
+    "grades": "ውጤቶች",
+    "schedule": "የጊዜ ሰሌዳ"
   },
   "roles": {
     "admin": "አስተዳዳሪ",

@@ -102,7 +102,11 @@
     "guardians": "Guardians",
     "myProfile": "My Profile",
     "settings": "Settings",
-    "mainNavigation": "Main navigation"
+    "mainNavigation": "Main navigation",
+    "enrollments": "Enrollments",
+    "attendance": "Attendance",
+    "grades": "Grades",
+    "schedule": "Schedule"
   },
   "roles": {
     "admin": "Administrator",

@@ -11,7 +11,8 @@ import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DataTable } from '@/components/shared/data-table';
+import { ColumnDef } from '@tanstack/react-table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Link } from '@/i18n/navigation';
 import { Plus, Search, MoreHorizontal, Eye, Pencil, Trash2, UserCheck } from 'lucide-react';
@@ -28,6 +29,65 @@ export default function GuardiansPage() {
   const filters = { page, size: 20, search: search || undefined };
   const { data, isLoading } = useGuardians(filters);
   const deleteGuardian = useDeleteGuardian();
+
+  const columns: ColumnDef<any>[] = [
+    {
+      accessorKey: 'full_name',
+      header: tc('name'),
+      cell: ({ row }) => <span className="font-medium">{row.original.full_name}</span>,
+    },
+    {
+      accessorKey: 'email',
+      header: tc('email'),
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.email}</span>,
+    },
+    {
+      accessorKey: 'phone_number',
+      header: tc('phone'),
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.phone_number || '—'}</span>,
+    },
+    {
+      accessorKey: 'occupation',
+      header: t('occupation'),
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.occupation || '—'}</span>,
+    },
+    {
+      id: 'student_links',
+      header: t('linkedStudents'),
+      cell: ({ row }) => <span>{row.original.student_links?.length || 0}</span>,
+    },
+    {
+      id: 'actions',
+      header: () => <span className="sr-only">{tc('actions')}</span>,
+      cell: ({ row }) => {
+        const guardian = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/guardians/${guardian.id}`} className="flex items-center gap-2">
+                  <Eye className="h-4 w-4" />{tc('view')}
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/guardians/${guardian.id}/edit`} className="flex items-center gap-2">
+                  <Pencil className="h-4 w-4" />{tc('edit')}
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDeleteId(guardian.id)} className="text-destructive focus:text-destructive flex items-center gap-2">
+                <Trash2 className="h-4 w-4" />{tc('delete')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -49,65 +109,34 @@ export default function GuardiansPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="py-16"><LoadingSpinner text={tc('loading')} /></div>
-          ) : !data?.items?.length ? (
-            <EmptyState icon={UserCheck} title={t('noGuardians')} action={canManageGuardians ? (
-              <Link href="/dashboard/guardians/create"><Button className="gap-2"><Plus className="h-4 w-4" />{t('createGuardian')}</Button></Link>
-            ) : undefined} />
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{tc('name')}</TableHead>
-                      <TableHead>{tc('email')}</TableHead>
-                      <TableHead className="hidden md:table-cell">{tc('phone')}</TableHead>
-                      <TableHead className="hidden lg:table-cell">{t('occupation')}</TableHead>
-                      <TableHead className="hidden lg:table-cell">{t('linkedStudents')}</TableHead>
-                      <TableHead className="w-[60px]"><span className="sr-only">{tc('actions')}</span></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.items.map((guardian: any) => (
-                      <TableRow key={guardian.id}>
-                        <TableCell className="font-medium">{guardian.full_name}</TableCell>
-                        <TableCell className="text-muted-foreground">{guardian.email}</TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground">{guardian.phone_number || '—'}</TableCell>
-                        <TableCell className="hidden lg:table-cell text-muted-foreground">{guardian.occupation || '—'}</TableCell>
-                        <TableCell className="hidden lg:table-cell">{guardian.student_links?.length || 0}</TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Button variant="ghost" size="sm" className="h-9 w-9 p-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem asChild><Link href={`/dashboard/guardians/${guardian.id}`} className="flex items-center gap-2"><Eye className="h-4 w-4" />{tc('view')}</Link></DropdownMenuItem>
-                              <DropdownMenuItem asChild><Link href={`/dashboard/guardians/${guardian.id}/edit`} className="flex items-center gap-2"><Pencil className="h-4 w-4" />{tc('edit')}</Link></DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setDeleteId(guardian.id)} className="text-destructive focus:text-destructive flex items-center gap-2"><Trash2 className="h-4 w-4" />{tc('delete')}</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              {data.pages > 1 && (
-                <div className="flex items-center justify-between border-t px-4 py-3">
-                  <p className="text-sm text-muted-foreground">{tc('showing')} {(data.page-1)*data.size+1}–{Math.min(data.page*data.size, data.total)} {tc('of')} {data.total}</p>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p-1))} disabled={page===1} className="min-h-[44px]">{tc('previous')}</Button>
-                    <span className="text-sm">{tc('page')} {data.page} {tc('of')} {data.pages}</span>
-                    <Button variant="outline" size="sm" onClick={() => setPage(p => p+1)} disabled={page>=data.pages} className="min-h-[44px]">{tc('next')}</Button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+      {/* Table */}
+      <DataTable
+        columns={columns}
+        data={data?.items || []}
+        isLoading={isLoading}
+        manualPagination
+        pageCount={data?.pages || 1}
+        pagination={{ pageIndex: page - 1, pageSize: 20 }}
+        onPaginationChange={(updater) => {
+          if (typeof updater === 'function') {
+            const newState = updater({ pageIndex: page - 1, pageSize: 20 });
+            setPage(newState.pageIndex + 1);
+          } else {
+            setPage(updater.pageIndex + 1);
+          }
+        }}
+        emptyState={
+          <EmptyState
+            icon={UserCheck}
+            title={t('noGuardians')}
+            action={canManageGuardians ? (
+              <Link href="/dashboard/guardians/create">
+                <Button className="gap-2"><Plus className="h-4 w-4" />{t('createGuardian')}</Button>
+              </Link>
+            ) : undefined}
+          />
+        }
+      />
       <ConfirmDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)} onConfirm={() => { if(deleteId) deleteGuardian.mutate(deleteId, { onSuccess: () => setDeleteId(null) }); }} isLoading={deleteGuardian.isPending} />
     </div>
   );

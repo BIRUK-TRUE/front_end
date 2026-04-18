@@ -16,11 +16,15 @@ import { Link } from '@/i18n/navigation';
 import { ArrowLeft, Pencil, Mail, Phone, MapPin, Calendar, BookOpen, User, Hash, History, UserPlus, MoreHorizontal, ArrowRightLeft, UserMinus } from 'lucide-react';
 import { format } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CalendarCheck, GraduationCap } from 'lucide-react';
 import { useStudentEnrollmentHistory, useEnrollStudent, useTransferStudent, useWithdrawStudent } from '@/features/enrollments/api/useEnrollments';
 import { type Enrollment } from '@/features/enrollments/types';
 import { EnrollmentWizard } from '@/features/enrollments/components/EnrollmentWizard';
 import { TransferModal } from '@/features/enrollments/components/TransferModal';
 import { WithdrawModal } from '@/features/enrollments/components/WithdrawModal';
+import { useStudentAttendance, useStudentAttendanceStats } from '@/features/attendance/api/useAttendance';
+import { useTerms } from '@/features/academics/api/useTerms';
+import { useReportCard } from '@/features/grades/api/useGrades';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -57,6 +61,14 @@ export default function StudentDetailPage() {
   const initials = student.full_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
   const activeEnrollment = enrollments?.find(e => e.status === 'active');
+
+  const [attendancePage, setAttendancePage] = useState(1);
+  const { data: attendanceData, isLoading: isLoadingAttendance } = useStudentAttendance(id, attendancePage, 20);
+  const { data: attendanceStats, isLoading: isLoadingStats } = useStudentAttendanceStats(id);
+
+  const [selectedTerm, setSelectedTerm] = useState<string>('');
+  const { data: terms } = useTerms(activeEnrollment?.academic_year_id || '');
+  const { data: reportCard, isLoading: isLoadingReportCard } = useReportCard(id, selectedTerm);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -100,14 +112,22 @@ export default function StudentDetailPage() {
       />
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+        <TabsList className="grid w-full max-w-[600px] grid-cols-4">
           <TabsTrigger value="profile" className="gap-2">
             <User className="h-4 w-4" />
-            Profile
+            <span className="hidden sm:inline">Profile</span>
           </TabsTrigger>
           <TabsTrigger value="enrollment" className="gap-2">
             <History className="h-4 w-4" />
-            Enrollment History
+            <span className="hidden sm:inline">Enrollments</span>
+          </TabsTrigger>
+          <TabsTrigger value="attendance" className="gap-2">
+            <CalendarCheck className="h-4 w-4" />
+            <span className="hidden sm:inline">Attendance</span>
+          </TabsTrigger>
+          <TabsTrigger value="grades" className="gap-2">
+            <GraduationCap className="h-4 w-4" />
+            <span className="hidden sm:inline">Grades</span>
           </TabsTrigger>
         </TabsList>
 
@@ -294,7 +314,157 @@ export default function StudentDetailPage() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
+
+        {/* Attendance Tab */}
+        <TabsContent value="attendance" className="space-y-6 outline-none">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-sm font-medium text-muted-foreground mb-2">Present Rate</div>
+                {isLoadingStats ? <LoadingSpinner /> : (
+                  <div className="text-3xl font-bold text-primary">
+                    {attendanceStats ? Math.round(attendanceStats.attendance_rate * 100) || 0 : 0}%
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-sm font-medium text-muted-foreground mb-2">Total Absences</div>
+                {isLoadingStats ? <LoadingSpinner /> : (
+                  <div className="text-3xl font-bold text-destructive">
+                    {attendanceStats?.absent || 0}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-sm font-medium text-muted-foreground mb-2">Late Arrivals</div>
+                {isLoadingStats ? <LoadingSpinner /> : (
+                  <div className="text-3xl font-bold text-amber-500">
+                    {attendanceStats?.late || 0}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-sm font-medium text-muted-foreground mb-2">Excused</div>
+                {isLoadingStats ? <LoadingSpinner /> : (
+                  <div className="text-3xl font-bold text-blue-500">
+                    {attendanceStats?.excused || 0}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Attendance History</CardTitle>
+              <CardDescription>Recent attendance records for this student.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoadingAttendance ? (
+                <div className="flex h-48 items-center justify-center"><LoadingSpinner /></div>
+              ) : !attendanceData?.items?.length ? (
+                <EmptyState icon={CalendarCheck} title="No Attendance Records" description="No attendance data has been logged for this student yet." />
+              ) : (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Notes</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {attendanceData.items.map((record: any) => (
+                        <TableRow key={record.id}>
+                          <TableCell className="font-medium">{format(new Date(record.date), 'MMM d, yyyy')}</TableCell>
+                          <TableCell>
+                            <Badge variant={record.status === 'present' ? 'default' : record.status === 'absent' ? 'destructive' : 'outline'} className="capitalize">
+                              {record.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{record.notes || '—'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {Math.ceil((attendanceData.total || 0) / 20) > 1 && (
+                    <div className="flex items-center justify-between border-t px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setAttendancePage(p => Math.max(1, p-1))} disabled={attendancePage === 1}>Previous</Button>
+                        <span className="text-sm text-muted-foreground">Page {attendancePage} of {Math.ceil((attendanceData.total || 0) / 20)}</span>
+                        <Button variant="outline" size="sm" onClick={() => setAttendancePage(p => p+1)} disabled={attendancePage >= Math.ceil((attendanceData.total || 0) / 20)}>Next</Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Grades Tab */}
+        <TabsContent value="grades" className="space-y-6 outline-none">
+          <Card>
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4">
+              <div>
+                <CardTitle>Report Card</CardTitle>
+                <CardDescription>Academic performance records.</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <select 
+                  className="flex h-10 w-[200px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={selectedTerm}
+                  onChange={(e) => setSelectedTerm(e.target.value)}
+                >
+                  <option value="">Select Term (Latest)</option>
+                  {terms?.items?.map((term: any) => (
+                    <option key={term.id} value={term.id}>{term.name}</option>
+                  ))}
+                </select>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoadingReportCard ? (
+                <div className="flex h-48 items-center justify-center"><LoadingSpinner /></div>
+              ) : !reportCard?.subjects?.length ? (
+                <EmptyState icon={GraduationCap} title="No Grades Available" description="No grades have been published for this term yet." />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Subject</TableHead>
+                      <TableHead className="text-center">Total Score</TableHead>
+                      <TableHead className="text-center">Letter Grade</TableHead>
+                      <TableHead>Teacher Remarks</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {reportCard.subjects.map((sub: any) => (
+                      <TableRow key={sub.subject_id}>
+                        <TableCell className="font-medium">{sub.subject_name}</TableCell>
+                        <TableCell className="text-center font-mono">{sub.total_score}</TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                            {sub.letter_grade || '—'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{sub.remarks || '—'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        </Tabs>
 
       <TransferModal
         open={isTransferModalOpen}
