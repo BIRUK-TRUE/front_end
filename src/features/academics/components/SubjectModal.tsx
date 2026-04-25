@@ -50,6 +50,7 @@ export function SubjectModal({
   isLoading,
 }: SubjectModalProps) {
   const t = useTranslations('common');
+  const ta = useTranslations('academics');
 
   const form = useForm<SubjectForm>({
     resolver: zodResolver(subjectSchema) as any,
@@ -91,12 +92,12 @@ export function SubjectModal({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {subject ? 'Edit Subject' : 'Add New Subject'}
+            {subject ? ta('editSubject') : ta('addNewSubject')}
           </DialogTitle>
           <DialogDescription>
             {subject
-              ? 'Update the details of this specific subject.'
-              : 'Add a new subject to the global curriculum list.'}
+              ? ta('subjectModalEditDesc')
+              : ta('subjectModalDesc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -107,9 +108,9 @@ export function SubjectModal({
               name="code"
               render={({ field }: { field: any }) => (
                 <FormItem>
-                  <FormLabel>Subject Code <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>{ta('subjectCode')} <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. MATH101" className="uppercase" {...field} />
+                    <Input placeholder={ta('subjectCodePlaceholder')} className="uppercase" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -121,9 +122,9 @@ export function SubjectModal({
               name="name"
               render={({ field }: { field: any }) => (
                 <FormItem>
-                  <FormLabel>Subject Name <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>{ta('subjectName')} <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Mathematics" {...field} />
+                    <Input placeholder={ta('subjectNamePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -135,18 +136,18 @@ export function SubjectModal({
               name="category"
               render={({ field }: { field: any }) => (
                 <FormItem>
-                  <FormLabel>Category</FormLabel>
+                  <FormLabel>{ta('category')}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
+                        <SelectValue placeholder={ta('selectCategory')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="core">Core</SelectItem>
-                      <SelectItem value="elective">Elective</SelectItem>
-                      <SelectItem value="vocational">Vocational</SelectItem>
-                      <SelectItem value="extracurricular">Extracurricular</SelectItem>
+                      <SelectItem value="core">{ta('core')}</SelectItem>
+                      <SelectItem value="elective">{ta('elective')}</SelectItem>
+                      <SelectItem value="vocational">{ta('vocational')}</SelectItem>
+                      <SelectItem value="extracurricular">{ta('extracurricular')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -159,10 +160,10 @@ export function SubjectModal({
               name="description"
               render={({ field }: { field: any }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{ta('description')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Optional description of the syllabus..."
+                      placeholder={ta('subjectDescriptionPlaceholder')}
                       className="resize-none"
                       {...field}
                       value={field.value || ''}

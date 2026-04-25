@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { studentsService, type StudentFilters } from '@/lib/api/students.service';
 import { queryKeys } from '@/lib/api/query-keys';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 export function useStudents(filters: StudentFilters = {}) {
   return useQuery({
@@ -29,20 +30,22 @@ export function useStudentStats() {
 
 export function useCreateStudent() {
   const queryClient = useQueryClient();
+  const t = useTranslations('common');
   return useMutation({
     mutationFn: studentsService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.students.all });
-      toast.success('Student created successfully');
+      toast.success(t('studentCreated'));
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to create student');
+      toast.error(error.response?.data?.detail || t('studentCreateFailed'));
     },
   });
 }
 
 export function useUpdateStudent() {
   const queryClient = useQueryClient();
+  const t = useTranslations('common');
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof studentsService.update>[1] }) =>
       studentsService.update(id, data),
@@ -51,38 +54,40 @@ export function useUpdateStudent() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.students.detail(variables.id),
       });
-      toast.success('Student updated successfully');
+      toast.success(t('studentUpdated'));
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to update student');
+      toast.error(error.response?.data?.detail || t('studentUpdateFailed'));
     },
   });
 }
 
 export function useDeleteStudent() {
   const queryClient = useQueryClient();
+  const t = useTranslations('common');
   return useMutation({
     mutationFn: studentsService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.students.all });
-      toast.success('Student deleted successfully');
+      toast.success(t('studentDeleted'));
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to delete student');
+      toast.error(error.response?.data?.detail || t('studentDeleteFailed'));
     },
   });
 }
 
 export function useRestoreStudent() {
   const queryClient = useQueryClient();
+  const t = useTranslations('common');
   return useMutation({
     mutationFn: studentsService.restore,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.students.all });
-      toast.success('Student restored successfully');
+      toast.success(t('studentRestored'));
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to restore student');
+      toast.error(error.response?.data?.detail || t('studentRestoreFailed'));
     },
   });
 }

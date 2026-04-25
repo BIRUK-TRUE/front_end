@@ -19,16 +19,16 @@ import {
 import { ArrowLeft, Loader2, Mail, CheckCircle, AlertCircle } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 
-const forgotSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email address'),
-});
-
-type ForgotForm = z.infer<typeof forgotSchema>;
-
 export default function ForgotPasswordPage() {
   const t = useTranslations('auth');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const forgotSchema = z.object({
+    email: z.string().min(1, t('emailRequired')).email(t('invalidEmail')),
+  });
+
+  type ForgotForm = z.infer<typeof forgotSchema>;
 
   const {
     register,

@@ -36,6 +36,7 @@ export default function DirectorsPage() {
   const t = useTranslations('users');
   const tr = useTranslations('roles');
   const tc = useTranslations('common');
+  const td = useTranslations('directorsPage');
   const router = useRouter();
   const { canViewUsers: canManageUsers } = usePermissions();
   
@@ -72,7 +73,7 @@ export default function DirectorsPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title={tr('director') + 's'}
-        description="Manage school directors and administrators"
+        description={td('description')}
         actions={
           canManageUsers && (
             <Link href="/dashboard/users/create">
@@ -134,7 +135,7 @@ export default function DirectorsPage() {
               <EmptyState
                 icon={Search}
                 title={tc('noResults')}
-                description="Try adjusting your search or filters to find what you're looking for."
+                description={td('noResultsDescription')}
               />
             ) : (
               <Table>
@@ -172,7 +173,7 @@ export default function DirectorsPage() {
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-9 w-9 p-0 rounded-full" aria-label="Open menu">
+                            <Button variant="ghost" className="h-9 w-9 p-0 rounded-full" aria-label={td('openMenu')}>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>

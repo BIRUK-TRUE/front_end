@@ -187,7 +187,7 @@ export default function EnrollmentsPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title={t('title')}
-        description="Manage school-wide student enrollments, transfers, and withdrawals."
+        description={t('description')}
         actions={
           <Button className="gap-2" asChild>
             <Link href="/dashboard/students">
@@ -200,7 +200,7 @@ export default function EnrollmentsPage() {
 
       <div className="flex flex-col md:flex-row gap-4 items-end bg-card p-4 rounded-xl border shadow-sm">
         <div className="flex-1 space-y-2">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider ml-1">Search Student</label>
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider ml-1">{t('searchStudent')}</label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -213,13 +213,13 @@ export default function EnrollmentsPage() {
         </div>
         
         <div className="w-full md:w-56 space-y-2">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider ml-1">Academic Year</label>
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider ml-1">{t('academicYear')}</label>
           <Select value={yearFilter} onValueChange={setYearFilter}>
             <SelectTrigger className="h-11">
-              <SelectValue placeholder="All Years" />
+              <SelectValue placeholder={t('allYears')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Academic Years</SelectItem>
+              <SelectItem value="all">{t('allAcademicYears')}</SelectItem>
               {yearsData?.items?.map((year) => (
                 <SelectItem key={year.id} value={year.id}>{year.name}</SelectItem>
               ))}
@@ -228,17 +228,17 @@ export default function EnrollmentsPage() {
         </div>
 
         <div className="w-full md:w-48 space-y-2">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider ml-1">Status</label>
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider ml-1">{tc('status')}</label>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="h-11">
-              <SelectValue placeholder="All Statuses" />
+              <SelectValue placeholder={t('allStatuses')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="withdrawn">Withdrawn</SelectItem>
-              <SelectItem value="transferred">Transferred</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="all">{t('allStatuses')}</SelectItem>
+              <SelectItem value="active">{t('statusActive')}</SelectItem>
+              <SelectItem value="withdrawn">{t('statusWithdrawn')}</SelectItem>
+              <SelectItem value="transferred">{t('statusTransferred')}</SelectItem>
+              <SelectItem value="completed">{t('statusCompleted')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -275,10 +275,10 @@ export default function EnrollmentsPage() {
             <EmptyState
               icon={History}
               title={t('noEnrollments')}
-              description="No student enrollments found matching your filters."
+              description={t('noEnrollmentsForFilters')}
               action={
                 <Button variant="outline" onClick={handleResetFilters}>
-                  Clear All Filters
+                  {t('clearAllFilters')}
                 </Button>
               }
             />

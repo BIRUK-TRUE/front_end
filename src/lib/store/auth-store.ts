@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface User {
   id: string;
@@ -50,6 +50,15 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: (state) => ({ 
+        user: state.user ? { 
+          id: state.user.id, 
+          name: state.user.full_name, 
+          role: state.user.roles[0], 
+          email: state.user.email 
+        } : null 
+      }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated();
       },

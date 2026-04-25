@@ -24,8 +24,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
 import { useTeachers } from '@/features/teachers/api/useTeachers';
 
 interface SectionModalProps {
@@ -44,6 +44,7 @@ export function SectionModal({
   isLoading,
 }: SectionModalProps) {
   const t = useTranslations('common');
+  const ta = useTranslations('academics');
 
   const form = useForm<SectionForm>({
     resolver: zodResolver(sectionSchema) as any,
@@ -90,12 +91,12 @@ export function SectionModal({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {section ? 'Edit Section' : 'Add New Section'}
+            {section ? ta('editSection') : ta('addNewSection')}
           </DialogTitle>
           <DialogDescription>
             {section
-              ? 'Update details for this class section.'
-              : 'Add a new section (e.g. A, B, Blue) for the selected class.'}
+              ? ta('sectionModalEditDesc')
+              : ta('sectionModalDesc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -106,9 +107,9 @@ export function SectionModal({
               name="name"
               render={({ field }: { field: any }) => (
                 <FormItem>
-                  <FormLabel>Section Name <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>{ta('sectionName')} <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. A" {...field} />
+                    <Input placeholder={ta('sectionNamePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -121,7 +122,7 @@ export function SectionModal({
                 name="capacity"
                 render={({ field }: { field: any }) => (
                   <FormItem>
-                    <FormLabel>Capacity <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel>{ta('capacity')} <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
@@ -140,10 +141,10 @@ export function SectionModal({
                 name="room_number"
                 render={({ field }: { field: any }) => (
                   <FormItem>
-                    <FormLabel>Room (Optional)</FormLabel>
+                    <FormLabel>{ta('roomOptional')}</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="e.g. 101" 
+                      <Input
+                        placeholder={ta('roomPlaceholder')}
                         {...field}
                         value={field.value || ''}
                       />
@@ -159,7 +160,7 @@ export function SectionModal({
               name="homeroom_teacher_id"
               render={({ field }: { field: any }) => (
                 <FormItem>
-                  <FormLabel>Homeroom Teacher (Optional)</FormLabel>
+                  <FormLabel>{ta('homeroomTeacherOptional')}</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
                     value={field.value || "none"}
@@ -167,11 +168,11 @@ export function SectionModal({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a teacher" />
+                        <SelectValue placeholder={ta('selectTeacher')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="none">No Homeroom Teacher</SelectItem>
+                      <SelectItem value="none">{ta('noHomeroomTeacher')}</SelectItem>
                       {teachersData?.items?.map((teacher: any) => (
                         <SelectItem key={teacher.id} value={teacher.id}>
                           {teacher.full_name}

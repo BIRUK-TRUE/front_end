@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { teachersService, type TeacherFilters } from '@/lib/api/teachers.service';
 import { queryKeys } from '@/lib/api/query-keys';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 export function useTeachers(filters: TeacherFilters = {}) {
   return useQuery({
@@ -29,20 +30,22 @@ export function useTeacherStats() {
 
 export function useCreateTeacher() {
   const queryClient = useQueryClient();
+  const t = useTranslations('common');
   return useMutation({
     mutationFn: teachersService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.teachers.all });
-      toast.success('Teacher created successfully');
+      toast.success(t('teacherCreated'));
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to create teacher');
+      toast.error(error.response?.data?.detail || t('teacherCreateFailed'));
     },
   });
 }
 
 export function useUpdateTeacher() {
   const queryClient = useQueryClient();
+  const t = useTranslations('common');
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof teachersService.update>[1] }) =>
       teachersService.update(id, data),
@@ -51,38 +54,40 @@ export function useUpdateTeacher() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.teachers.detail(variables.id),
       });
-      toast.success('Teacher updated successfully');
+      toast.success(t('teacherUpdated'));
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to update teacher');
+      toast.error(error.response?.data?.detail || t('teacherUpdateFailed'));
     },
   });
 }
 
 export function useDeleteTeacher() {
   const queryClient = useQueryClient();
+  const t = useTranslations('common');
   return useMutation({
     mutationFn: teachersService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.teachers.all });
-      toast.success('Teacher deleted successfully');
+      toast.success(t('teacherDeleted'));
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to delete teacher');
+      toast.error(error.response?.data?.detail || t('teacherDeleteFailed'));
     },
   });
 }
 
 export function useRestoreTeacher() {
   const queryClient = useQueryClient();
+  const t = useTranslations('common');
   return useMutation({
     mutationFn: teachersService.restore,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.teachers.all });
-      toast.success('Teacher restored successfully');
+      toast.success(t('teacherRestored'));
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to restore teacher');
+      toast.error(error.response?.data?.detail || t('teacherRestoreFailed'));
     },
   });
 }

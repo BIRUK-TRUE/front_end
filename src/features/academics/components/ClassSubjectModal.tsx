@@ -37,6 +37,7 @@ export function ClassSubjectModal({
   isLoading,
 }: ClassSubjectModalProps) {
   const t = useTranslations('common');
+  const ta = useTranslations('academics');
   const [search, setSearch] = useState('');
   
   const { data: globalSubjects, isLoading: isGlobasLoading } = useSubjects({
@@ -61,17 +62,15 @@ export function ClassSubjectModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Manage Class Subjects</DialogTitle>
-          <DialogDescription>
-            Assign or remove subjects for this specific class. All unassigned global subjects are listed below.
-          </DialogDescription>
+          <DialogTitle>{ta('manageClassSubjects')}</DialogTitle>
+          <DialogDescription>{ta('manageClassSubjectsDesc')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Filter subjects..."
+              placeholder={ta('filterSubjects')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -85,7 +84,7 @@ export function ClassSubjectModal({
               </div>
             ) : filteredSubjects.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground">
-                No subjects found.
+                {ta('noSubjectsFound')}
               </div>
             ) : (
               <div className="space-y-1">
@@ -124,7 +123,7 @@ export function ClassSubjectModal({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+            {t('close')}
           </Button>
         </DialogFooter>
       </DialogContent>

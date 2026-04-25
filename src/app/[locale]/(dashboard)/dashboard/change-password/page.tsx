@@ -13,21 +13,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Loader2, AlertCircle, Save } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { toast } from 'sonner';
-
-const passwordSchema = z.object({
-  current_password: z.string().min(1, 'Current password is required'),
-  new_password: z.string().min(8, 'New password must be at least 8 characters'),
-  confirm_password: z.string().min(1, 'Please confirm your new password'),
-}).refine((data) => data.new_password === data.confirm_password, {
-  message: "Passwords don't match",
-  path: ["confirm_password"],
-});
-
-type PasswordForm = z.infer<typeof passwordSchema>;
+type PasswordForm = {
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
+};
 
 export default function ChangePasswordPage() {
   const tc = useTranslations('common');
+  const t = useTranslations('auth');
+  const tv = useTranslations('validation');
   const router = useRouter();
+
+  const passwordSchema = z.object({
+    current_password: z.string().min(1, tv('required')),
+    new_password: z.string().min(8, tv('passwordMinLength')),
+    confirm_password: z.string().min(1, tv('required')),
+  }).refine((data) => data.new_password === data.confirm_password, {
+    message: tv('passwordsDoNotMatch'),
+    path: ['confirm_password'],
+  });
 
   const {
     register,
@@ -43,18 +48,18 @@ export default function ChangePasswordPage() {
       // In a real app, you'd call an API here
       // await authService.changePassword(data);
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API
-      toast.success('Password changed successfully');
+      toast.success(t('passwordChanged'));
       reset();
       router.push('/dashboard/profile');
-    } catch (error) {
-      toast.error('Failed to change password. Please check your current password.');
+    } catch (_error) {
+      toast.error(t('changePasswordFailed'));
     }
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title="Change Password"
+        title={t('changePassword')}
         actions={
           <Link href="/dashboard/profile">
             <Button variant="outline" className="gap-2 min-h-[44px]">
@@ -67,12 +72,12 @@ export default function ChangePasswordPage() {
 
       <Card className="max-w-md">
         <CardHeader>
-          <CardTitle>Security Settings</CardTitle>
+          <CardTitle>{t('securitySettings')}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="current_password">Current Password</Label>
+              <Label htmlFor="current_password">{t('currentPassword')}</Label>
               <Input
                 id="current_password"
                 type="password"
@@ -89,7 +94,7 @@ export default function ChangePasswordPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="new_password">New Password</Label>
+              <Label htmlFor="new_password">{t('newPassword')}</Label>
               <Input
                 id="new_password"
                 type="password"
@@ -106,7 +111,7 @@ export default function ChangePasswordPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirm_password">Confirm New Password</Label>
+              <Label htmlFor="confirm_password">{t('confirmPassword')}</Label>
               <Input
                 id="confirm_password"
                 type="password"
@@ -126,12 +131,12 @@ export default function ChangePasswordPage() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Updating...
+                  {t('updating')}
                 </>
               ) : (
                 <>
                   <Save className="h-4 w-4" />
-                  Update Password
+                  {t('updatePassword')}
                 </>
               )}
             </Button>

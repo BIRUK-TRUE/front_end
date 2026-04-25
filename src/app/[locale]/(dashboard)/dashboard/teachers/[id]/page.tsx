@@ -114,7 +114,7 @@ export default function TeacherDetailPage() {
               <div className="flex flex-col sm:flex-row gap-2">
                 <Select value={yearId} onValueChange={(v) => { setYearId(v); setTermId(''); }}>
                   <SelectTrigger className="w-full sm:w-[150px]">
-                    <SelectValue placeholder="Academic Year" />
+                    <SelectValue placeholder={tc('selectAcademicYear')} />
                   </SelectTrigger>
                   <SelectContent>
                     {years?.items?.map((y: any) => (
@@ -125,7 +125,7 @@ export default function TeacherDetailPage() {
 
                 <Select value={termId} onValueChange={setTermId} disabled={!yearId}>
                   <SelectTrigger className="w-full sm:w-[150px]">
-                    <SelectValue placeholder="Term" />
+                    <SelectValue placeholder={tc('selectTerm')} />
                   </SelectTrigger>
                   <SelectContent>
                     {terms?.items?.map((t: any) => (
@@ -139,8 +139,8 @@ export default function TeacherDetailPage() {
               {!termId ? (
                 <EmptyState
                   icon={CalendarDays}
-                  title="Select an Academic Term"
-                  description="Choose a year and term to view this teacher's scheduled classes."
+                  title={t('selectAcademicTerm')}
+                  description={t('selectTermDescription')}
                 />
               ) : (
                 <TimetableGrid entries={scheduleData || []} isLoading={isLoadingSchedule} />

@@ -15,30 +15,31 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 
-const teacherSchema = z.object({
-  email: z.string().min(1, 'Required').email('Invalid email'),
-  full_name: z.string().min(2, 'Min 2 characters'),
-  phone_number: z.string().optional(),
-  address: z.string().optional(),
-  password: z.string().optional(),
-  hire_date: z.string().min(1, 'Required'),
-  date_of_birth: z.string().min(1, 'Required'),
-  sex: z.enum(['M', 'F'], { message: 'Required' }),
-  qualification: z.string().optional(),
-  specialization: z.string().optional(),
-  emergency_contact_name: z.string().optional(),
-  emergency_contact_phone: z.string().optional(),
-  office_location: z.string().optional(),
-});
-
-type TeacherForm = z.infer<typeof teacherSchema>;
-
 export default function CreateTeacherPage() {
   const t = useTranslations('teachers');
   const tc = useTranslations('common');
   const ts = useTranslations('students');
+  const tv = useTranslations('validation');
   const router = useRouter();
   const createTeacher = useCreateTeacher();
+
+  const teacherSchema = z.object({
+    email: z.string().min(1, tv('required')).email(tv('invalidEmail')),
+    full_name: z.string().min(2, tv('nameMinLength')),
+    phone_number: z.string().optional(),
+    address: z.string().optional(),
+    password: z.string().optional(),
+    hire_date: z.string().min(1, tv('required')),
+    date_of_birth: z.string().min(1, tv('required')),
+    sex: z.enum(['M', 'F'], { message: tv('required') }),
+    qualification: z.string().optional(),
+    specialization: z.string().optional(),
+    emergency_contact_name: z.string().optional(),
+    emergency_contact_phone: z.string().optional(),
+    office_location: z.string().optional(),
+  });
+
+  type TeacherForm = z.infer<typeof teacherSchema>;
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<TeacherForm>({
     resolver: zodResolver(teacherSchema),
@@ -58,7 +59,7 @@ export default function CreateTeacherPage() {
         <CardContent className="p-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
             {/* User details */}
-            <CardTitle className="text-base">User Details</CardTitle>
+            <CardTitle className="text-base">{t('userDetails')}</CardTitle>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="email">{tc('email')} *</Label>
@@ -101,8 +102,8 @@ export default function CreateTeacherPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2"><Label htmlFor="qualification">{t('qualification')}</Label><Input id="qualification" {...register('qualification')} className="h-11" placeholder="e.g., BSc, MEd" /></div>
-              <div className="space-y-2"><Label htmlFor="specialization">{t('specialization')}</Label><Input id="specialization" {...register('specialization')} className="h-11" placeholder="e.g., Math, Science" /></div>
+              <div className="space-y-2"><Label htmlFor="qualification">{t('qualification')}</Label><Input id="qualification" {...register('qualification')} className="h-11" placeholder={t('qualificationPlaceholder')} /></div>
+              <div className="space-y-2"><Label htmlFor="specialization">{t('specialization')}</Label><Input id="specialization" {...register('specialization')} className="h-11" placeholder={t('specializationPlaceholder')} /></div>
             </div>
             <div className="space-y-2"><Label htmlFor="office_location">{t('officeLocation')}</Label><Input id="office_location" {...register('office_location')} className="h-11" /></div>
 

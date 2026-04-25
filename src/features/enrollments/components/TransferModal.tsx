@@ -52,7 +52,7 @@ export function TransferModal({
   onSubmit,
   isLoading,
 }: TransferModalProps) {
-  const t = useTranslations('common');
+  const t = useTranslations('enrollments');
   
   const form = useForm<TransferForm>({
     resolver: zodResolver(transferSchema) as any,
@@ -104,7 +104,7 @@ export function TransferModal({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select target section" />
+                        <SelectValue placeholder={t('selectTargetSection')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -150,12 +150,12 @@ export function TransferModal({
               name="reason"
               render={({ field }: { field: any }) => (
                 <FormItem>
-                  <FormLabel>Reason (Optional)</FormLabel>
+                  <FormLabel>{t('reasonOptional')}</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Why is this student being transferred?" 
+                    <Textarea
+                      placeholder={t('transferReasonPlaceholder')}
                       className="resize-none"
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -169,7 +169,7 @@ export function TransferModal({
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Transfer Student
+                {t('transferStudent')}
               </Button>
             </DialogFooter>
           </form>

@@ -16,7 +16,7 @@ import { CalendarDays } from 'lucide-react';
 
 export default function SchedulePage() {
   const t = useTranslations('schedule');
-  const tc = useTranslations('common');
+  const ts = useTranslations('schedulePage');
 
   const [yearId, setYearId] = useState<string>('');
   const [termId, setTermId] = useState<string>('');
@@ -34,17 +34,17 @@ export default function SchedulePage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title="Class Timetables"
-        description="Manage and view the weekly schedule for specific classes and sections."
+        title={ts('title')}
+        description={ts('description')}
         actions={
           <div className="flex gap-2">
             <Button variant="outline" className="gap-2">
               <Printer className="h-4 w-4" />
-              Print
+              {ts('print')}
             </Button>
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
-              Add Period
+              {ts('addPeriod')}
             </Button>
           </div>
         }
@@ -52,10 +52,10 @@ export default function SchedulePage() {
 
       <div className="flex flex-col md:flex-row gap-4 items-end bg-card p-4 rounded-xl border shadow-sm">
         <div className="w-full md:w-48 space-y-2">
-          <label className="text-xs font-medium text-muted-foreground uppercase ml-1">Academic Year</label>
+          <label className="text-xs font-medium text-muted-foreground uppercase ml-1">{ts('academicYear')}</label>
           <Select value={yearId} onValueChange={(v) => { setYearId(v); setTermId(''); }}>
             <SelectTrigger className="h-11">
-              <SelectValue placeholder="Select Year" />
+              <SelectValue placeholder={ts('selectYear')} />
             </SelectTrigger>
             <SelectContent>
               {years?.items?.map((y: any) => (
@@ -66,10 +66,10 @@ export default function SchedulePage() {
         </div>
 
         <div className="w-full md:w-48 space-y-2">
-          <label className="text-xs font-medium text-muted-foreground uppercase ml-1">Term</label>
+          <label className="text-xs font-medium text-muted-foreground uppercase ml-1">{ts('term')}</label>
           <Select value={termId} onValueChange={setTermId} disabled={!yearId}>
             <SelectTrigger className="h-11">
-              <SelectValue placeholder="Select Term" />
+              <SelectValue placeholder={ts('selectTerm')} />
             </SelectTrigger>
             <SelectContent>
               {terms?.items?.map((t: any) => (
@@ -80,10 +80,10 @@ export default function SchedulePage() {
         </div>
 
         <div className="w-full md:w-48 space-y-2">
-          <label className="text-xs font-medium text-muted-foreground uppercase ml-1">Class</label>
+          <label className="text-xs font-medium text-muted-foreground uppercase ml-1">{ts('class')}</label>
           <Select value={classId} onValueChange={(v) => { setClassId(v); setSectionId(''); }}>
             <SelectTrigger className="h-11">
-              <SelectValue placeholder="Select Class" />
+              <SelectValue placeholder={ts('selectClass')} />
             </SelectTrigger>
             <SelectContent>
               {classesData?.items?.map((c: any) => (
@@ -94,10 +94,10 @@ export default function SchedulePage() {
         </div>
 
         <div className="w-full md:w-48 space-y-2">
-          <label className="text-xs font-medium text-muted-foreground uppercase ml-1">Section</label>
+          <label className="text-xs font-medium text-muted-foreground uppercase ml-1">{ts('section')}</label>
           <Select value={sectionId} onValueChange={setSectionId} disabled={!classId}>
             <SelectTrigger className="h-11">
-              <SelectValue placeholder="Select Section" />
+              <SelectValue placeholder={ts('selectSection')} />
             </SelectTrigger>
             <SelectContent>
               {selectedClass?.sections?.map((s: any) => (
@@ -111,8 +111,8 @@ export default function SchedulePage() {
       {!sectionId || !termId ? (
         <EmptyState
           icon={CalendarDays}
-          title="Select a Section and Term"
-          description="Use the filters above to view the timetable for a specific class section."
+          title={ts('selectSectionAndTermTitle')}
+          description={ts('selectSectionAndTermDescription')}
         />
       ) : (
         <TimetableGrid entries={scheduleData || []} isLoading={isLoading} />

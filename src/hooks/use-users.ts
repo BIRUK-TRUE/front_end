@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersService, type UserFilters } from '@/lib/api/users.service';
 import { queryKeys } from '@/lib/api/query-keys';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 export function useUsers(filters: UserFilters = {}) {
   return useQuery({
@@ -36,20 +37,22 @@ export function useUserStats() {
 
 export function useCreateUser() {
   const queryClient = useQueryClient();
+  const t = useTranslations('common');
   return useMutation({
     mutationFn: usersService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success('User created successfully');
+      toast.success(t('userCreated'));
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to create user');
+      toast.error(error.response?.data?.detail || t('userCreateFailed'));
     },
   });
 }
 
 export function useUpdateUser() {
   const queryClient = useQueryClient();
+  const t = useTranslations('common');
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof usersService.update>[1] }) =>
       usersService.update(id, data),
@@ -58,38 +61,40 @@ export function useUpdateUser() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.detail(variables.id),
       });
-      toast.success('User updated successfully');
+      toast.success(t('userUpdated'));
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to update user');
+      toast.error(error.response?.data?.detail || t('userUpdateFailed'));
     },
   });
 }
 
 export function useDeleteUser() {
   const queryClient = useQueryClient();
+  const t = useTranslations('common');
   return useMutation({
     mutationFn: usersService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success('User deleted successfully');
+      toast.success(t('userDeleted'));
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to delete user');
+      toast.error(error.response?.data?.detail || t('userDeleteFailed'));
     },
   });
 }
 
 export function useRestoreUser() {
   const queryClient = useQueryClient();
+  const t = useTranslations('common');
   return useMutation({
     mutationFn: usersService.restore,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success('User restored successfully');
+      toast.success(t('userRestored'));
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to restore user');
+      toast.error(error.response?.data?.detail || t('userRestoreFailed'));
     },
   });
 }

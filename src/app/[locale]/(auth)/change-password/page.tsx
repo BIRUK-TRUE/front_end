@@ -22,30 +22,31 @@ import { ShieldCheck, Loader2, Eye, EyeOff, AlertCircle, AlertTriangle } from 'l
 import { PasswordStrength } from '@/components/auth/password-strength';
 import { toast } from 'sonner';
 
-const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .max(128, 'Password must be at most 128 characters'),
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  });
-
-type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
-
 export default function ChangePasswordPage() {
   const t = useTranslations('auth');
+  const tv = useTranslations('validation');
   const router = useRouter();
   const { user, updateUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [serverError, setServerError] = useState('');
+
+  const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, t('currentPasswordRequired')),
+    newPassword: z
+      .string()
+      .min(8, tv('passwordMinLength'))
+      .max(128, t('passwordMaxLength')),
+    confirmPassword: z.string().min(1, t('confirmPasswordRequired')),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: t('passwordsDoNotMatch'),
+    path: ['confirmPassword'],
+  });
+
+  type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
 
   const {
     register,
@@ -72,7 +73,7 @@ export default function ChangePasswordPage() {
       router.push('/dashboard');
     } catch (error: any) {
       setServerError(
-        error.response?.data?.detail || 'Failed to change password'
+        error.response?.data?.detail || t('changePasswordFailed')
       );
     } finally {
       setIsLoading(false);

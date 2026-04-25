@@ -11,11 +11,11 @@ interface TimetableGridProps {
 }
 
 const DAYS = [
-  { value: 1, label: 'Monday' },
-  { value: 2, label: 'Tuesday' },
-  { value: 3, label: 'Wednesday' },
-  { value: 4, label: 'Thursday' },
-  { value: 5, label: 'Friday' },
+  { value: 1, key: 'monday' },
+  { value: 2, key: 'tuesday' },
+  { value: 3, key: 'wednesday' },
+  { value: 4, key: 'thursday' },
+  { value: 5, key: 'friday' },
 ];
 
 const TIME_SLOTS = [
@@ -23,7 +23,8 @@ const TIME_SLOTS = [
 ];
 
 export function TimetableGrid({ entries, isLoading }: TimetableGridProps) {
-  const t = useTranslations('common');
+  const t = useTranslations('common.days');
+  const tc = useTranslations('common');
 
   if (isLoading) {
     return (
@@ -46,7 +47,7 @@ export function TimetableGrid({ entries, isLoading }: TimetableGridProps) {
           <div className="p-4 font-semibold text-center border-r text-muted-foreground">Time</div>
           {DAYS.map(day => (
             <div key={day.value} className="p-4 font-semibold text-center border-r last:border-0">
-              {day.label}
+              {t(day.key)}
             </div>
           ))}
         </div>
@@ -76,13 +77,13 @@ export function TimetableGrid({ entries, isLoading }: TimetableGridProps) {
                             {entry.teacher_name}
                           </div>
                           <div className="text-xs text-muted-foreground mt-auto">
-                            Room {entry.room_number || 'TBA'}
+                            {tc('room')} {entry.room_number || tc('tba')}
                           </div>
                         </CardContent>
                       </Card>
                     ) : (
                       <div className="w-full h-full rounded border border-dashed border-muted flex items-center justify-center bg-muted/5 opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
-                        <span className="text-xs text-muted-foreground">+ Add</span>
+                        <span className="text-xs text-muted-foreground">{tc('add')}</span>
                       </div>
                     )}
                   </div>

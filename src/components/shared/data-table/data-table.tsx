@@ -26,6 +26,7 @@ import { DataTablePagination } from './data-table-pagination';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -56,6 +57,8 @@ export function DataTable<TData, TValue>({
   pagination,
   onPaginationChange,
 }: DataTableProps<TData, TValue>) {
+  const tc = useTranslations('common');
+  const searchPlaceholderFinal = searchPlaceholder || tc('searchPlaceholder');
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -100,7 +103,7 @@ export function DataTable<TData, TValue>({
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder={searchPlaceholder}
+              placeholder={searchPlaceholderFinal}
               value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ''}
               onChange={(event) =>
                 table.getColumn(searchKey)?.setFilterValue(event.target.value)
@@ -137,7 +140,7 @@ export function DataTable<TData, TValue>({
                 <TableCell colSpan={columns.length} className="h-48 text-center">
                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                    Loading...
+                    {tc('loading')}
                   </div>
                 </TableCell>
               </TableRow>
@@ -162,7 +165,7 @@ export function DataTable<TData, TValue>({
                   className="h-48 text-center"
                 >
                   {emptyState || (
-                    <p className="text-muted-foreground">No results found.</p>
+                    <p className="text-muted-foreground">{tc('noResults')}</p>
                   )}
                 </TableCell>
               </TableRow>

@@ -87,7 +87,7 @@ export default function EditGuardianPage() {
               Editing <strong>{guardian.full_name}</strong> — Email: {guardian.email}
             </div>
 
-            <CardTitle className="text-base">Personal Details</CardTitle>
+            <CardTitle className="text-base">{t('personalDetails')}</CardTitle>
             <div className="space-y-2">
               <Label htmlFor="full_name">{tc('name')} *</Label>
               <Input id="full_name" {...register('full_name')} aria-invalid={!!errors.full_name} className="h-11" />

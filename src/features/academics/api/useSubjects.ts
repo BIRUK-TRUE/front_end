@@ -41,7 +41,8 @@ export const useSubjects = (filters: SubjectFilters = { page: 1, size: 20 }) => 
     queryFn: async () => {
       const { data } = await axiosInstance.get<PaginatedResponse<Subject>>('/academics/subjects', { params: filters });
       return data;
-    }
+    },
+    enabled: true,
   });
 };
 

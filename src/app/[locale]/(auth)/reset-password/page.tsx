@@ -23,28 +23,30 @@ import { PasswordStrength } from '@/components/auth/password-strength';
 import { Link } from '@/i18n/navigation';
 import { toast } from 'sonner';
 
-const resetSchema = z
-  .object({
-    newPassword: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .max(128, 'Password must be at most 128 characters'),
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  });
-
-type ResetForm = z.infer<typeof resetSchema>;
-
 export default function ResetPasswordPage() {
   const t = useTranslations('auth');
+  const tv = useTranslations('validation');
+  const tc = useTranslations('common');
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token') || '';
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const resetSchema = z
+    .object({
+      newPassword: z
+        .string()
+        .min(8, tv('passwordMinLength'))
+        .max(128, t('passwordMaxLength')),
+      confirmPassword: z.string().min(1, t('confirmPasswordRequired')),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: t('passwordsDoNotMatch'),
+      path: ['confirmPassword'],
+    });
+
+  type ResetForm = z.infer<typeof resetSchema>;
   const [serverError, setServerError] = useState('');
 
   const {
@@ -66,7 +68,7 @@ export default function ResetPasswordPage() {
       toast.success(t('passwordChanged'));
       router.push('/login');
     } catch (error: any) {
-      setServerError(error.response?.data?.detail || 'Failed to reset password');
+      setServerError(error.response?.data?.detail || t('resetPasswordFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -116,7 +118,7 @@ export default function ResetPasswordPage() {
                 size="sm"
                 className="absolute right-0 top-0 h-11 w-11 px-3 hover:bg-transparent"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? tc('hidePassword') : tc('showPassword')}
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -161,7 +163,7 @@ export default function ResetPasswordPage() {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                Resetting...
+                {t('resetting')}
               </>
             ) : (
               t('resetPassword')

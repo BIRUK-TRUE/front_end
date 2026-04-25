@@ -21,6 +21,14 @@ import {
   ClipboardCheck,
   Award,
   CalendarClock,
+  School,
+  CalendarCheck,
+  Clock,
+  Wallet,
+  Bell,
+  BarChart3,
+  TrendingUp,
+  ScanFace,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -47,23 +55,151 @@ export function Sidebar({
   onClose,
 }: SidebarProps) {
   const t = useTranslations('nav');
+  const tc = useTranslations('common');
   const pathname = usePathname();
-  const { 
-    canViewUsers, 
-    canManageStudents, 
-    canManageTeachers, 
-    canManageGuardians, 
+  const {
+    canViewUsers,
+    canManageStudents,
+    canManageTeachers,
+    canManageGuardians,
     canAccessSettings,
     canManageAcademics,
-    canManageEnrollments
+    canManageEnrollments,
+    canViewOwnClasses,
+    canTakeAttendance,
+    canEnterGrades,
+    canViewOwnSchedule,
+    canViewAnalytics,
+    canViewTeacherAnalytics,
+    canManageNotifications,
+    isTeacher,
+    isStudent,
+    isGuardian,
   } = usePermissions();
+  
+  const { user } = useAuthStore();
 
-  const navItems: NavItem[] = [
+  // Teacher-specific nav items (shown only to teachers)
+  const teacherNavItems: NavItem[] = [
+    {
+      href: '/dashboard/teacher',
+      label: t('dashboard'),
+      icon: LayoutDashboard,
+      show: isTeacher,
+    },
+    {
+      href: '/dashboard/teacher/my-classes',
+      label: t('myClasses'),
+      icon: School,
+      show: canViewOwnClasses,
+    },
+    {
+      href: '/dashboard/teacher/attendance',
+      label: t('attendance'),
+      icon: ClipboardCheck,
+      show: canTakeAttendance,
+    },
+    {
+      href: '/dashboard/attendance/face-scan',
+      label: t('faceScan'),
+      icon: ScanFace,
+      show: canTakeAttendance,
+    },
+    {
+      href: '/dashboard/teacher/grades',
+      label: t('grades'),
+      icon: Award,
+      show: canEnterGrades,
+    },
+    {
+      href: '/dashboard/teacher/schedule',
+      label: t('mySchedule'),
+      icon: CalendarClock,
+      show: canViewOwnSchedule,
+    },
+    {
+      href: '/dashboard/teacher/analytics',
+      label: t('myClassAnalytics'),
+      icon: TrendingUp,
+      show: canViewTeacherAnalytics,
+    },
+  ];
+
+  // Student-specific nav items (shown only to students)
+  const studentNavItems: NavItem[] = [
+    {
+      href: '/dashboard/student',
+      label: t('dashboard'),
+      icon: LayoutDashboard,
+      show: isStudent,
+    },
+    {
+      href: '/dashboard/student/my-attendance',
+      label: t('myAttendance'),
+      icon: CalendarCheck,
+      show: isStudent,
+    },
+    {
+      href: '/dashboard/student/my-grades',
+      label: t('myGrades'),
+      icon: BookOpen,
+      show: isStudent,
+    },
+    {
+      href: '/dashboard/student/my-schedule',
+      label: t('mySchedule'),
+      icon: Clock,
+      show: isStudent,
+    },
+    {
+      href: '/dashboard/student/my-profile',
+      label: t('myProfile'),
+      icon: User,
+      show: isStudent,
+    },
+  ];
+
+  // Guardian-specific nav items (shown only to guardians)
+  const guardianNavItems: NavItem[] = [
+    {
+      href: '/guardian',
+      label: t('dashboard'),
+      icon: LayoutDashboard,
+      show: isGuardian,
+    },
+    {
+      href: '/guardian/payments',
+      label: t('payments'),
+      icon: Wallet,
+      show: isGuardian,
+    },
+    {
+      href: '/guardian/notifications',
+      label: t('notifications'),
+      icon: Bell,
+      show: isGuardian,
+    },
+    {
+      href: '/guardian/profile',
+      label: t('myProfile'),
+      icon: User,
+      show: isGuardian,
+    },
+  ];
+
+  // Admin/Registrar/Director nav items
+  const adminNavItems: NavItem[] = [
     {
       href: '/dashboard',
       label: t('dashboard'),
       icon: LayoutDashboard,
-      show: true,
+      show: !isTeacher, // Hide from teachers who use /dashboard/teacher
+    },
+    {
+      href: '/dashboard/analytics',
+      label: t('analytics'),
+      icon: BarChart3,
+      show: canViewAnalytics,
     },
     {
       href: '/dashboard/users',
@@ -73,8 +209,8 @@ export function Sidebar({
     },
     {
       href: '/dashboard/directors',
-      label: 'Directors',
-      icon: UserCheck, // Or a Shield/Star icon
+      label: t('directors'),
+      icon: UserCheck,
       show: canViewUsers,
     },
     {
@@ -85,7 +221,7 @@ export function Sidebar({
     },
     {
       href: '/dashboard/academics/subjects',
-      label: 'Academics',
+      label: t('academics'),
       icon: Building2,
       show: canManageAcademics,
     },
@@ -97,9 +233,9 @@ export function Sidebar({
     },
     {
       href: '/dashboard/schedule',
-      label: 'Schedule',
+      label: t('schedule'),
       icon: CalendarClock,
-      show: canManageStudents || canManageAcademics,
+      show: (canManageStudents || canManageAcademics) && !isTeacher,
     },
     {
       href: '/dashboard/teachers',
@@ -117,15 +253,55 @@ export function Sidebar({
       href: '/dashboard/attendance',
       label: t('attendance'),
       icon: ClipboardCheck,
-      show: canManageStudents || canManageTeachers,
+      show: (canManageStudents || canManageTeachers) && !isTeacher,
+    },
+    {
+      href: '/dashboard/attendance/face-scan',
+      label: t('faceScan'),
+      icon: ScanFace,
+      show: (canManageStudents || canManageTeachers) && !isTeacher,
+    },
+    {
+      href: '/dashboard/attendance/face-enrollment',
+      label: t('faceEnrollment'),
+      icon: ScanFace,
+      show: (canManageStudents || canManageTeachers) && !isTeacher,
     },
     {
       href: '/dashboard/grades',
       label: t('grades'),
       icon: Award,
-      show: canManageStudents || canManageTeachers,
+      show: (canManageStudents || canManageTeachers) && !isTeacher,
+    },
+    // Notification section (admin/director only)
+    {
+      href: '/dashboard/notifications/alert-rules',
+      label: t('alertRules'),
+      icon: Bell,
+      show: canManageNotifications,
+    },
+    {
+      href: '/dashboard/notifications/compose',
+      label: t('sendNotification'),
+      icon: Bell,
+      show: canManageNotifications,
+    },
+    {
+      href: '/dashboard/notifications/history',
+      label: t('notificationHistory'),
+      icon: Bell,
+      show: canManageNotifications,
     },
   ];
+
+  const getNavItems = (): NavItem[] => {
+    if (isStudent) return studentNavItems;
+    if (isTeacher) return teacherNavItems;
+    if (isGuardian) return guardianNavItems;
+    return adminNavItems;
+  };
+
+  const navItems: NavItem[] = getNavItems();
 
   const bottomItems: NavItem[] = [
     {
@@ -219,27 +395,27 @@ export function Sidebar({
             size="sm"
             className="lg:hidden min-h-[44px] min-w-[44px]"
             onClick={onClose}
-            aria-label="Close sidebar"
+            aria-label={tc('closeSidebar')}
           >
             <X className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Navigation */}
-        <ScrollArea className="flex-1 px-3 py-4">
+        <ScrollArea className="flex-1 px-3 py-4 overflow-y-auto">
           <nav className="space-y-1" aria-label={t('mainNavigation')}>
             {navItems.map((item) => (
               <NavLink key={item.href} item={item} />
             ))}
           </nav>
-        </ScrollArea>
 
-        {/* Bottom nav */}
-        <div className="border-t px-3 py-4 space-y-1">
-          {bottomItems.map((item) => (
-            <NavLink key={item.href} item={item} />
-          ))}
-        </div>
+          {/* Bottom nav */}
+          <div className="border-t px-0 py-4 space-y-1 mt-4">
+            {bottomItems.map((item) => (
+              <NavLink key={item.href} item={item} />
+            ))}
+          </div>
+        </ScrollArea>
 
         {/* Collapse toggle (desktop only) */}
         <div className="hidden lg:flex border-t px-3 py-2">

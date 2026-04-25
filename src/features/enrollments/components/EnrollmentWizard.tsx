@@ -41,7 +41,7 @@ export function EnrollmentWizard({
   onSubmit,
   isLoading,
 }: EnrollmentWizardProps) {
-  const t = useTranslations('common');
+  const t = useTranslations('enrollments');
   
   const form = useForm<EnrollmentForm>({
     resolver: zodResolver(enrollmentSchema) as any,
@@ -103,7 +103,7 @@ export function EnrollmentWizard({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Academic Year" />
+                      <SelectValue placeholder={t('selectAcademicYear')} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -140,7 +140,7 @@ export function EnrollmentWizard({
             name="class_id"
             render={({ field }: { field: any }) => (
               <FormItem>
-                <FormLabel>Class / Grade</FormLabel>
+                <FormLabel>{t('classGrade')}</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   value={field.value}
@@ -148,7 +148,7 @@ export function EnrollmentWizard({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder={!academicYearId ? "Select Year First" : "Select Class"} />
+                      <SelectValue placeholder={!academicYearId ? t('selectYearFirst') : t('selectClass')} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -177,7 +177,7 @@ export function EnrollmentWizard({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder={!classId ? "Select Class First" : "Select Section"} />
+                      <SelectValue placeholder={!classId ? t('selectClassFirst') : t('selectSection')} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -191,9 +191,9 @@ export function EnrollmentWizard({
                           <span>{section.name}</span>
                           <div className="flex items-center gap-2">
                             {section.is_full ? (
-                              <Badge variant="destructive" className="text-[10px] h-4">Full</Badge>
+                              <Badge variant="destructive" className="text-[10px] h-4">{t('full')}</Badge>
                             ) : (
-                              <span className="text-xs text-muted-foreground">{section.available_slots} slots left</span>
+                              <span className="text-xs text-muted-foreground">{t('slotsLeft', { count: section.available_slots })}</span>
                             )}
                           </div>
                         </div>
@@ -209,7 +209,7 @@ export function EnrollmentWizard({
 
         <Button type="submit" className="w-full h-11 text-base font-semibold" disabled={isLoading}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Complete Enrollment
+          {t('completeEnrollment')}
         </Button>
       </form>
     </Form>

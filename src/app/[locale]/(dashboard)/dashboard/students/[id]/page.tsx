@@ -40,6 +40,7 @@ export default function StudentDetailPage() {
   const t = useTranslations('students');
   const tc = useTranslations('common');
   const tg = useTranslations('guardians');
+  const te = useTranslations('enrollments');
   const { id } = useParams<{ id: string }>();
   const { data: student, isLoading } = useStudent(id);
   const { data: guardians } = useGuardiansForStudent(id);
@@ -80,20 +81,20 @@ export default function StudentDetailPage() {
             
             <Dialog open={isEnrollModalOpen} onOpenChange={setIsEnrollModalOpen}>
               <DialogTrigger asChild>
-                {!activeEnrollment && (
-                  <Button className="gap-2 min-h-[44px] bg-primary hover:bg-primary/90">
-                    <UserPlus className="h-4 w-4" />
-                    Enroll Student
-                  </Button>
-                )}
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[600px]">
-                <DialogHeader>
-                  <DialogTitle>Enroll Student</DialogTitle>
-                  <DialogDescription>
-                    Assign {student.full_name} to a class and section for an academic year.
-                  </DialogDescription>
-                </DialogHeader>
+              {!activeEnrollment && (
+                <Button className="gap-2 min-h-[44px] bg-primary hover:bg-primary/90">
+                  <UserPlus className="h-4 w-4" />
+                  {t('enrollStudent')}
+                </Button>
+              )}
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>{t('enrollStudent')}</DialogTitle>
+                <DialogDescription>
+                  {t('academicTrackRecord')}
+                </DialogDescription>
+              </DialogHeader>
                 <EnrollmentWizard 
                   studentId={id} 
                   studentName={student.full_name} 
@@ -115,19 +116,19 @@ export default function StudentDetailPage() {
         <TabsList className="grid w-full max-w-[600px] grid-cols-4">
           <TabsTrigger value="profile" className="gap-2">
             <User className="h-4 w-4" />
-            <span className="hidden sm:inline">Profile</span>
+            <span className="hidden sm:inline">{tc('profile')}</span>
           </TabsTrigger>
           <TabsTrigger value="enrollment" className="gap-2">
             <History className="h-4 w-4" />
-            <span className="hidden sm:inline">Enrollments</span>
+            <span className="hidden sm:inline">{te('enrollmentHistory')}</span>
           </TabsTrigger>
           <TabsTrigger value="attendance" className="gap-2">
             <CalendarCheck className="h-4 w-4" />
-            <span className="hidden sm:inline">Attendance</span>
+            <span className="hidden sm:inline">{tc('attendance')}</span>
           </TabsTrigger>
           <TabsTrigger value="grades" className="gap-2">
             <GraduationCap className="h-4 w-4" />
-            <span className="hidden sm:inline">Grades</span>
+            <span className="hidden sm:inline">{tc('grades')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -146,7 +147,7 @@ export default function StudentDetailPage() {
                 </div>
                 {activeEnrollment && (
                   <div className="mt-4 pt-4 border-t">
-                    <div className="text-xs text-muted-foreground uppercase mb-1">Current Enrollment</div>
+                    <div className="text-xs text-muted-foreground uppercase mb-1">{te('currentEnrollment')}</div>
                     <Badge variant="secondary" className="text-sm px-3 py-1">
                       {activeEnrollment.class_name} — {activeEnrollment.section_name}
                     </Badge>
@@ -210,13 +211,13 @@ export default function StudentDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Enrollment History</CardTitle>
-                <CardDescription>Academic track record for this student.</CardDescription>
+                <CardTitle>{te('enrollmentHistory')}</CardTitle>
+                <CardDescription>{t('academicTrackRecord')}</CardDescription>
               </div>
               {!activeEnrollment && (
                 <Button onClick={() => setIsEnrollModalOpen(true)} className="gap-2">
                   <UserPlus className="h-4 w-4" />
-                  New Enrollment
+                  {t('newEnrollment')}
                 </Button>
               )}
             </CardHeader>
@@ -228,22 +229,22 @@ export default function StudentDetailPage() {
               ) : !enrollments?.length ? (
                 <EmptyState
                   icon={History}
-                  title="No Enrollment History"
-                  description="This student hasn't been enrolled in any academic years yet."
+                  title={t('noEnrollmentHistory')}
+                  description={t('enrollmentPrompt')}
                   action={
-                    <Button onClick={() => setIsEnrollModalOpen(true)}>Enroll Student Now</Button>
+                    <Button onClick={() => setIsEnrollModalOpen(true)}>{t('enrollStudent')}</Button>
                   }
                 />
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Academic Year</TableHead>
-                      <TableHead>Class</TableHead>
-                      <TableHead>Section</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>{tc('academicYear')}</TableHead>
+                      <TableHead>{tc('class')}</TableHead>
+                      <TableHead>{tc('section')}</TableHead>
+                      <TableHead>{tc('date')}</TableHead>
+                      <TableHead>{tc('status')}</TableHead>
+                      <TableHead className="text-right">{tc('actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -285,7 +286,7 @@ export default function StudentDetailPage() {
                                     }}
                                   >
                                     <ArrowRightLeft className="h-4 w-4" />
-                                    Transfer Section
+                                    {t('transferSection')}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem 
                                     className="gap-2 text-destructive"
@@ -295,13 +296,13 @@ export default function StudentDetailPage() {
                                     }}
                                   >
                                     <UserMinus className="h-4 w-4" />
-                                    Withdraw Student
+                                    {t('withdrawStudent')}
                                   </DropdownMenuItem>
                                 </>
                               )}
                               <DropdownMenuItem className="gap-2">
                                 <History className="h-4 w-4" />
-                                View Details
+                                {t('viewDetails')}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -320,7 +321,7 @@ export default function StudentDetailPage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardContent className="p-6">
-                <div className="text-sm font-medium text-muted-foreground mb-2">Present Rate</div>
+                <div className="text-sm font-medium text-muted-foreground mb-2">{t('presentRate')}</div>
                 {isLoadingStats ? <LoadingSpinner /> : (
                   <div className="text-3xl font-bold text-primary">
                     {attendanceStats ? Math.round(attendanceStats.attendance_rate * 100) || 0 : 0}%
@@ -330,7 +331,7 @@ export default function StudentDetailPage() {
             </Card>
             <Card>
               <CardContent className="p-6">
-                <div className="text-sm font-medium text-muted-foreground mb-2">Total Absences</div>
+                <div className="text-sm font-medium text-muted-foreground mb-2">{t('totalAbsences')}</div>
                 {isLoadingStats ? <LoadingSpinner /> : (
                   <div className="text-3xl font-bold text-destructive">
                     {attendanceStats?.absent || 0}
@@ -340,7 +341,7 @@ export default function StudentDetailPage() {
             </Card>
             <Card>
               <CardContent className="p-6">
-                <div className="text-sm font-medium text-muted-foreground mb-2">Late Arrivals</div>
+                <div className="text-sm font-medium text-muted-foreground mb-2">{t('lateArrivals')}</div>
                 {isLoadingStats ? <LoadingSpinner /> : (
                   <div className="text-3xl font-bold text-amber-500">
                     {attendanceStats?.late || 0}
@@ -350,7 +351,7 @@ export default function StudentDetailPage() {
             </Card>
             <Card>
               <CardContent className="p-6">
-                <div className="text-sm font-medium text-muted-foreground mb-2">Excused</div>
+                <div className="text-sm font-medium text-muted-foreground mb-2">{t('excused')}</div>
                 {isLoadingStats ? <LoadingSpinner /> : (
                   <div className="text-3xl font-bold text-blue-500">
                     {attendanceStats?.excused || 0}
@@ -362,22 +363,22 @@ export default function StudentDetailPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Attendance History</CardTitle>
-              <CardDescription>Recent attendance records for this student.</CardDescription>
+              <CardTitle>{t('attendanceHistory')}</CardTitle>
+              <CardDescription>{t('attendanceHistoryDesc')}</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               {isLoadingAttendance ? (
                 <div className="flex h-48 items-center justify-center"><LoadingSpinner /></div>
               ) : !attendanceData?.items?.length ? (
-                <EmptyState icon={CalendarCheck} title="No Attendance Records" description="No attendance data has been logged for this student yet." />
+                <EmptyState icon={CalendarCheck} title={t('noData')} description={t('noAttendanceData')} />
               ) : (
                 <>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Notes</TableHead>
+                        <TableHead>{tc('date')}</TableHead>
+                        <TableHead>{tc('status')}</TableHead>
+                        <TableHead>{tc('notes')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -397,9 +398,9 @@ export default function StudentDetailPage() {
                   {Math.ceil((attendanceData.total || 0) / 20) > 1 && (
                     <div className="flex items-center justify-between border-t px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setAttendancePage(p => Math.max(1, p-1))} disabled={attendancePage === 1}>Previous</Button>
-                        <span className="text-sm text-muted-foreground">Page {attendancePage} of {Math.ceil((attendanceData.total || 0) / 20)}</span>
-                        <Button variant="outline" size="sm" onClick={() => setAttendancePage(p => p+1)} disabled={attendancePage >= Math.ceil((attendanceData.total || 0) / 20)}>Next</Button>
+                        <Button variant="outline" size="sm" onClick={() => setAttendancePage(p => Math.max(1, p-1))} disabled={attendancePage === 1}>{tc('previous')}</Button>
+                        <span className="text-sm text-muted-foreground">{tc('page')} {attendancePage} {tc('of')} {Math.ceil((attendanceData.total || 0) / 20)}</span>
+                        <Button variant="outline" size="sm" onClick={() => setAttendancePage(p => p+1)} disabled={attendancePage >= Math.ceil((attendanceData.total || 0) / 20)}>{tc('next')}</Button>
                       </div>
                     </div>
                   )}
@@ -414,16 +415,16 @@ export default function StudentDetailPage() {
           <Card>
             <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4">
               <div>
-                <CardTitle>Report Card</CardTitle>
+                <CardTitle>{t('reportCard')}</CardTitle>
                 <CardDescription>Academic performance records.</CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <select 
+                <select
                   className="flex h-10 w-[200px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm"
                   value={selectedTerm}
                   onChange={(e) => setSelectedTerm(e.target.value)}
                 >
-                  <option value="">Select Term (Latest)</option>
+                  <option value="">{t('selectTerm')}</option>
                   {terms?.items?.map((term: any) => (
                     <option key={term.id} value={term.id}>{term.name}</option>
                   ))}
@@ -434,15 +435,15 @@ export default function StudentDetailPage() {
               {isLoadingReportCard ? (
                 <div className="flex h-48 items-center justify-center"><LoadingSpinner /></div>
               ) : !reportCard?.subjects?.length ? (
-                <EmptyState icon={GraduationCap} title="No Grades Available" description="No grades have been published for this term yet." />
+                <EmptyState icon={GraduationCap} title={t('noGradesAvailable')} description={t('noGradesPublished')} />
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Subject</TableHead>
-                      <TableHead className="text-center">Total Score</TableHead>
-                      <TableHead className="text-center">Letter Grade</TableHead>
-                      <TableHead>Teacher Remarks</TableHead>
+                      <TableHead>{t('subject')}</TableHead>
+                      <TableHead className="text-center">{t('totalScore')}</TableHead>
+                      <TableHead className="text-center">{t('letterGrade')}</TableHead>
+                      <TableHead>{t('teacherRemarks')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

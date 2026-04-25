@@ -35,6 +35,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export default function GradesPage() {
   const tc = useTranslations('common');
+  const t = useTranslations('gradesPage');
 
   const [selectedYearId, setSelectedYearId] = useState('');
   const [selectedClassId, setSelectedClassId] = useState('');
@@ -128,8 +129,8 @@ export default function GradesPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title="Grade Management"
-        description="Create assessments and enter student grades"
+        title={t('title')}
+        description={t('description')}
       />
 
       {/* Filters */}
@@ -137,15 +138,15 @@ export default function GradesPage() {
         <CardContent className="p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label>Academic Year</Label>
+              <Label>{t('academicYear')}</Label>
               <Select value={selectedYearId} onValueChange={(v) => { setSelectedYearId(v); setSelectedClassId(''); setSelectedSubjectId(''); setSelectedAssessmentId(''); }}>
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Select Year" />
+                  <SelectValue placeholder={t('selectYear')} />
                 </SelectTrigger>
                 <SelectContent>
                   {yearsData?.items?.map((year: any) => (
                     <SelectItem key={year.id} value={year.id}>
-                      {year.name} {year.is_current ? '(Current)' : ''}
+                      {year.name} {year.is_current ? `(${tc('current')})` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -153,10 +154,10 @@ export default function GradesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Class</Label>
+              <Label>{t('class')}</Label>
               <Select value={selectedClassId} onValueChange={(v) => { setSelectedClassId(v); setSelectedSubjectId(''); setSelectedAssessmentId(''); }} disabled={!selectedYearId}>
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder={!selectedYearId ? 'Select Year First' : 'Select Class'} />
+                  <SelectValue placeholder={!selectedYearId ? t('selectYearFirst') : t('selectClass')} />
                 </SelectTrigger>
                 <SelectContent>
                   {classesData?.items?.map((cls: any) => (
@@ -169,10 +170,10 @@ export default function GradesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Subject</Label>
+              <Label>{t('subject')}</Label>
               <Select value={selectedSubjectId} onValueChange={(v) => { setSelectedSubjectId(v); setSelectedAssessmentId(''); }} disabled={!selectedClassId}>
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder={!selectedClassId ? 'Select Class First' : 'Select Subject'} />
+                  <SelectValue placeholder={!selectedClassId ? t('selectClassFirst') : t('selectSubject')} />
                 </SelectTrigger>
                 <SelectContent>
                   {subjects.map((subj: any) => (
@@ -185,10 +186,10 @@ export default function GradesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Assessment</Label>
+              <Label>{t('assessment')}</Label>
               <Select value={selectedAssessmentId} onValueChange={setSelectedAssessmentId} disabled={!selectedSubjectId}>
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder={!selectedSubjectId ? 'Select Subject First' : 'Select Assessment'} />
+                  <SelectValue placeholder={!selectedSubjectId ? t('selectSubjectFirst') : t('selectAssessment')} />
                 </SelectTrigger>
                 <SelectContent>
                   {assessments?.map((a) => (
@@ -227,22 +228,22 @@ export default function GradesPage() {
             <DialogTrigger asChild>
               <Button size="sm" variant="outline" className="gap-2">
                 <Plus className="h-4 w-4" />
-                New Assessment
+                {t('newAssessment')}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
-                <DialogTitle>Create Assessment</DialogTitle>
-                <DialogDescription>Create a new quiz, test, or exam for this class and subject.</DialogDescription>
+                <DialogTitle>{t('createAssessmentTitle')}</DialogTitle>
+                <DialogDescription>{t('createAssessmentDescription')}</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label>Assessment Name</Label>
-                  <Input value={newAssessment.name} onChange={(e) => setNewAssessment((p) => ({ ...p, name: e.target.value }))} placeholder="e.g., Quiz 1, Midterm Exam" />
+                  <Label>{t('assessmentName')}</Label>
+                  <Input value={newAssessment.name} onChange={(e) => setNewAssessment((p) => ({ ...p, name: e.target.value }))} placeholder={t('assessmentNamePlaceholder')} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Type</Label>
+                    <Label>{t('type')}</Label>
                     <Select value={newAssessment.type} onValueChange={(v) => setNewAssessment((p) => ({ ...p, type: v as AssessmentType }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -253,20 +254,20 @@ export default function GradesPage() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Max Score</Label>
+                    <Label>{t('maxScore')}</Label>
                     <Input type="number" value={newAssessment.max_score} onChange={(e) => setNewAssessment((p) => ({ ...p, max_score: Number(e.target.value) }))} />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Weight (%)</Label>
+                  <Label>{t('weightPercent')}</Label>
                   <Input type="number" value={newAssessment.weight} min={1} max={100} onChange={(e) => setNewAssessment((p) => ({ ...p, weight: Number(e.target.value) }))} />
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>{tc('cancel')}</Button>
                 <Button onClick={handleCreateAssessment} disabled={!newAssessment.name || createAssessment.isPending}>
                   {createAssessment.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Create
+                  {tc('create')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -278,8 +279,8 @@ export default function GradesPage() {
       {!selectedAssessmentId ? (
         <EmptyState
           icon={Award}
-          title="Select an Assessment"
-          description="Choose a year, class, subject, and assessment to start entering grades."
+          title={t('selectAssessmentTitle')}
+          description={t('selectAssessmentDescription')}
         />
       ) : isLoadingGrades ? (
         <div className="flex items-center justify-center h-64">
@@ -290,14 +291,14 @@ export default function GradesPage() {
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">Grade Entry</CardTitle>
+                <CardTitle className="text-lg">{t('gradeEntry')}</CardTitle>
                 <CardDescription>
-                  {assessments?.find((a) => a.id === selectedAssessmentId)?.name} — Max Score: {assessments?.find((a) => a.id === selectedAssessmentId)?.max_score}
+                  {assessments?.find((a) => a.id === selectedAssessmentId)?.name} - {t('maxScore')}: {assessments?.find((a) => a.id === selectedAssessmentId)?.max_score}
                 </CardDescription>
               </div>
               <Button onClick={handleSubmitGrades} disabled={submitGrades.isPending || Object.keys(grades).length === 0} className="gap-2">
                 {submitGrades.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Save Grades
+                {t('saveGrades')}
               </Button>
             </div>
           </CardHeader>
@@ -306,9 +307,9 @@ export default function GradesPage() {
               <div className="space-y-2">
                 {/* Header */}
                 <div className="grid grid-cols-[1fr,120px,120px] sm:grid-cols-[1fr,120px,120px] gap-4 px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b">
-                  <span>Student</span>
-                  <span>Score</span>
-                  <span>Grade</span>
+                  <span>{t('student')}</span>
+                  <span>{t('score')}</span>
+                  <span>{t('grade')}</span>
                 </div>
                 {gradeRecords.map((record) => {
                   const entry = grades[record.student_id];
@@ -373,8 +374,8 @@ export default function GradesPage() {
             ) : (
               <EmptyState
                 icon={BookOpen}
-                title="No Students Found"
-                description="No students are enrolled for this assessment."
+                title={t('noStudentsFoundTitle')}
+                description={t('noStudentsFoundDescription')}
               />
             )}
           </CardContent>

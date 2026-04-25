@@ -1,18 +1,26 @@
 'use client';
 
-import { useLocale } from 'next-intl';
+import { useParams } from 'next/navigation';
 import { useRouter, usePathname } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Globe } from 'lucide-react';
 
 export function LanguageSwitcher() {
-  const locale = useLocale();
+  const params = useParams();
   const router = useRouter();
   const pathname = usePathname();
 
+  // Get locale from URL params directly
+  const locale = (params?.locale as string) || 'en';
+
   const toggleLocale = () => {
     const newLocale = locale === 'en' ? 'am' : 'en';
-    router.replace(pathname, { locale: newLocale });
+
+    // Strip the current locale prefix from pathname
+    const pathnameWithoutLocale = pathname.replace(/^\/(en|am)/, '') || '/';
+
+    // Navigate to the new locale
+    router.push(pathnameWithoutLocale, { locale: newLocale });
   };
 
   return (

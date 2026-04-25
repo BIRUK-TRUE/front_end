@@ -4,6 +4,8 @@ import { Link } from '@/i18n/navigation';
 import { FileQuestion } from 'lucide-react';
 
 export default function NotFound() {
+  const t = useTranslations('errors');
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <div className="text-center max-w-md">
@@ -12,10 +14,10 @@ export default function NotFound() {
         </div>
         <h1 className="text-4xl font-bold">404</h1>
         <p className="mt-2 text-lg text-muted-foreground">
-          The page you are looking for does not exist or has been moved.
+          {t('notFoundDescription')}
         </p>
         <Link href="/dashboard">
-          <Button className="mt-6 min-h-[44px] gap-2">Go to Dashboard</Button>
+          <Button className="mt-6 min-h-[44px] gap-2">{t('goHome')}</Button>
         </Link>
       </div>
     </div>

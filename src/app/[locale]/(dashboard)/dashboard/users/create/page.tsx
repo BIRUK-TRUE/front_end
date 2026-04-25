@@ -15,25 +15,26 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 
-const createUserSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email'),
-  full_name: z.string().min(2, 'Name must be at least 2 characters'),
-  phone_number: z.string().optional(),
-  address: z.string().optional(),
-  password: z.string().optional(),
-  role_names: z.array(z.string()).min(1, 'At least one role is required'),
-});
-
-type CreateUserForm = z.infer<typeof createUserSchema>;
-
 const allRoles = ['admin', 'director', 'registrar', 'teacher', 'student', 'guardian'];
 
 export default function CreateUserPage() {
   const t = useTranslations('users');
   const tc = useTranslations('common');
   const tr = useTranslations('roles');
+  const tv = useTranslations('validation');
   const router = useRouter();
   const createUser = useCreateUser();
+
+  const createUserSchema = z.object({
+    email: z.string().min(1, tv('emailRequired')).email(tv('invalidEmail')),
+    full_name: z.string().min(2, tv('nameMinLength')),
+    phone_number: z.string().optional(),
+    address: z.string().optional(),
+    password: z.string().optional(),
+    role_names: z.array(z.string()).min(1, tv('atLeastOneRole')),
+  });
+
+  type CreateUserForm = z.infer<typeof createUserSchema>;
 
   const {
     register,

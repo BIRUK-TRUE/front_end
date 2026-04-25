@@ -42,6 +42,7 @@ export function TermModal({
   isLoading,
 }: TermModalProps) {
   const t = useTranslations('common');
+  const ta = useTranslations('academics');
 
   const form = useForm<TermForm>({
     resolver: zodResolver(termSchema) as any,
@@ -80,12 +81,12 @@ export function TermModal({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {term ? 'Edit Term' : 'Add New Term'}
+            {term ? ta('editTerm') : ta('addNewTerm')}
           </DialogTitle>
           <DialogDescription>
             {term
-              ? 'Update details for this grading term.'
-              : 'Add a new term (e.g. Semester 1, Quater 1) to the academic year.'}
+              ? ta('termModalEditDesc')
+              : ta('termModalDesc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -96,9 +97,9 @@ export function TermModal({
               name="name"
               render={({ field }: { field: any }) => (
                 <FormItem>
-                  <FormLabel>Term Name <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>{ta('termName')} <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Semester 1" {...field} />
+                    <Input placeholder={ta('termNamePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -111,7 +112,7 @@ export function TermModal({
                 name="start_date"
                 render={({ field }: { field: any }) => (
                   <FormItem>
-                    <FormLabel>Start Date <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel>{ta('startDate')} <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -125,7 +126,7 @@ export function TermModal({
                 name="end_date"
                 render={({ field }: { field: any }) => (
                   <FormItem>
-                    <FormLabel>End Date <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel>{ta('endDate')} <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>

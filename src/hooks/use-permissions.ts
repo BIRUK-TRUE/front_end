@@ -25,6 +25,19 @@ export function usePermissions() {
     isTeacher: permissions.isTeacher(roles),
     isStudent: permissions.isStudent(roles),
     isGuardian: permissions.isGuardian(roles),
+    // Teacher permissions
+    canViewOwnClasses: permissions.canViewOwnClasses(roles),
+    canTakeAttendance: permissions.canTakeAttendance(roles),
+    canEnterGrades: permissions.canEnterGrades(roles),
+    canViewOwnSchedule: permissions.canViewOwnSchedule(roles),
+
+    // Analytics permissions
+    canViewAnalytics: permissions.canViewAnalytics(roles),
+    canViewTeacherAnalytics: permissions.canViewTeacherAnalytics(roles),
+
+    // Notification permissions
+    canManageNotifications: permissions.canManageNotifications(roles),
+
     canEditUser: (targetRoles: string[]) =>
       permissions.canEditUser(roles, targetRoles),
     canDeleteUser: (targetRoles: string[]) =>

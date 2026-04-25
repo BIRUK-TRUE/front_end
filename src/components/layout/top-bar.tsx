@@ -6,6 +6,10 @@ import { useAuthStore } from '@/lib/store/auth-store';
 import { authService } from '@/lib/api/auth.service';
 import { useRouter } from '@/i18n/navigation';
 import { LanguageSwitcher } from '@/components/auth/language-switcher';
+import { NotificationCenter } from '@/features/notifications/components/NotificationCenter';
+import { useNotifications, useUnreadNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotification } from '@/features/notifications/api/useNotifications';
+import { useRealtimeToasts } from '@/features/notifications/hooks/useRealtimeToasts';
+import { NotificationPriority } from '@/features/notifications/types';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -35,6 +39,21 @@ export function TopBar({ onMenuClick }: TopBarProps) {
     router.push('/login');
   };
 
+  // Notification hooks
+  const userId = user?.id || '';
+  const { data: notifications = [] } = useNotifications(userId);
+  const { data: unreadCount = 0 } = useUnreadNotifications(userId);
+  const markAsRead = useMarkAsRead();
+  const markAllAsRead = useMarkAllAsRead();
+  const deleteNotification = useDeleteNotification();
+
+  // Real-time toast notifications
+  useRealtimeToasts({
+    userId,
+    enabled: !!userId,
+    minPriority: NotificationPriority.MEDIUM,
+  });
+
   // Build breadcrumb from pathname
   const segments = pathname.split('/').filter(Boolean);
   const breadcrumbs = segments.map((segment, index) => {
@@ -62,13 +81,13 @@ export function TopBar({ onMenuClick }: TopBarProps) {
           size="sm"
           className="lg:hidden min-h-[44px] min-w-[44px]"
           onClick={onMenuClick}
-          aria-label="Open sidebar menu"
+          aria-label={t('openSidebar')}
         >
           <Menu className="h-5 w-5" aria-hidden="true" />
         </Button>
 
         {/* Breadcrumb */}
-        <nav aria-label="Breadcrumb" className="hidden sm:block">
+        <nav aria-label={t('breadcrumb')} className="hidden sm:block">
           <ol className="flex items-center gap-1 text-sm text-muted-foreground">
             {breadcrumbs.map((crumb, i) => (
               <li key={crumb.href} className="flex items-center gap-1">
@@ -93,8 +112,15 @@ export function TopBar({ onMenuClick }: TopBarProps) {
         </nav>
       </div>
 
-      {/* Right: language + user menu */}
+      {/* Right: notification center + language + user menu */}
       <div className="flex items-center gap-2">
+        <NotificationCenter
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkAsRead={(id) => markAsRead.mutate(id)}
+          onMarkAllAsRead={() => markAllAsRead.mutate()}
+          onDelete={(id) => deleteNotification.mutate(id)}
+        />
         <LanguageSwitcher />
 
         <DropdownMenu>

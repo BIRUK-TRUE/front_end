@@ -24,12 +24,15 @@ import {
 } from '@/components/ui/select';
 import { EmptyState } from '@/components/shared/empty-state';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
-import { CalendarDays, Check, CheckCircle2, Loader2, Users, ClipboardCheck, UserX, Clock, ShieldCheck } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
+import { CalendarDays, Check, CheckCircle2, Loader2, Users, ClipboardCheck, UserX, Clock, ShieldCheck, ScanFace, QrCode } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 
 export default function AttendancePage() {
   const tc = useTranslations('common');
+  const t = useTranslations('attendancePage');
+  const ta = useTranslations('teacher.attendance');
 
   const today = format(new Date(), 'yyyy-MM-dd');
   const [selectedYearId, setSelectedYearId] = useState('');
@@ -142,24 +145,72 @@ export default function AttendancePage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title="Attendance"
-        description="Mark and manage daily student attendance"
+        title={t('title')}
+        description={t('description')}
       />
+
+      {/* Attendance Method Selector */}
+      <Card className="border-primary/20">
+        <CardContent className="p-6">
+          <h3 className="text-sm font-medium mb-4">{t('selectMethod')}</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Button
+              variant="default"
+              className="w-full h-16 justify-start gap-3"
+            >
+              <div className="p-2 bg-white/20 rounded-lg">
+                <ClipboardCheck className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <div className="font-semibold">{t('manualEntry')}</div>
+                <div className="text-xs opacity-80">{t('manualEntryDesc')}</div>
+              </div>
+            </Button>
+            <Link href="/dashboard/attendance/face-scan" className="w-full">
+              <Button
+                variant="outline"
+                className="w-full h-16 justify-start gap-3 hover:border-primary/50"
+              >
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <ScanFace className="h-5 w-5 text-primary" />
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold">{t('faceScan')}</div>
+                  <div className="text-xs text-muted-foreground">{t('faceScanDesc')}</div>
+                </div>
+              </Button>
+            </Link>
+            <Button
+              variant="outline"
+              className="w-full h-16 justify-start gap-3 hover:border-primary/50"
+              disabled
+            >
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <QrCode className="h-5 w-5 text-primary" />
+              </div>
+              <div className="text-left">
+                <div className="font-semibold">{t('barcodeId')}</div>
+                <div className="text-xs text-muted-foreground">{t('barcodeIdDesc')}</div>
+              </div>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label>Academic Year</Label>
+              <Label>{t('academicYear')}</Label>
               <Select value={selectedYearId} onValueChange={setSelectedYearId}>
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Select Year" />
+                  <SelectValue placeholder={t('selectYear')} />
                 </SelectTrigger>
                 <SelectContent>
                   {yearsData?.items?.map((year: any) => (
                     <SelectItem key={year.id} value={year.id}>
-                      {year.name} {year.is_current ? '(Current)' : ''}
+                      {year.name} {year.is_current ? `(${tc('current')})` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -167,10 +218,10 @@ export default function AttendancePage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Class</Label>
+              <Label>{tc('class')}</Label>
               <Select value={selectedClassId} onValueChange={setSelectedClassId} disabled={!selectedYearId}>
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder={!selectedYearId ? 'Select Year First' : 'Select Class'} />
+                  <SelectValue placeholder={!selectedYearId ? t('selectYearFirst') : t('selectClass')} />
                 </SelectTrigger>
                 <SelectContent>
                   {classesData?.items?.map((cls: any) => (
@@ -183,10 +234,10 @@ export default function AttendancePage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Section</Label>
+              <Label>{t('selectSection')}</Label>
               <Select value={selectedSectionId} onValueChange={setSelectedSectionId} disabled={!selectedClassId}>
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder={!selectedClassId ? 'Select Class First' : 'Select Section'} />
+                  <SelectValue placeholder={!selectedClassId ? t('selectClassFirst') : t('selectSection')} />
                 </SelectTrigger>
                 <SelectContent>
                   {classDetail?.sections?.map((section: any) => (
@@ -199,7 +250,7 @@ export default function AttendancePage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Date</Label>
+              <Label>{t('date')}</Label>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10" />
             </div>
           </div>
@@ -209,8 +260,8 @@ export default function AttendancePage() {
       {!selectedSectionId ? (
         <EmptyState
           icon={ClipboardCheck}
-          title="Select a Section"
-          description="Choose an academic year, class, and section to start marking attendance."
+          title={t('selectSection')}
+          description={t('selectSectionPrompt')}
         />
       ) : isLoadingRecords ? (
         <LoadingSpinner fullPage text={tc('loading')} />
@@ -225,7 +276,7 @@ export default function AttendancePage() {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-emerald-600">{presentCount}</div>
-                  <div className="text-xs text-muted-foreground">Present</div>
+                  <div className="text-xs text-muted-foreground">{t('present')}</div>
                 </div>
               </CardContent>
             </Card>
@@ -236,7 +287,7 @@ export default function AttendancePage() {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-red-600">{absentCount}</div>
-                  <div className="text-xs text-muted-foreground">Absent</div>
+                  <div className="text-xs text-muted-foreground">{t('absent')}</div>
                 </div>
               </CardContent>
             </Card>
@@ -247,7 +298,7 @@ export default function AttendancePage() {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-amber-600">{lateCount}</div>
-                  <div className="text-xs text-muted-foreground">Late</div>
+                  <div className="text-xs text-muted-foreground">{t('late')}</div>
                 </div>
               </CardContent>
             </Card>
@@ -258,7 +309,7 @@ export default function AttendancePage() {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-blue-600">{excusedCount}</div>
-                  <div className="text-xs text-muted-foreground">Excused</div>
+                  <div className="text-xs text-muted-foreground">{t('excused')}</div>
                 </div>
               </CardContent>
             </Card>
@@ -269,13 +320,13 @@ export default function AttendancePage() {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg">Student Attendance</CardTitle>
+                  <CardTitle className="text-lg">{t('studentAttendance')}</CardTitle>
                   <CardDescription>{format(new Date(date), 'EEEE, MMMM d, yyyy')}</CardDescription>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={markAllPresent} className="gap-2">
                     <Check className="h-4 w-4" />
-                    Mark All Present
+                    {t('markAllPresent')}
                   </Button>
                   <Button
                     size="sm"
@@ -284,7 +335,7 @@ export default function AttendancePage() {
                     className="gap-2"
                   >
                     {submitAttendance.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Submit Attendance
+                    {t('submitAttendance')}
                   </Button>
                 </div>
               </div>
@@ -342,8 +393,8 @@ export default function AttendancePage() {
               ) : (
                 <EmptyState
                   icon={Users}
-                  title="No Students Found"
-                  description="No students are enrolled in this section for the selected date."
+                  title={t('noStudentsFound')}
+                  description={t('noStudentsDesc')}
                 />
               )}
             </CardContent>

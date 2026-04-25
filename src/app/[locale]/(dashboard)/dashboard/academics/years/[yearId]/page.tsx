@@ -29,6 +29,7 @@ import { EmptyState } from '@/components/shared/empty-state';
 
 export default function AcademicYearDetailPage() {
   const t = useTranslations('common');
+  const ta = useTranslations('academics');
   const params = useParams();
   const router = useRouter();
   const yearId = params.yearId as string;
@@ -100,20 +101,21 @@ export default function AcademicYearDetailPage() {
     });
   };
 
-  const getStatusBadge = (status?: AcademicYearStatus, isCurrent?: boolean) => {
+  const getStatusBadge = (status?: AcademicYearStatus, isCurrent?: boolean, t?: any) => {
+    const translate = t || ((key: string) => key);
     if (isCurrent) {
-      return <Badge variant="default" className="bg-primary/20 text-primary hover:bg-primary/30 border-primary/30">Current Active Year</Badge>;
+      return <Badge variant="default" className="bg-primary/20 text-primary hover:bg-primary/30 border-primary/30">{translate('currentActiveYear')}</Badge>;
     }
-    
+
     switch (status) {
       case AcademicYearStatus.PLANNING:
-        return <Badge variant="outline" className="bg-muted text-muted-foreground border-muted-foreground/30">Planning</Badge>;
+        return <Badge variant="outline" className="bg-muted text-muted-foreground border-muted-foreground/30">{translate('planning')}</Badge>;
       case AcademicYearStatus.ACTIVE:
-        return <Badge variant="outline" className="bg-success/10 text-success border-success/30">Active</Badge>;
+        return <Badge variant="outline" className="bg-success/10 text-success border-success/30">{translate('active')}</Badge>;
       case AcademicYearStatus.COMPLETED:
-        return <Badge variant="outline" className="bg-info/10 text-info border-info/30">Completed</Badge>;
+        return <Badge variant="outline" className="bg-info/10 text-info border-info/30">{translate('completed')}</Badge>;
       case AcademicYearStatus.ARCHIVED:
-        return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">Archived</Badge>;
+        return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">{translate('archived')}</Badge>;
       default:
         return null;
     }
@@ -130,10 +132,10 @@ export default function AcademicYearDetailPage() {
   if (!year) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
-        <h2 className="text-2xl font-bold tracking-tight">Academic Year Not Found</h2>
-        <p className="text-muted-foreground">The year you are looking for does not exist or has been removed.</p>
+        <h2 className="text-2xl font-bold tracking-tight">{ta('academicYearNotFound')}</h2>
+        <p className="text-muted-foreground">{ta('academicYearNotFoundDesc')}</p>
         <Button asChild>
-          <Link href="/dashboard/academics/years">Back to Academic Years</Link>
+          <Link href="/dashboard/academics/years">{ta('backToList')}</Link>
         </Button>
       </div>
     );
@@ -144,7 +146,7 @@ export default function AcademicYearDetailPage() {
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
         <Link href="/dashboard/academics/years" className="hover:text-foreground flex items-center gap-1 transition-colors">
           <ArrowLeft className="h-4 w-4" />
-          Back to list
+          {ta('backToList')}
         </Link>
       </div>
 
@@ -153,7 +155,7 @@ export default function AcademicYearDetailPage() {
         description={`${new Date(year.start_date).toLocaleDateString()} — ${new Date(year.end_date).toLocaleDateString()}`}
         actions={
           <div className="flex items-center gap-4">
-            {getStatusBadge(year.status, year.is_current)}
+            {getStatusBadge(year.status, year.is_current, ta)}
             {/* We will add global year actions here later if needed */}
           </div>
         }
@@ -163,27 +165,27 @@ export default function AcademicYearDetailPage() {
         <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="terms" className="gap-2">
             <CalendarDays className="h-4 w-4" />
-            <span className="hidden sm:inline">Terms</span>
+            <span className="hidden sm:inline">{ta('terms')}</span>
           </TabsTrigger>
           <TabsTrigger value="classes" className="gap-2">
             <BookOpen className="h-4 w-4" />
-            <span className="hidden sm:inline">Classes</span>
+            <span className="hidden sm:inline">{ta('classes')}</span>
           </TabsTrigger>
           <TabsTrigger value="stats" className="gap-2">
             <GraduationCap className="h-4 w-4" />
-            <span className="hidden sm:inline">Statistics</span>
+            <span className="hidden sm:inline">{ta('statistics')}</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="terms" className="space-y-4 outline-none">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-medium">Terms</h3>
-              <p className="text-sm text-muted-foreground">Manage the grading terms (e.g., Semester 1, Semester 2) for this year.</p>
+              <h3 className="text-lg font-medium">{ta('terms')}</h3>
+              <p className="text-sm text-muted-foreground">{ta('manageTerms')}</p>
             </div>
             <Button size="sm" onClick={openCreateTermModal} className="gap-2">
               <Plus className="h-4 w-4" />
-              Add Term
+              {ta('addTerm')}
             </Button>
           </div>
           <Card>
@@ -196,10 +198,10 @@ export default function AcademicYearDetailPage() {
                 ) : !termsData?.items?.length ? (
                   <EmptyState
                     icon={CalendarDays}
-                    title="No Terms Configured"
-                    description="Create a term to start assigning classes."
+                    title={ta('noTermsConfigured')}
+                    description={ta('createTermPrompt')}
                     action={
-                      <Button onClick={openCreateTermModal}>Add Term</Button>
+                      <Button onClick={openCreateTermModal}>{ta('addTerm')}</Button>
                     }
                   />
                 ) : (
@@ -210,7 +212,7 @@ export default function AcademicYearDetailPage() {
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-medium text-base">{term.name}</span>
                               {term.status === 'active' && (
-                                <Badge variant="outline" className="bg-success/10 text-success border-success/30 font-normal shadow-none">Active Term</Badge>
+                                <Badge variant="outline" className="bg-success/10 text-success border-success/30 font-normal shadow-none">{ta('activeTerm')}</Badge>
                               )}
                             </div>
                             <div className="text-sm text-muted-foreground flex items-center gap-2">
@@ -229,7 +231,7 @@ export default function AcademicYearDetailPage() {
                             <DropdownMenuContent align="end" className="w-[160px]">
                               <DropdownMenuItem onClick={() => openEditTermModal(term)}>
                                 <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
-                                Edit Details
+                                {ta('editDetails')}
                               </DropdownMenuItem>
                               
                               {term.status !== 'active' && (
@@ -237,7 +239,7 @@ export default function AcademicYearDetailPage() {
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem onClick={() => handleActivateTerm(term.id)}>
                                     <CheckCircle className="mr-2 h-4 w-4 text-success" />
-                                    Set as Active
+                                    {ta('setAsActive')}
                                   </DropdownMenuItem>
                                 </>
                               )}
@@ -255,12 +257,12 @@ export default function AcademicYearDetailPage() {
         <TabsContent value="classes" className="space-y-4 outline-none">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-medium">Classes</h3>
-              <p className="text-sm text-muted-foreground">Manage the classes and their sections offered this year.</p>
+              <h3 className="text-lg font-medium">{ta('classes')}</h3>
+              <p className="text-sm text-muted-foreground">{ta('manageClasses')}</p>
             </div>
             <Button size="sm" onClick={openCreateClassModal} className="gap-2">
               <Plus className="h-4 w-4" />
-              Add Class
+              {ta('addClass')}
             </Button>
           </div>
           <Card>
@@ -273,10 +275,10 @@ export default function AcademicYearDetailPage() {
                 ) : !classesData?.items?.length ? (
                   <EmptyState
                     icon={BookOpen}
-                    title="No Classes Configured"
-                    description="Create a class (e.g. Grade 9) to start managing sections and students."
+                    title={ta('noClassesConfigured')}
+                    description={ta('createClassPrompt')}
                     action={
-                      <Button onClick={openCreateClassModal}>Add Class</Button>
+                      <Button onClick={openCreateClassModal}>{ta('addClass')}</Button>
                     }
                   />
                 ) : (
@@ -292,19 +294,19 @@ export default function AcademicYearDetailPage() {
                                 {classItem.name}
                               </Link>
                               <Badge variant="outline" className="font-normal text-xs bg-muted/50">
-                                Grade {classItem.grade_level}
+                                {ta('gradeLevel')} {classItem.grade_level}
                               </Badge>
                             </div>
                             <div className="text-sm text-muted-foreground flex items-center gap-4">
                                <span className="flex items-center gap-1">
                                  <BookOpen className="h-3 w-3" />
-                                 {classItem.section_count || 0} Sections
+                                 {classItem.section_count || 0} {ta('sections')}
                                </span>
                                <span>
-                                 Capacity: {classItem.capacity ? classItem.capacity : 'Unlimited'}
+                                 {ta('capacity')}: {classItem.capacity ? classItem.capacity : ta('unlimited')}
                                </span>
                                <span>
-                                 Enrolled: {classItem.total_students || 0}
+                                 {ta('enrolled')}: {classItem.total_students || 0}
                                </span>
                             </div>
                           </div>
@@ -319,12 +321,12 @@ export default function AcademicYearDetailPage() {
                             <DropdownMenuContent align="end" className="w-[160px]">
                               <DropdownMenuItem onClick={() => router.push(`/dashboard/academics/classes/${classItem.id}` as any)}>
                                 <BookOpen className="mr-2 h-4 w-4 text-muted-foreground" />
-                                Manage Sections
+                                {ta('manageSections')}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => openEditClassModal(classItem)}>
                                 <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
-                                Edit Details
+                                {ta('editDetails')}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -340,22 +342,22 @@ export default function AcademicYearDetailPage() {
         <TabsContent value="stats" className="space-y-4 outline-none">
           <Card>
             <CardHeader>
-              <CardTitle>Year Overview</CardTitle>
-              <CardDescription>Enrollment and structure statistics for the year.</CardDescription>
+              <CardTitle>{ta('yearOverview')}</CardTitle>
+              <CardDescription>{ta('enrollmentStats')}</CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
                <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-6 text-center text-muted-foreground text-sm">
                  <div>
                    <div className="text-2xl font-bold text-foreground mb-1">{year.term_count || 0}</div>
-                   <div>Total Terms</div>
+                   <div>{ta('totalTerms')}</div>
                  </div>
                  <div>
                    <div className="text-2xl font-bold text-foreground mb-1">{year.class_count || 0}</div>
-                   <div>Total Classes</div>
+                   <div>{ta('totalClasses')}</div>
                  </div>
                  <div>
                    <div className="text-2xl font-bold text-foreground mb-1">—</div>
-                   <div>Total Enrolled Students</div>
+                   <div>{ta('totalEnrolledStudents')}</div>
                  </div>
                </div>
             </CardContent>

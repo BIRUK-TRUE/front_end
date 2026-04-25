@@ -1,6 +1,5 @@
 import { LanguageSwitcher } from '@/components/auth/language-switcher';
 import { GraduationCap } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 
 export default function AuthLayout({
   children,

@@ -44,6 +44,7 @@ export function AcademicYearModal({
   isLoading,
 }: AcademicYearModalProps) {
   const t = useTranslations('common');
+  const ta = useTranslations('academics');
 
   const form = useForm<AcademicYearForm>({
     resolver: zodResolver(academicYearSchema) as any,
@@ -101,9 +102,9 @@ export function AcademicYearModal({
               name="name"
               render={({ field }: { field: any }) => (
                 <FormItem>
-                  <FormLabel>Year Name <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>{ta('yearName')} <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. 2024-2025" {...field} />
+                    <Input placeholder={ta('yearNamePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -116,7 +117,7 @@ export function AcademicYearModal({
                 name="start_date"
                 render={({ field }: { field: any }) => (
                   <FormItem>
-                    <FormLabel>Start Date <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel>{ta('startDate')} <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -130,7 +131,7 @@ export function AcademicYearModal({
                 name="end_date"
                 render={({ field }: { field: any }) => (
                   <FormItem>
-                    <FormLabel>End Date <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel>{ta('endDate')} <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -145,10 +146,10 @@ export function AcademicYearModal({
               name="description"
               render={({ field }: { field: any }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{ta('description')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Optional notes about this academic year..."
+                      placeholder={ta('yearDescriptionPlaceholder')}
                       className="resize-none"
                       {...field}
                       value={field.value || ''}

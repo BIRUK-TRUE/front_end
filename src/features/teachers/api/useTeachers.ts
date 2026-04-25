@@ -15,5 +15,6 @@ export const useTeachers = (filters: TeacherFilters = {}) => {
   return useQuery({
     queryKey: teachersKeys.list(filters),
     queryFn: () => teachersService.getAll(filters),
+    enabled: true,
   });
 };

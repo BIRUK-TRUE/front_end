@@ -93,7 +93,7 @@ export default function EditTeacherPage() {
               Editing <strong>{teacher.full_name}</strong> — Email: {teacher.email}
             </div>
 
-            <CardTitle className="text-base">Personal Details</CardTitle>
+            <CardTitle className="text-base">{t('personalDetails')}</CardTitle>
             <div className="space-y-2">
               <Label htmlFor="full_name">{tc('name')} *</Label>
               <Input id="full_name" {...register('full_name')} aria-invalid={!!errors.full_name} className="h-11" />
@@ -114,11 +114,11 @@ export default function EditTeacherPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="qualification">{t('qualification')}</Label>
-                <Input id="qualification" {...register('qualification')} className="h-11" placeholder="e.g., BSc, MEd" />
+                <Input id="qualification" {...register('qualification')} className="h-11" placeholder={t('qualificationPlaceholder')} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="specialization">{t('specialization')}</Label>
-                <Input id="specialization" {...register('specialization')} className="h-11" placeholder="e.g., Math, Science" />
+                <Input id="specialization" {...register('specialization')} className="h-11" placeholder={t('specializationPlaceholder')} />
               </div>
             </div>
             <div className="space-y-2">

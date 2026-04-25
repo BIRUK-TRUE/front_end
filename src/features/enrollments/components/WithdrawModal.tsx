@@ -100,12 +100,12 @@ export function WithdrawModal({
               name="reason"
               render={({ field }: { field: any }) => (
                 <FormItem>
-                  <FormLabel>Reason for Withdrawal</FormLabel>
+                  <FormLabel>{t('reasonForWithdrawal')}</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Please provide a reason for withdrawal" 
+                    <Textarea
+                      placeholder={t('withdrawalReasonPlaceholder')}
                       className="resize-none h-24"
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -119,7 +119,7 @@ export function WithdrawModal({
               </Button>
               <Button type="submit" variant="destructive" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Confirm Withdrawal
+                {t('confirmWithdrawal')}
               </Button>
             </DialogFooter>
           </form>

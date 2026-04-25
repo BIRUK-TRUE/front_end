@@ -1,0 +1,146 @@
+"use client";
+
+import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Bell, 
+  Calendar, 
+  GraduationCap, 
+  Wallet, 
+  CheckCircle2,
+  Mail,
+  Filter
+} from "lucide-react";
+import { 
+  useGuardianNotifications, 
+  useMarkNotificationRead, 
+  useMarkAllNotificationsRead 
+} from "../hooks/useGuardianNotifications";
+import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+export function GuardianNotificationList() {
+  const t = useTranslations("guardianPortal.notifications");
+  const [filter, setFilter] = useState("all");
+  const { data, isLoading } = useGuardianNotifications({ type: filter === "all" ? undefined : filter });
+  const markRead = useMarkNotificationRead();
+  const markAllRead = useMarkAllNotificationsRead();
+
+  if (isLoading) {
+    return <Skeleton className="h-96 w-full" />;
+  }
+
+  const notifications = data?.items || [];
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case "attendance": return <Calendar className="h-4 w-4" />;
+      case "grade": return <GraduationCap className="h-4 w-4" />;
+      case "fee": return <Wallet className="h-4 w-4" />;
+      default: return <Bell className="h-4 w-4" />;
+    }
+  };
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case "attendance": return t("types.attendance");
+      case "grade": return t("types.grades");
+      case "fee": return t("types.fees");
+      default: return t("types.general");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => markAllRead.mutate()} 
+          disabled={notifications.every(n => n.isRead) || markAllRead.isPending}
+          className="gap-2"
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          {t("markAllRead")}
+        </Button>
+      </div>
+
+      <Tabs value={filter} onValueChange={setFilter} className="space-y-4">
+        <TabsList className="bg-muted/50 p-1 rounded-lg">
+          <TabsTrigger value="all">{t("filters.all")}</TabsTrigger>
+          <TabsTrigger value="attendance">{t("filters.attendance")}</TabsTrigger>
+          <TabsTrigger value="grade">{t("filters.grades")}</TabsTrigger>
+          <TabsTrigger value="fee">{t("filters.fees")}</TabsTrigger>
+          <TabsTrigger value="general">{t("filters.general")}</TabsTrigger>
+        </TabsList>
+
+        <Card className="shadow-sm border-muted/60">
+          <CardContent className="p-0">
+            {notifications.length === 0 ? (
+              <div className="py-20 text-center flex flex-col items-center justify-center">
+                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Mail className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <p className="text-muted-foreground italic">{t("noNotifications")}</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-muted/60">
+                {notifications.map((n) => (
+                  <div 
+                    key={n.id} 
+                    className={cn(
+                      "p-4 flex gap-4 transition-colors hover:bg-muted/30 cursor-pointer",
+                      !n.isRead && "bg-primary/[0.02] border-l-4 border-l-primary"
+                    )}
+                    onClick={() => !n.isRead && markRead.mutate(n.id)}
+                  >
+                    <div className={cn(
+                      "h-10 w-10 rounded-full flex items-center justify-center shrink-0",
+                      n.type === "attendance" ? "bg-red-50 text-red-600" :
+                      n.type === "grade" ? "bg-blue-50 text-blue-600" :
+                      n.type === "fee" ? "bg-orange-50 text-orange-600" :
+                      "bg-primary/10 text-primary"
+                    )}>
+                      {getIcon(n.type)}
+                    </div>
+                    
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                            {getTypeLabel(n.type)}
+                          </span>
+                          {!n.isRead && (
+                            <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4 bg-primary">
+                              {t("unread")}
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {format(new Date(n.createdAt), "MMM d, h:mm a")}
+                        </span>
+                      </div>
+                      <p className="text-sm font-bold leading-none">{n.title}</p>
+                      <p className="text-sm text-foreground/80 leading-snug">{n.message}</p>
+                      <p className="text-[10px] text-muted-foreground font-medium pt-1">
+                         {t("student")}: <span className="text-primary">{n.studentName}</span>
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </Tabs>
+    </div>
+  );
+}

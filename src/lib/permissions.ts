@@ -48,4 +48,26 @@ export const permissions = {
     
   canManageEnrollments: (roles: string[]) =>
     roles.some((r) => ['admin', 'director', 'registrar'].includes(r)),
+
+  // Teacher-specific permissions
+  canViewOwnClasses: (roles: string[]) => roles.includes('teacher'),
+
+  canTakeAttendance: (roles: string[]) =>
+    roles.some((r) => ['teacher', 'admin', 'registrar'].includes(r)),
+
+  canEnterGrades: (roles: string[]) =>
+    roles.some((r) => ['teacher', 'admin'].includes(r)),
+
+  canViewOwnSchedule: (roles: string[]) => roles.includes('teacher'),
+
+  // Analytics permissions
+  canViewAnalytics: (roles: string[]) =>
+    roles.some((r) => ['admin', 'director'].includes(r)),
+
+  canViewTeacherAnalytics: (roles: string[]) =>
+    roles.some((r) => ['teacher', 'admin', 'director'].includes(r)),
+
+  // Notification permissions
+  canManageNotifications: (roles: string[]) =>
+    roles.some((r) => ['admin', 'director'].includes(r)),
 };

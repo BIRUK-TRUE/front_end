@@ -1,10 +1,11 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { authService } from '@/lib/api/auth.service';
@@ -22,14 +23,9 @@ import {
 import { GraduationCap, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 
-const loginSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
-});
-
-type LoginForm = z.infer<typeof loginSchema>;
-
 export default function LoginPage() {
+  const params = useParams();
+  const locale = (params?.locale as string) || 'en';
   const t = useTranslations('auth');
   const tc = useTranslations('common');
   const router = useRouter();
@@ -38,13 +34,25 @@ export default function LoginPage() {
   const [serverError, setServerError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginForm>({
+  // Create schema reactive to locale changes
+  const loginSchema = useMemo(() => z.object({
+    email: z.string().min(1, t('emailRequired')).email(t('invalidEmail')),
+    password: z.string().min(1, t('passwordRequired')),
+  }), [t, locale]);
+
+  type LoginForm = z.infer<typeof loginSchema>;
+
+  const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
+
+  const { register, handleSubmit, formState: { errors }, reset } = form;
+
+  // Update resolver when locale changes
+  useEffect(() => {
+    form.reset();
+    form.clearErrors();
+  }, [locale, form]);
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
@@ -69,7 +77,7 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-xl border-0 shadow-primary/5">
+    <Card key={locale} className="w-full max-w-md shadow-xl border-0 shadow-primary/5">
       <CardHeader className="space-y-3 text-center pb-2">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/25">
           <GraduationCap className="h-7 w-7" aria-hidden="true" />
@@ -136,7 +144,7 @@ export default function LoginPage() {
                 size="sm"
                 className="absolute right-0 top-0 h-11 w-11 px-3 hover:bg-transparent"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? tc('hidePassword') : tc('showPassword')}
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />

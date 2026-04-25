@@ -9,18 +9,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Loader2, Plus, Users, Edit, BookOpen, Trash2, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, Users, Edit, BookOpen, Trash2 } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { SectionModal } from '@/features/academics/components/SectionModal';
 import { ClassSubjectModal } from '@/features/academics/components/ClassSubjectModal';
 import { useClassSubjects, useAssignSubject, useRemoveSubject } from '@/features/academics/api/useClasses';
-import { useSubjects } from '@/features/academics/api/useSubjects';
 import { type SectionForm } from '@/features/academics/types/schemas';
 import { type Section } from '@/features/academics/types';
 import { EmptyState } from '@/components/shared/empty-state';
 
 export default function ClassDetailPage() {
-  const t = useTranslations('common');
+  const t = useTranslations('academics');
+  const tp = useTranslations('academicsPages.classDetail');
   const params = useParams();
   const classId = params.classId as string;
 
@@ -70,10 +70,10 @@ export default function ClassDetailPage() {
   if (!classData) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
-        <h2 className="text-2xl font-bold tracking-tight">Class Not Found</h2>
-        <p className="text-muted-foreground">The class you are looking for does not exist or has been removed.</p>
+        <h2 className="text-2xl font-bold tracking-tight">{tp('notFoundTitle')}</h2>
+        <p className="text-muted-foreground">{tp('notFoundDescription')}</p>
         <Button asChild>
-          <Link href={`/dashboard/academics/years`}>Back to Academic Years</Link>
+          <Link href={`/dashboard/academics/years`}>{tp('backToAcademicYears')}</Link>
         </Button>
       </div>
     );
@@ -91,16 +91,16 @@ export default function ClassDetailPage() {
           className="hover:text-foreground flex items-center gap-1 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Academic Year
+          {tp('backToAcademicYear')}
         </Link>
       </div>
 
       <PageHeader
         title={classData.name}
-        description={classData.description || `Grade ${classData.grade_level}`}
+        description={classData.description || tp('gradeDescription', { grade: classData.grade_level })}
         actions={
           <div className="flex items-center gap-4">
-             <Badge variant="outline" className="bg-muted text-muted-foreground">Grade {classData.grade_level}</Badge>
+             <Badge variant="outline" className="bg-muted text-muted-foreground">{tp('gradeBadge', { grade: classData.grade_level })}</Badge>
           </div>
         }
       />
@@ -112,7 +112,7 @@ export default function ClassDetailPage() {
               <BookOpen className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Sections</p>
+              <p className="text-sm font-medium text-muted-foreground">{tp('statsSections')}</p>
               <h4 className="text-2xl font-bold">{classData.section_count || sections.length}</h4>
             </div>
           </CardContent>
@@ -123,7 +123,7 @@ export default function ClassDetailPage() {
               <Users className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Enrolled</p>
+              <p className="text-sm font-medium text-muted-foreground">{tp('statsTotalEnrolled')}</p>
               <h4 className="text-2xl font-bold">{classData.total_students || 0}</h4>
             </div>
           </CardContent>
@@ -134,8 +134,8 @@ export default function ClassDetailPage() {
               <Users className="h-6 w-6 opacity-60" />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Max Capacity</p>
-              <h4 className="text-2xl font-bold">{classData.capacity || 'Unlimited'}</h4>
+              <p className="text-sm font-medium text-muted-foreground">{tp('statsMaxCapacity')}</p>
+              <h4 className="text-2xl font-bold">{classData.capacity || t('unlimited')}</h4>
             </div>
           </CardContent>
         </Card>
@@ -145,23 +145,23 @@ export default function ClassDetailPage() {
         <TabsList className="grid w-full max-w-sm grid-cols-2">
           <TabsTrigger value="sections" className="gap-2">
             <Users className="h-4 w-4" />
-            Sections
+            {tp('sectionsTab')}
           </TabsTrigger>
           <TabsTrigger value="subjects" className="gap-2">
             <BookOpen className="h-4 w-4" />
-            Subjects
+            {tp('subjectsTab')}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="sections" className="space-y-4 outline-none">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-medium">Sections</h3>
-              <p className="text-sm text-muted-foreground">Manage the sub-sections available for this class.</p>
+              <h3 className="text-lg font-medium">{tp('sectionsTitle')}</h3>
+              <p className="text-sm text-muted-foreground">{tp('sectionsDescription')}</p>
             </div>
              <Button onClick={openCreateSectionModal} className="gap-2">
               <Plus className="h-4 w-4" />
-              Add Section
+              {tp('addSection')}
             </Button>
           </div>
 
@@ -171,10 +171,10 @@ export default function ClassDetailPage() {
                   {!sections.length ? (
                     <EmptyState
                       icon={Users}
-                      title="No Sections Configured"
-                      description="Create a section to start assigning students and homeroom teachers."
+                      title={tp('noSectionsTitle')}
+                      description={tp('noSectionsDescription')}
                       action={
-                        <Button onClick={openCreateSectionModal}>Add Section</Button>
+                        <Button onClick={openCreateSectionModal}>{tp('addSection')}</Button>
                       }
                     />
                   ) : (
@@ -185,18 +185,18 @@ export default function ClassDetailPage() {
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="font-medium text-lg">{section.full_name || `${classData.name} ${section.name}`}</span>
                                 {section.is_full && (
-                                  <Badge variant="destructive" className="font-normal">Full Capacity</Badge>
+                                  <Badge variant="destructive" className="font-normal">{tp('fullCapacity')}</Badge>
                                 )}
                               </div>
                               <div className="text-sm text-muted-foreground flex items-center gap-4">
                                  <span>
-                                   Room: {section.room_number || 'N/A'}
+                                   {tp('roomLabel')}: {section.room_number || tp('notAvailable')}
                                  </span>
                                  <span>
-                                   Capacity: {section.capacity}
+                                   {t('capacity')}: {section.capacity}
                                  </span>
                                  <span>
-                                   Available Slots: {section.available_slots}
+                                   {tp('availableSlots')}: {section.available_slots}
                                  </span>
                               </div>
                             </div>
@@ -204,11 +204,11 @@ export default function ClassDetailPage() {
                             <div className="flex gap-2">
                                 <Button variant="outline" size="sm" onClick={() => openEditSectionModal(section)}>
                                   <Edit className="mr-2 h-4 w-4" />
-                                  Edit Settings
+                                  {tp('editSettings')}
                                 </Button>
                                 <Button variant="default" size="sm" asChild>
                                    <Link href={`/dashboard/academics/classes/${classId}/sections/${section.id}`}>
-                                      View Roster
+                                      {tp('viewRoster')}
                                    </Link>
                                 </Button>
                             </div>
@@ -224,12 +224,12 @@ export default function ClassDetailPage() {
         <TabsContent value="subjects" className="space-y-4 outline-none">
            <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-medium">Class Subjects</h3>
-              <p className="text-sm text-muted-foreground">Assign subjects that are taught in this class.</p>
+              <h3 className="text-lg font-medium">{tp('classSubjectsTitle')}</h3>
+              <p className="text-sm text-muted-foreground">{tp('classSubjectsDescription')}</p>
             </div>
             <Button size="sm" variant="outline" onClick={() => setIsSubjectModalOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" />
-              Assign Subjects
+              {tp('assignSubjects')}
             </Button>
           </div>
 
@@ -243,8 +243,8 @@ export default function ClassDetailPage() {
                   ) : !assignedSubjects?.length ? (
                     <EmptyState
                       icon={BookOpen}
-                      title="No Subjects Assigned"
-                      description="Assign subjects to this class to manage curriculum and grading."
+                      title={tp('noSubjectsTitle')}
+                      description={tp('noSubjectsDescription')}
                     />
                   ) : (
                     <div className="divide-y">

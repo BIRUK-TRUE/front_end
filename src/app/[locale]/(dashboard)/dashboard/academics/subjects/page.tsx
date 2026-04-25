@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 
 export default function SubjectsPage() {
   const tc = useTranslations('common');
+  const t = useTranslations('subjectsPage');
   
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -94,12 +95,12 @@ export default function SubjectsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title="Subjects"
-        description="Manage the global list of subjects taught at the school"
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button className="gap-2" onClick={openCreateModal}>
             <Plus className="h-4 w-4" />
-            Add Subject
+            {t('addSubject')}
           </Button>
         }
       />
@@ -111,7 +112,7 @@ export default function SubjectsPage() {
             <form onSubmit={handleSearch} className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search subjects..."
+                placeholder={t('searchSubjects')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 h-11"
@@ -126,7 +127,7 @@ export default function SubjectsPage() {
                   className="rounded-full h-9 capitalize"
                   onClick={() => setCategory(cat)}
                 >
-                  {cat}
+                  {t(cat)}
                 </Button>
               ))}
             </div>
@@ -141,21 +142,21 @@ export default function SubjectsPage() {
             ) : !data?.items?.length ? (
               <EmptyState
                 icon={BookOpen}
-                title="No Subjects Found"
-                description="Try adjusting your search or add a new subject to get started."
+                title={t('noSubjectsTitle')}
+                description={t('noSubjectsDescription')}
                     action={
-                      <Button onClick={openCreateModal}>Add Subject</Button>
+                      <Button onClick={openCreateModal}>{t('addSubject')}</Button>
                     }
               />
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Subject Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="hidden md:table-cell">Description</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('code')}</TableHead>
+                    <TableHead>{t('subjectNameLabel')}</TableHead>
+                    <TableHead>{t('category')}</TableHead>
+                    <TableHead className="hidden md:table-cell">{t('descriptionLabel')}</TableHead>
+                    <TableHead className="text-right">{tc('actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -216,8 +217,8 @@ export default function SubjectsPage() {
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null); }}
         onConfirm={handleDelete}
-        title="Delete Subject"
-        description="Are you sure you want to delete this subject? It cannot be undone."
+        title={t('deleteSubjectTitle')}
+        description={t('deleteSubjectDescription')}
         isLoading={deleteSubject.isPending}
       />
     </div>

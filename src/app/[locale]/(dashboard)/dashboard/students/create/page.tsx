@@ -17,28 +17,29 @@ import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 
-const studentSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email'),
-  full_name: z.string().min(2, 'Name must be at least 2 characters'),
-  phone_number: z.string().optional(),
-  address: z.string().optional(),
-  password: z.string().optional(),
-  admission_date: z.string().min(1, 'Admission date is required'),
-  date_of_birth: z.string().min(1, 'Date of birth is required'),
-  sex: z.enum(['M', 'F'], { message: 'Sex is required' }),
-  nationality: z.string().optional(),
-  previous_school: z.string().optional(),
-  ministry_exam_result: z.coerce.number().min(0).max(100).optional(),
-});
-
-type StudentForm = z.infer<typeof studentSchema>;
-
 export default function CreateStudentPage() {
   const t = useTranslations('students');
   const tc = useTranslations('common');
+  const tv = useTranslations('validation');
   const router = useRouter();
   const createStudent = useCreateStudent();
   const [step, setStep] = useState(1);
+
+  const studentSchema = z.object({
+    email: z.string().min(1, tv('emailRequired')).email(tv('invalidEmail')),
+    full_name: z.string().min(2, tv('nameMinLength')),
+    phone_number: z.string().optional(),
+    address: z.string().optional(),
+    password: z.string().optional(),
+    admission_date: z.string().min(1, tv('admissionDateRequired')),
+    date_of_birth: z.string().min(1, tv('dateOfBirthRequired')),
+    sex: z.enum(['M', 'F'], { message: tv('sexRequired') }),
+    nationality: z.string().optional(),
+    previous_school: z.string().optional(),
+    ministry_exam_result: z.coerce.number().min(0).max(100).optional(),
+  });
+
+  type StudentForm = z.infer<typeof studentSchema>;
 
   const {
     register,

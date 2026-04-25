@@ -43,6 +43,7 @@ export function ClassModal({
   isLoading,
 }: ClassModalProps) {
   const t = useTranslations('common');
+  const ta = useTranslations('academics');
 
   const form = useForm<ClassForm>({
     resolver: zodResolver(classSchema) as any,
@@ -84,12 +85,12 @@ export function ClassModal({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {classItem ? 'Edit Class' : 'Add New Class'}
+            {classItem ? ta('editClassTitle') : ta('addClassTitle')}
           </DialogTitle>
           <DialogDescription>
             {classItem
-              ? 'Update details for this class offering.'
-              : 'Add a new class (e.g. Grade 9, Advanced Math) for the academic year.'}
+              ? ta('editClassDesc')
+              : ta('addClassDesc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -100,9 +101,9 @@ export function ClassModal({
               name="name"
               render={({ field }: { field: any }) => (
                 <FormItem>
-                  <FormLabel>Class Name <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>{ta('className')} <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Grade 9" {...field} />
+                    <Input placeholder={ta('classNamePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -115,7 +116,7 @@ export function ClassModal({
                 name="grade_level"
                 render={({ field }: { field: any }) => (
                   <FormItem>
-                    <FormLabel>Grade/Year Level <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel>{ta('gradeYearLevel')} <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
@@ -134,12 +135,12 @@ export function ClassModal({
                 name="capacity"
                 render={({ field }: { field: any }) => (
                   <FormItem>
-                    <FormLabel>Total Capacity (Optional)</FormLabel>
+                    <FormLabel>{ta('totalCapacity')}</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
                         min={1}
-                        placeholder="e.g. 150" 
+                        placeholder={ta('capacityPlaceholder')}
                         {...field}
                         value={field.value || ''}
                         onChange={(e) => {
@@ -159,10 +160,10 @@ export function ClassModal({
               name="description"
               render={({ field }: { field: any }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{ta('description')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Optional notes about this class..."
+                      placeholder={ta('classDescriptionPlaceholder')}
                       className="resize-none"
                       {...field}
                       value={field.value || ''}

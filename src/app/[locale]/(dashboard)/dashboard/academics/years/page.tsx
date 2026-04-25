@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export default function AcademicYearsPage() {
+  const t = useTranslations('academicsPages');
   const router = useRouter();
   
   const [page, setPage] = useState(1);
@@ -74,18 +75,18 @@ export default function AcademicYearsPage() {
 
   const getStatusBadge = (status: AcademicYearStatus, isCurrent: boolean) => {
     if (isCurrent) {
-      return <Badge variant="default" className="bg-primary/20 text-primary hover:bg-primary/30 border-primary/30">Current Active Year</Badge>;
+      return <Badge variant="default" className="bg-primary/20 text-primary hover:bg-primary/30 border-primary/30">{t('currentActiveYear')}</Badge>;
     }
     
     switch (status) {
       case AcademicYearStatus.PLANNING:
-        return <Badge variant="outline" className="bg-muted text-muted-foreground border-muted-foreground/30">Planning</Badge>;
+        return <Badge variant="outline" className="bg-muted text-muted-foreground border-muted-foreground/30">{t('planning')}</Badge>;
       case AcademicYearStatus.ACTIVE:
-        return <Badge variant="outline" className="bg-success/10 text-success border-success/30">Active</Badge>;
+        return <Badge variant="outline" className="bg-success/10 text-success border-success/30">{t('active')}</Badge>;
       case AcademicYearStatus.COMPLETED:
-        return <Badge variant="outline" className="bg-info/10 text-info border-info/30">Completed</Badge>;
+        return <Badge variant="outline" className="bg-info/10 text-info border-info/30">{t('completed')}</Badge>;
       case AcademicYearStatus.ARCHIVED:
-        return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">Archived</Badge>;
+        return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">{t('archived')}</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -94,12 +95,12 @@ export default function AcademicYearsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title="Academic Years"
-        description="Manage school years, terms, and classes"
+        title={t('academicYearsTitle')}
+        description={t('academicYearsDescription')}
         actions={
           <Button className="gap-2" onClick={openCreateModal}>
             <Plus className="h-4 w-4" />
-            Create Year
+            {t('createYear')}
           </Button>
         }
       />
@@ -114,22 +115,22 @@ export default function AcademicYearsPage() {
             ) : !data?.items?.length ? (
               <EmptyState
                 icon={Calendar}
-                title="No Academic Years"
-                description="Start by creating an academic year to setup your school structure."
+                title={t('noAcademicYearsTitle')}
+                description={t('noAcademicYearsDescription')}
                 action={
-                  <Button onClick={openCreateModal}>Create Academic Year</Button>
+                  <Button onClick={openCreateModal}>{t('createAcademicYear')}</Button>
                 }
               />
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Year Name</TableHead>
-                    <TableHead>Timeline</TableHead>
-                    <TableHead>Terms</TableHead>
-                    <TableHead>Classes</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('yearName')}</TableHead>
+                    <TableHead>{t('timeline')}</TableHead>
+                    <TableHead>{t('terms')}</TableHead>
+                    <TableHead>{t('classes')}</TableHead>
+                    <TableHead>{t('status')}</TableHead>
+                    <TableHead className="text-right">{t('actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -166,14 +167,14 @@ export default function AcademicYearsPage() {
                             className="h-8 shadow-none"
                             onClick={() => router.push(`/dashboard/academics/years/${year.id}`)}
                           >
-                            Manage
+                            {t('manage')}
                             <ChevronRight className="h-4 w-4 ml-1" />
                           </Button>
 
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <span className="sr-only">Open menu</span>
+                                <span className="sr-only">{t('openMenu')}</span>
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -182,7 +183,7 @@ export default function AcademicYearsPage() {
                                 onClick={() => openEditModal(year)}
                               >
                                 <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
-                                Edit Details
+                                {t('editDetails')}
                               </DropdownMenuItem>
                               
                               {!year.is_current && year.status !== AcademicYearStatus.COMPLETED && year.status !== AcademicYearStatus.ARCHIVED && (
@@ -192,7 +193,7 @@ export default function AcademicYearsPage() {
                                     onClick={() => handleActivate(year.id)}
                                   >
                                     <CheckCircle className="mr-2 h-4 w-4 text-success" />
-                                    Set as Current
+                                    {t('setAsCurrent')}
                                   </DropdownMenuItem>
                                 </>
                               )}
@@ -202,7 +203,7 @@ export default function AcademicYearsPage() {
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem className="text-muted-foreground">
                                     <Archive className="mr-2 h-4 w-4" />
-                                    Archive Year
+                                    {t('archiveYear')}
                                   </DropdownMenuItem>
                                 </>
                               )}

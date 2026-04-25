@@ -21,6 +21,7 @@ export const useEnrollments = (filters: object = {}) => {
       const { data } = await axiosInstance.get<PaginatedResponse<Enrollment>>('/enrollments', { params: filters });
       return data;
     },
+    enabled: true,
   });
 };
 

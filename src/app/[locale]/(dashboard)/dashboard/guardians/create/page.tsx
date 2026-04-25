@@ -14,23 +14,24 @@ import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 
-const guardianSchema = z.object({
-  email: z.string().min(1, 'Required').email('Invalid email'),
-  full_name: z.string().min(2, 'Min 2 characters'),
-  phone_number: z.string().optional(),
-  address: z.string().optional(),
-  password: z.string().optional(),
-  occupation: z.string().optional(),
-  workplace: z.string().optional(),
-});
-
-type GuardianForm = z.infer<typeof guardianSchema>;
-
 export default function CreateGuardianPage() {
   const t = useTranslations('guardians');
   const tc = useTranslations('common');
+  const tv = useTranslations('validation');
   const router = useRouter();
   const createGuardian = useCreateGuardian();
+
+  const guardianSchema = z.object({
+    email: z.string().min(1, tv('required')).email(tv('invalidEmail')),
+    full_name: z.string().min(2, tv('nameMinLength')),
+    phone_number: z.string().optional(),
+    address: z.string().optional(),
+    password: z.string().optional(),
+    occupation: z.string().optional(),
+    workplace: z.string().optional(),
+  });
+
+  type GuardianForm = z.infer<typeof guardianSchema>;
 
   const { register, handleSubmit, formState: { errors } } = useForm<GuardianForm>({
     resolver: zodResolver(guardianSchema),
@@ -47,7 +48,7 @@ export default function CreateGuardianPage() {
       <Card className="max-w-2xl">
         <CardContent className="p-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-            <CardTitle className="text-base">User Details</CardTitle>
+            <CardTitle className="text-base">{t('userDetails')}</CardTitle>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="email">{tc('email')} *</Label>
