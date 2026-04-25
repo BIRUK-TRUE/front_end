@@ -11,6 +11,7 @@ export function useAtRiskStudents(filters?: {
   classId?: string;
   sectionId?: string;
   termId?: string;
+  teacherId?: string;
 }) {
   return useQuery({
     queryKey: analyticsKeys.atRisk(filters),

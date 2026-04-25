@@ -83,7 +83,7 @@ export function ChapaPaymentModal({ isOpen, onClose, student, feeId, onSuccess }
         return_url: `${window.location.origin}/dashboard/payments/success?ref=${reference}`,
         customization: {
           title: t('schoolFeePayment'),
-          description: t('paymentFor', { name: student.name, fee: fee?.fee_type }),
+          description: t('paymentFor', { name: student.name, fee: fee?.fee_type || '' }),
         },
         fee_id: feeId,
       };

@@ -18,8 +18,7 @@ import {
   Filter
 } from "lucide-react";
 import { 
-  useAnalyticsSummary, 
-  useAnalyticsDashboard 
+  useAnalyticsSummary 
 } from "../hooks/useAnalyticsDashboard";
 import { useAtRiskStudents } from "../hooks/useAtRiskStudents";
 import { useAttendanceTrend } from "../hooks/useAttendanceTrend";
@@ -47,7 +46,8 @@ export function AnalyticsOverview() {
 
   // Data Fetching
   const { data: yearsData } = useAcademicYears();
-  const { data: classesData } = useClasses();
+  const currentYearId = yearsData?.items?.find(y => y.is_current)?.id || "";
+  const { data: classesData } = useClasses(currentYearId);
   
   const currentTermId = selectedTerm || yearsData?.items?.find(y => y.is_current)?.id || "";
 
@@ -108,9 +108,9 @@ export function AnalyticsOverview() {
             </SelectTrigger>
             <SelectContent>
                <SelectItem value="all">{t("filters.allClasses")}</SelectItem>
-               {classesData?.map(cls => (
-                 <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
-               ))}
+                {classesData?.items?.map(cls => (
+                  <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>

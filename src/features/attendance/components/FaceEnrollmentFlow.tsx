@@ -262,7 +262,7 @@ export function FaceEnrollmentFlow({
 
             <div className="flex justify-center gap-4">
                <Button 
-                size="xl" 
+                size="lg" 
                 onClick={captureDescriptor} 
                 disabled={isCapturing || enrollStatus === 'saving'}
                 className="rounded-full w-full h-16 text-lg font-bold shadow-lg shadow-primary/20"

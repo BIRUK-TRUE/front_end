@@ -28,17 +28,17 @@ export default function TeacherDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: teacher, isLoading } = useTeacher(id);
 
-  if (isLoading) return <LoadingSpinner fullPage text={tc('loading')} />;
-  if (!teacher) return null;
-
-  const initials = teacher.full_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
-
   const [yearId, setYearId] = useState<string>('');
   const [termId, setTermId] = useState<string>('');
 
   const { data: years } = useAcademicYears(1, 50);
   const { data: terms } = useTerms(yearId);
   const { data: scheduleData, isLoading: isLoadingSchedule } = useTeacherSchedule(id, termId);
+
+  if (isLoading) return <LoadingSpinner fullPage text={tc('loading')} />;
+  if (!teacher) return null;
+
+  const initials = teacher.full_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <div className="space-y-6 animate-fade-in">

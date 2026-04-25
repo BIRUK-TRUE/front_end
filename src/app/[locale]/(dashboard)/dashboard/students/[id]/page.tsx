@@ -42,17 +42,24 @@ export default function StudentDetailPage() {
   const tg = useTranslations('guardians');
   const te = useTranslations('enrollments');
   const { id } = useParams<{ id: string }>();
+  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+  const [selectedEnrollment, setSelectedEnrollment] = useState<Enrollment | null>(null);
+  const [attendancePage, setAttendancePage] = useState(1);
+  const [selectedTerm, setSelectedTerm] = useState<string>('');
+
   const { data: student, isLoading } = useStudent(id);
   const { data: guardians } = useGuardiansForStudent(id);
   const { data: enrollments, isLoading: isLoadingEnrollments } = useStudentEnrollmentHistory(id);
   
+  const activeEnrollment = enrollments?.find(e => e.status === 'active');
+  const { data: attendanceData, isLoading: isLoadingAttendance } = useStudentAttendance(id, attendancePage, 20);
+  const { data: attendanceStats, isLoading: isLoadingStats } = useStudentAttendanceStats(id);
+  const { data: terms } = useTerms(activeEnrollment?.academic_year_id || '');
+  const { data: reportCard, isLoading: isLoadingReportCard } = useReportCard(id, selectedTerm);
+
   const enrollStudent = useEnrollStudent();
-  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
-
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
-  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
-  const [selectedEnrollment, setSelectedEnrollment] = useState<Enrollment | null>(null);
-
   const transferStudent = useTransferStudent(selectedEnrollment?.id || '');
   const withdrawStudent = useWithdrawStudent(selectedEnrollment?.id || '');
 
@@ -60,16 +67,6 @@ export default function StudentDetailPage() {
   if (!student) return null;
 
   const initials = student.full_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
-
-  const activeEnrollment = enrollments?.find(e => e.status === 'active');
-
-  const [attendancePage, setAttendancePage] = useState(1);
-  const { data: attendanceData, isLoading: isLoadingAttendance } = useStudentAttendance(id, attendancePage, 20);
-  const { data: attendanceStats, isLoading: isLoadingStats } = useStudentAttendanceStats(id);
-
-  const [selectedTerm, setSelectedTerm] = useState<string>('');
-  const { data: terms } = useTerms(activeEnrollment?.academic_year_id || '');
-  const { data: reportCard, isLoading: isLoadingReportCard } = useReportCard(id, selectedTerm);
 
   return (
     <div className="space-y-6 animate-fade-in">

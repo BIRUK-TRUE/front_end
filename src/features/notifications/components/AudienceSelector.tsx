@@ -12,7 +12,6 @@ import {
 import { Label } from '@/components/ui/label';
 import { useClasses } from '@/features/academics/api/useClasses';
 import { useAcademicYears } from '@/features/academics/api/useAcademicYears';
-import { useStudents } from '@/features/students/api/useStudents';
 import { Badge } from '@/components/ui/badge';
 import { Users, X } from 'lucide-react';
 import { cn } from '@/lib/utils';

@@ -78,6 +78,14 @@ export interface Section {
   homeroom_teacher_name: string | null;
 }
 
+export interface Student {
+  id: string;
+  full_name: string;
+  registration_number: string;
+  email?: string;
+  is_active?: boolean;
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;

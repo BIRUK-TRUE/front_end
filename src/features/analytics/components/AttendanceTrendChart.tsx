@@ -51,7 +51,7 @@ export function AttendanceTrendChart({ data, isLoading }: AttendanceTrendChartPr
                 <Tooltip 
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   labelFormatter={(val) => format(new Date(val), 'MMMM d, yyyy')}
-                  formatter={(val: number) => [`${val.toFixed(1)}%`, 'Attendance Rate']}
+                  formatter={(val: any) => [`${Number(val).toFixed(1)}%`, 'Attendance Rate']}
                 />
                 <Line 
                   type="monotone" 

@@ -8,6 +8,7 @@ export function useAttendanceTrend(filters?: {
   days: number;
   classId?: string;
   sectionId?: string;
+  teacherId?: string;
 }) {
   return useQuery({
     queryKey: analyticsKeys.trend(filters),
