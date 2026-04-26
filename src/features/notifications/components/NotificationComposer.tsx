@@ -17,6 +17,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { 
   Send, 
   Eye, 
   Clock, 
@@ -24,10 +31,12 @@ import {
   Mail, 
   MessageSquare,
   Users,
-  Loader2
+  Loader2,
+  FileText
 } from 'lucide-react';
 import { AudienceSelector } from './AudienceSelector';
 import { useNotificationComposer } from '../api/useNotificationComposer';
+import { NOTIFICATION_TEMPLATES } from '../constants/templates';
 import { 
   Dialog,
   DialogContent,
@@ -38,6 +47,7 @@ import {
 
 export function NotificationComposer() {
   const t = useTranslations('notifications.compose');
+  const tc = useTranslations('common');
   const { previewRecipients, sendNotification } = useNotificationComposer();
 
   const [formData, setFormData] = useState({
@@ -51,6 +61,7 @@ export function NotificationComposer() {
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [recipientPreview, setRecipientPreview] = useState<{ count: number; sampleNames: string[] } | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('none');
 
   // Update recipient count when audience changes
   useEffect(() => {
@@ -62,6 +73,27 @@ export function NotificationComposer() {
     }
   }, [formData.targetType, formData.targetIds]);
 
+  const handleTemplateSelect = (templateName: string) => {
+    if (templateName === 'none') {
+      setFormData({
+        ...formData,
+        title: '',
+        message: '',
+      });
+      setSelectedTemplate('none');
+      return;
+    }
+    const template = NOTIFICATION_TEMPLATES.find((t) => t.name === templateName);
+    if (template) {
+      setFormData({
+        ...formData,
+        title: template.title,
+        message: template.message,
+      });
+      setSelectedTemplate(templateName);
+    }
+  };
+
   const handleSend = () => {
     sendNotification.mutate({
       ...formData,
@@ -70,6 +102,9 @@ export function NotificationComposer() {
   };
 
   const isFormValid = formData.title && formData.message && formData.channels.length > 0;
+  const charCount = formData.message.length;
+  const smsSegments = Math.ceil(charCount / 160);
+  const isSmsSelected = formData.channels.includes('sms');
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -80,6 +115,27 @@ export function NotificationComposer() {
             <CardDescription>{t('subtitle')}</CardDescription>
           </CardHeader>
           <CardContent className="pt-8 space-y-8">
+            {/* Template Selector */}
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                {t('template')}
+              </Label>
+              <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
+                <SelectTrigger className="h-11 rounded-xl">
+                  <SelectValue placeholder={t('selectTemplate')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t('noTemplate')}</SelectItem>
+                  {NOTIFICATION_TEMPLATES.map((template) => (
+                    <SelectItem key={template.name} value={template.name}>
+                      {template.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-6">
               <div className="grid gap-2">
                 <Label htmlFor="title" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t('messageTitle')}</Label>
@@ -93,7 +149,22 @@ export function NotificationComposer() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="message" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t('messageBody')}</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="message" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t('messageBody')}</Label>
+                  <div className="flex items-center gap-2 text-xs">
+                    {isSmsSelected && (
+                      <>
+                        <span className="text-muted-foreground">{charCount} / 160</span>
+                        {smsSegments > 1 && (
+                          <span className="text-orange-500 font-medium">{smsSegments} segments</span>
+                        )}
+                      </>
+                    )}
+                    {!isSmsSelected && (
+                      <span className="text-muted-foreground">{charCount} chars</span>
+                    )}
+                  </div>
+                </div>
                 <Textarea 
                   id="message"
                   placeholder={t('messageBodyPlaceholder')}
@@ -101,6 +172,11 @@ export function NotificationComposer() {
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   className="min-h-[200px] rounded-2xl border-muted-foreground/20 p-4 focus:ring-primary/20 resize-none"
                 />
+                {isSmsSelected && charCount > 160 && (
+                  <p className="text-xs text-orange-500 mt-1">
+                    {t('smsWarning', { segments: smsSegments })}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -132,6 +208,11 @@ export function NotificationComposer() {
                     </div>
                  ))}
                </div>
+               {isSmsSelected && recipientPreview && (
+                 <div className="text-xs text-muted-foreground">
+                   {t('estimatedCost', { count: recipientPreview.count, cost: (recipientPreview.count * 0.5).toFixed(2) })}
+                 </div>
+               )}
             </div>
 
             <div className="pt-8 border-t space-y-6">
@@ -210,14 +291,14 @@ export function NotificationComposer() {
 
       {/* Preview Modal */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="sm:max-w-[450px] rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
-           <DialogHeader className="bg-primary px-6 py-6 text-white text-left">
+        <DialogContent className="sm:max-w-[450px] rounded-3xl p-0 overflow-hidden border-none shadow-2xl flex flex-col max-h-[85vh]">
+           <DialogHeader className="bg-primary px-6 py-6 text-white text-left shrink-0">
               <DialogTitle className="text-xl font-bold flex items-center gap-3">
                  <Bell className="h-6 w-6" />
                  {t('previewTitle')}
               </DialogTitle>
            </DialogHeader>
-           <div className="bg-slate-50 p-6">
+           <div className="flex-1 overflow-y-auto bg-slate-50 p-6 min-h-0">
               <div className="bg-white rounded-2xl shadow-sm overflow-hidden border">
                  <div className="p-4 bg-primary/5 border-b border-primary/10 flex items-center justify-between">
                     <p className="text-primary font-bold text-sm tracking-tight">{formData.title || t('previewUntitled')}</p>
@@ -237,8 +318,8 @@ export function NotificationComposer() {
                  )}
               </div>
            </div>
-           <DialogFooter className="px-6 py-4 bg-muted/20 border-t">
-              <Button variant="ghost" onClick={() => setIsPreviewOpen(false)} className="rounded-xl h-11 px-6 font-bold">{t('notifications.center.emptySubtitle')}</Button>
+           <DialogFooter className="px-6 py-4 bg-muted/20 border-t shrink-0">
+              <Button variant="ghost" onClick={() => setIsPreviewOpen(false)} className="rounded-xl h-11 px-6 font-bold">{tc('close')}</Button>
               <Button onClick={() => setIsPreviewOpen(false)} className="rounded-xl h-11 px-8 font-black shadow-lg shadow-primary/20">{t('backToEditor')}</Button>
            </DialogFooter>
         </DialogContent>

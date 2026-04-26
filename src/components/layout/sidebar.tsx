@@ -5,6 +5,7 @@ import { usePathname } from '@/i18n/navigation';
 import { Link } from '@/i18n/navigation';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useUnreadNotifications } from '@/features/notifications/api/useNotifications';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -33,6 +34,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -78,6 +80,7 @@ export function Sidebar({
   } = usePermissions();
   
   const { user } = useAuthStore();
+  const { data: unreadCount } = useUnreadNotifications(user?.id || '');
 
   // Teacher-specific nav items (shown only to teachers)
   const teacherNavItems: NavItem[] = [
@@ -162,27 +165,33 @@ export function Sidebar({
   // Guardian-specific nav items (shown only to guardians)
   const guardianNavItems: NavItem[] = [
     {
-      href: '/guardian',
+      href: '/dashboard/guardian',
       label: t('dashboard'),
       icon: LayoutDashboard,
       show: isGuardian,
     },
     {
-      href: '/guardian/payments',
-      label: t('payments'),
-      icon: Wallet,
+      href: '/dashboard/guardian',
+      label: t('myChildren'),
+      icon: Users,
       show: isGuardian,
     },
     {
-      href: '/guardian/notifications',
+      href: '/dashboard/guardian/notifications',
       label: t('notifications'),
       icon: Bell,
       show: isGuardian,
     },
     {
-      href: '/guardian/profile',
-      label: t('myProfile'),
-      icon: User,
+      href: '/dashboard/guardian/payments',
+      label: t('payments'),
+      icon: Wallet,
+      show: isGuardian,
+    },
+    {
+      href: '/dashboard/guardian/profile',
+      label: t('settings'),
+      icon: Settings,
       show: isGuardian,
     },
   ];
@@ -323,7 +332,7 @@ export function Sidebar({
     return pathname.startsWith(href);
   };
 
-  const NavLink = ({ item }: { item: NavItem }) => {
+  const NavLink = ({ item, showBadge }: { item: NavItem; showBadge?: boolean }) => {
     if (!item.show) return null;
     const Icon = item.icon;
     const active = isActive(item.href);
@@ -345,7 +354,19 @@ export function Sidebar({
         )}
         aria-current={active ? 'page' : undefined}
       >
-        <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+        <div className="relative">
+          <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+          {showBadge && unreadCount && unreadCount > 0 && (
+            <Badge
+              className={cn(
+                'absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px] font-bold',
+                unreadCount > 5 ? 'bg-red-500' : unreadCount > 2 ? 'bg-orange-500' : 'bg-blue-500'
+              )}
+            >
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </Badge>
+          )}
+        </div>
         {!isCollapsed && <span>{item.label}</span>}
       </Link>
     );
@@ -405,7 +426,11 @@ export function Sidebar({
         <ScrollArea className="flex-1 px-3 py-4 overflow-y-auto">
           <nav className="space-y-1" aria-label={t('mainNavigation')}>
             {navItems.map((item) => (
-              <NavLink key={item.href} item={item} />
+              <NavLink 
+                key={item.href} 
+                item={item} 
+                showBadge={item.href.includes('notifications')} 
+              />
             ))}
           </nav>
 

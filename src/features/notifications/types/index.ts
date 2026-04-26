@@ -54,6 +54,7 @@ export interface NotificationHistory {
   sent_by_name: string;
   recipient_count: number;
   type: 'automatic' | 'manual';
+  priority: NotificationPriority;
   status: {
     delivered: number;
     pending: number;

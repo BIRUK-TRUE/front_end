@@ -6,18 +6,19 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from '@/i18n/navigation';
 import { useCreateUser } from '@/hooks/use-users';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 
 const allRoles = ['admin', 'director', 'registrar', 'teacher', 'student', 'guardian'];
 
-export default function CreateUserPage() {
+function CreateUserForm() {
   const t = useTranslations('users');
   const tc = useTranslations('common');
   const tr = useTranslations('roles');
@@ -25,14 +26,20 @@ export default function CreateUserPage() {
   const router = useRouter();
   const createUser = useCreateUser();
 
-  const createUserSchema = z.object({
-    email: z.string().min(1, tv('emailRequired')).email(tv('invalidEmail')),
-    full_name: z.string().min(2, tv('nameMinLength')),
-    phone_number: z.string().optional(),
-    address: z.string().optional(),
-    password: z.string().optional(),
-    role_names: z.array(z.string()).min(1, tv('atLeastOneRole')),
-  });
+  const createUserSchema = z
+    .object({
+      email: z.string().min(1, tv('emailRequired')).email(tv('invalidEmail')),
+      full_name: z.string().min(2, tv('nameMinLength')),
+      phone_number: z.string().optional(),
+      address: z.string().optional(),
+      password: z.string().min(8, tv('passwordMinLength')),
+      confirm_password: z.string(),
+      role_names: z.array(z.string()).min(1, tv('atLeastOneRole')),
+    })
+    .refine((data) => data.password === data.confirm_password, {
+      message: tv('passwordsDoNotMatch'),
+      path: ['confirm_password'],
+    });
 
   type CreateUserForm = z.infer<typeof createUserSchema>;
 
@@ -58,7 +65,8 @@ export default function CreateUserPage() {
   };
 
   const onSubmit = (data: CreateUserForm) => {
-    createUser.mutate(data, {
+    const { confirm_password, ...payload } = data;
+    createUser.mutate(payload, {
       onSuccess: () => router.push('/dashboard/users'),
     });
   };
@@ -129,18 +137,42 @@ export default function CreateUserPage() {
               </div>
             </div>
 
-            {/* Password (optional) */}
+            {/* Password */}
             <div className="space-y-2">
-              <Label htmlFor="password">
-                {tc('password') || 'Password'}{' '}
-                <span className="text-muted-foreground text-xs">(auto-generated if empty)</span>
-              </Label>
+              <Label htmlFor="password">{t('password')} *</Label>
               <Input
                 id="password"
                 type="password"
                 {...register('password')}
+                aria-invalid={!!errors.password}
+                aria-describedby={errors.password ? 'password-err' : undefined}
                 className="h-11"
               />
+              {errors.password && (
+                <p id="password-err" className="text-sm text-destructive flex items-center gap-1.5" role="alert">
+                  <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            {/* Confirm Password */}
+            <div className="space-y-2">
+              <Label htmlFor="confirm_password">{t('confirmPassword')} *</Label>
+              <Input
+                id="confirm_password"
+                type="password"
+                {...register('confirm_password')}
+                aria-invalid={!!errors.confirm_password}
+                aria-describedby={errors.confirm_password ? 'confirm-password-err' : undefined}
+                className="h-11"
+              />
+              {errors.confirm_password && (
+                <p id="confirm-password-err" className="text-sm text-destructive flex items-center gap-1.5" role="alert">
+                  <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                  {errors.confirm_password.message}
+                </p>
+              )}
             </div>
 
             {/* Roles */}
@@ -197,5 +229,13 @@ export default function CreateUserPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function CreateUserPage() {
+  return (
+    <ProtectedRoute requireRoles={['admin', 'director']}>
+      <CreateUserForm />
+    </ProtectedRoute>
   );
 }

@@ -3,13 +3,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '@/lib/api/axios';
 import { toast } from 'sonner';
-import type { Notification, NotificationPreferences, CreateNotificationPayload } from '../types';
+import type { Notification, NotificationPreferences, CreateNotificationPayload, NotificationHistory, AlertRule, NotificationDetail } from '../types';
 
 const notificationsKeys = {
   all: ['notifications'] as const,
   list: (userId: string) => [...notificationsKeys.all, 'list', userId] as const,
   unread: (userId: string) => [...notificationsKeys.all, 'unread', userId] as const,
   preferences: (userId: string) => [...notificationsKeys.all, 'preferences', userId] as const,
+  history: (filters?: any) => [...notificationsKeys.all, 'history', filters] as const,
+  detail: (id: string) => [...notificationsKeys.all, 'detail', id] as const,
+  alertRules: () => [...notificationsKeys.all, 'alertRules'] as const,
+  alertRule: (id: string) => [...notificationsKeys.all, 'alertRule', id] as const,
 };
 
 // Get all notifications for user
@@ -35,6 +39,35 @@ export function useUnreadNotifications(userId: string) {
     },
     enabled: !!userId,
     refetchInterval: 10000, // Refetch every 10 seconds for real-time feel
+  });
+}
+
+// Get notification history with filters
+export function useNotificationHistory(filters?: {
+  type?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  channel?: string;
+  target?: string;
+}) {
+  return useQuery({
+    queryKey: notificationsKeys.history(filters),
+    queryFn: async (): Promise<NotificationHistory[]> => {
+      const { data } = await axiosInstance.get('/notifications/history', { params: filters });
+      return data;
+    },
+  });
+}
+
+// Get notification detail
+export function useNotificationDetail(id: string) {
+  return useQuery({
+    queryKey: notificationsKeys.detail(id),
+    queryFn: async (): Promise<NotificationDetail> => {
+      const { data } = await axiosInstance.get(`/notifications/history/${id}`);
+      return data;
+    },
+    enabled: !!id,
   });
 }
 
@@ -111,12 +144,18 @@ export function useCreateNotification() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationsKeys.all });
+      queryClient.invalidateQueries({ queryKey: notificationsKeys.history() });
       toast.success('Notification sent');
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to send notification');
     },
   });
+}
+
+// Send notification (alias for create)
+export function useSendNotification() {
+  return useCreateNotification();
 }
 
 // Delete notification
@@ -132,6 +171,67 @@ export function useDeleteNotification() {
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to delete notification');
+    },
+  });
+}
+
+// Alert Rules
+export function useAlertRules() {
+  return useQuery({
+    queryKey: notificationsKeys.alertRules(),
+    queryFn: async (): Promise<AlertRule[]> => {
+      const { data } = await axiosInstance.get('/notifications/alert-rules');
+      return data;
+    },
+  });
+}
+
+export function useCreateAlertRule() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: Omit<AlertRule, 'id' | 'created_at'>) => {
+      const { data } = await axiosInstance.post('/notifications/alert-rules', payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationsKeys.alertRules() });
+      toast.success('Alert rule created');
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(error.response?.data?.detail || 'Failed to create alert rule');
+    },
+  });
+}
+
+export function useUpdateAlertRule() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, payload }: { id: string; payload: Partial<AlertRule> }) => {
+      const { data } = await axiosInstance.patch(`/notifications/alert-rules/${id}`, payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationsKeys.alertRules() });
+      toast.success('Alert rule updated');
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(error.response?.data?.detail || 'Failed to update alert rule');
+    },
+  });
+}
+
+export function useDeleteAlertRule() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await axiosInstance.delete(`/notifications/alert-rules/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationsKeys.alertRules() });
+      toast.success('Alert rule deleted');
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(error.response?.data?.detail || 'Failed to delete alert rule');
     },
   });
 }

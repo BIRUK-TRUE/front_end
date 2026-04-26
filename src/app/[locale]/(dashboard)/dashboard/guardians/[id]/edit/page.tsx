@@ -8,18 +8,20 @@ import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { useGuardian, useUpdateGuardian } from '@/hooks/use-guardians';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Loader2, AlertCircle, GraduationCap } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
+import { Badge } from '@/components/ui/badge';
 
 const editGuardianSchema = z.object({
   full_name: z.string().min(2, 'Min 2 characters'),
-  phone_number: z.string().optional(),
+  phone_number: z.string().regex(/^\+251\d{9}$/, { message: 'Invalid phone format' }).optional().or(z.literal('')),
   address: z.string().optional(),
   occupation: z.string().optional(),
   workplace: z.string().optional(),
@@ -27,7 +29,7 @@ const editGuardianSchema = z.object({
 
 type EditGuardianForm = z.infer<typeof editGuardianSchema>;
 
-export default function EditGuardianPage() {
+function EditGuardianForm() {
   const t = useTranslations('guardians');
   const tc = useTranslations('common');
   const router = useRouter();
@@ -60,14 +62,31 @@ export default function EditGuardianPage() {
   if (!guardian) return null;
 
   const onSubmit = (data: EditGuardianForm) => {
+    const payload: any = { ...data };
+    if (payload.phone_number === '') {
+      delete payload.phone_number;
+    }
     updateGuardian.mutate(
-      { id, data },
+      { id, data: payload },
       { onSuccess: () => router.push(`/dashboard/guardians/${id}`) }
     );
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
+        <Link href="/dashboard/guardians" className="hover:text-foreground">
+          {t('title')}
+        </Link>
+        <span>/</span>
+        <Link href={`/dashboard/guardians/${id}`} className="hover:text-foreground">
+          {guardian.full_name}
+        </Link>
+        <span>/</span>
+        <span className="text-foreground">{t('editGuardian')}</span>
+      </nav>
+
       <PageHeader
         title={t('editGuardian')}
         actions={
@@ -96,7 +115,8 @@ export default function EditGuardianPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="phone_number">{tc('phone')}</Label>
-                <Input id="phone_number" {...register('phone_number')} className="h-11" />
+                <Input id="phone_number" placeholder="+2519XXXXXXXX" {...register('phone_number')} aria-invalid={!!errors.phone_number} className="h-11" />
+                {errors.phone_number && <p className="text-sm text-destructive flex items-center gap-1.5" role="alert"><AlertCircle className="h-3.5 w-3.5" />{errors.phone_number.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="address">{tc('address')}</Label>
@@ -127,6 +147,35 @@ export default function EditGuardianPage() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Linked Students (Read-only) */}
+      <Card className="max-w-2xl">
+        <CardHeader>
+          <CardTitle>{t('linkedStudentsReadOnly')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!guardian.student_links?.length ? (
+            <p className="text-sm text-muted-foreground">{t('noLinkedStudents')}</p>
+          ) : (
+            <div className="space-y-2">
+              {guardian.student_links.map((link: any) => (
+                <div key={link.student_id} className="flex items-center gap-3 p-3 rounded-lg border">
+                  <GraduationCap className="h-4 w-4 text-primary" aria-hidden="true" />
+                  <div className="flex-1">
+                    <p className="font-medium">{link.student_name}</p>
+                    <p className="text-sm text-muted-foreground">{link.student_registration_number}</p>
+                  </div>
+                  <Badge variant="outline" className="capitalize">{t(link.relationship_type as any) || link.relationship_type}</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
+}
+
+export default function EditGuardianPage() {
+  return <ProtectedRoute><EditGuardianForm /></ProtectedRoute>;
 }

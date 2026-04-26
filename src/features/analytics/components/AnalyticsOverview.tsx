@@ -15,7 +15,8 @@ import {
   GraduationCap, 
   AlertTriangle, 
   ChevronDown,
-  Filter
+  Filter,
+  RefreshCw
 } from "lucide-react";
 import { 
   useAnalyticsSummary 
@@ -32,12 +33,16 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { useClasses } from "@/features/academics/api/useClasses";
 import { useAcademicYears } from "@/features/academics/api/useAcademicYears";
+import { useQueryClient } from "@tanstack/react-query";
+import { analyticsKeys } from "../types";
 
 export function AnalyticsOverview() {
   const t = useTranslations("analytics");
   const tc = useTranslations("common");
+  const queryClient = useQueryClient();
 
   // Filters State
   const [selectedTerm, setSelectedTerm] = useState<string>("");
@@ -51,69 +56,81 @@ export function AnalyticsOverview() {
   
   const currentTermId = selectedTerm || yearsData?.items?.find(y => y.is_current)?.id || "";
 
-  const { data: summary, isLoading: isLoadingSummary } = useAnalyticsSummary({ 
+  const { data: summary, isLoading: isLoadingSummary, refetch: refetchSummary } = useAnalyticsSummary({ 
     termId: currentTermId,
     classId: selectedClass 
   });
 
-  const { data: trendData, isLoading: isLoadingTrend } = useAttendanceTrend({
+  const { data: trendData, isLoading: isLoadingTrend, refetch: refetchTrend } = useAttendanceTrend({
     days: timeRange,
     classId: selectedClass
   });
 
-  const { data: distributionData, isLoading: isLoadingDistribution } = useGradeDistribution({
+  const { data: distributionData, isLoading: isLoadingDistribution, refetch: refetchDistribution } = useGradeDistribution({
     termId: currentTermId,
     classId: selectedClass
   });
 
-  const { data: atRiskData, isLoading: isLoadingAtRisk } = useAtRiskStudents({
+  const { data: atRiskData, isLoading: isLoadingAtRisk, refetch: refetchAtRisk } = useAtRiskStudents({
     termId: currentTermId,
     classId: selectedClass
   });
 
-  const { data: performanceData, isLoading: isLoadingPerformance } = useClassPerformance(currentTermId);
+  const { data: performanceData, isLoading: isLoadingPerformance, refetch: refetchPerformance } = useClassPerformance(currentTermId);
+
+  const handleRefreshAll = () => {
+    refetchSummary();
+    refetchTrend();
+    refetchDistribution();
+    refetchAtRisk();
+    refetchPerformance();
+  };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 min-w-0">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground">{t("title")}</h1>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         
-        {/* Filter Bar */}
-        <div className="flex flex-wrap items-center gap-3 bg-muted/40 p-2 rounded-xl border border-border/50">
-          <div className="flex items-center gap-2 px-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs font-semibold text-muted-foreground uppercase">{t("filters.term")}:</span>
-          </div>
-          
-          <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-            <SelectTrigger className="w-[180px] h-9 border-none bg-background shadow-sm">
-              <SelectValue placeholder={t("filters.allTerms")} />
-            </SelectTrigger>
-            <SelectContent>
-               <SelectItem value="all">{t("filters.allTerms")}</SelectItem>
-               {yearsData?.items?.map(year => (
-                 <SelectItem key={year.id} value={year.id}>{year.name}</SelectItem>
-               ))}
-            </SelectContent>
-          </Select>
+        <Button variant="outline" size="sm" onClick={handleRefreshAll} className="gap-2">
+          <RefreshCw className="h-4 w-4" /> {t("refresh")}
+        </Button>
+      </div>
+      
+      {/* Filter Bar */}
+      <div className="flex flex-wrap items-center gap-3 bg-muted/40 p-2 rounded-xl border border-border/50">
+        <div className="flex items-center gap-2 px-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <span className="text-xs font-semibold text-muted-foreground uppercase">{t("filters.term")}:</span>
+        </div>
+        
+        <Select value={selectedTerm} onValueChange={setSelectedTerm}>
+          <SelectTrigger className="w-[180px] h-9 border-none bg-background shadow-sm">
+            <SelectValue placeholder={t("filters.allTerms")} />
+          </SelectTrigger>
+          <SelectContent>
+             <SelectItem value="all">{t("filters.allTerms")}</SelectItem>
+             {yearsData?.items?.map(year => (
+               <SelectItem key={year.id} value={year.id}>{year.name}</SelectItem>
+             ))}
+          </SelectContent>
+        </Select>
 
-          <Separator orientation="vertical" className="h-6 hidden md:block" />
+        <Separator orientation="vertical" className="h-6 hidden md:block" />
 
-          <Select value={selectedClass} onValueChange={setSelectedClass}>
-            <SelectTrigger className="w-[180px] h-9 border-none bg-background shadow-sm">
-              <SelectValue placeholder={t("filters.allClasses")} />
-            </SelectTrigger>
-            <SelectContent>
-               <SelectItem value="all">{t("filters.allClasses")}</SelectItem>
+        <Select value={selectedClass} onValueChange={setSelectedClass}>
+          <SelectTrigger className="w-[180px] h-9 border-none bg-background shadow-sm">
+            <SelectValue placeholder={t("filters.allClasses")} />
+          </SelectTrigger>
+          <SelectContent>
+             <SelectItem value="all">{t("filters.allClasses")}</SelectItem>
                 {classesData?.items?.map(cls => (
                   <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
                 ))}
-            </SelectContent>
-          </Select>
-        </div>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Metrics Row */}
@@ -151,10 +168,12 @@ export function AnalyticsOverview() {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-12">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         <AttendanceTrendChart 
           data={trendData || []} 
-          isLoading={isLoadingTrend} 
+          isLoading={isLoadingTrend}
+          days={timeRange}
+          onDaysChange={setTimeRange}
         />
         <GradeDistributionChart 
           data={distributionData || []} 

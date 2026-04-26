@@ -208,9 +208,9 @@ export function GradeEntryGrid({ students, assessment, onSaveGrades, isSaving }:
       <CardHeader className="pb-4">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <CardTitle className="text-lg">Bulk Grade Entry</CardTitle>
+            <CardTitle className="text-lg">{t('bulkGradeEntry')}</CardTitle>
             <CardDescription>
-              {assessment.name} — Max Score: {maxScore} — Weight: {assessment.weight}%
+              {assessment.name} — {t('maxScore')}: {maxScore} — {t('weight')}: {assessment.weight}%
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -225,7 +225,7 @@ export function GradeEntryGrid({ students, assessment, onSaveGrades, isSaving }:
             </div>
             <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
               <Download className="h-4 w-4" />
-              Export
+              {t('export')}
             </Button>
             <Button
               size="sm"
@@ -234,7 +234,7 @@ export function GradeEntryGrid({ students, assessment, onSaveGrades, isSaving }:
               className="gap-2"
             >
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Save All
+              {t('saveAll')}
             </Button>
           </div>
         </div>
@@ -242,17 +242,17 @@ export function GradeEntryGrid({ students, assessment, onSaveGrades, isSaving }:
         {/* Stats Bar */}
         <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground uppercase">Entered:</span>
+            <span className="text-xs text-muted-foreground uppercase">{t('entered')}:</span>
             <Badge variant="outline">{stats.count} / {students.length}</Badge>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground uppercase">Average:</span>
+            <span className="text-xs text-muted-foreground uppercase">{t('average')}:</span>
             <Badge variant="outline" className={getGradeColor(getLetterGrade(Number(stats.avg)))}>
               {stats.avg} / {maxScore}
             </Badge>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground uppercase">Range:</span>
+            <span className="text-xs text-muted-foreground uppercase">{t('range')}:</span>
             <Badge variant="outline">{stats.min} - {stats.max}</Badge>
           </div>
         </div>
@@ -260,7 +260,7 @@ export function GradeEntryGrid({ students, assessment, onSaveGrades, isSaving }:
         {/* Bulk Actions */}
         {selectedStudents.size > 0 && (
           <div className="flex items-center gap-2 mt-4 p-3 bg-primary/5 rounded-lg border border-primary/10">
-            <span className="text-sm font-medium">{selectedStudents.size} selected:</span>
+            <span className="text-sm font-medium">{t('selectedCount', { count: selectedStudents.size })}:</span>
             <div className="flex gap-1">
               {[maxScore, Math.round(maxScore * 0.9), Math.round(maxScore * 0.8), Math.round(maxScore * 0.7)].map((score) => (
                 <Button
@@ -270,7 +270,7 @@ export function GradeEntryGrid({ students, assessment, onSaveGrades, isSaving }:
                   onClick={() => handleBulkSetScore(score)}
                   className="h-7 text-xs"
                 >
-                  Set {score}
+                  {t('setScore', { score })}
                 </Button>
               ))}
               <Button
@@ -279,7 +279,7 @@ export function GradeEntryGrid({ students, assessment, onSaveGrades, isSaving }:
                 onClick={() => handleBulkSetScore(null)}
                 className="h-7 text-xs text-destructive"
               >
-                Clear
+                {t('clear')}
               </Button>
             </div>
           </div>
@@ -299,18 +299,18 @@ export function GradeEntryGrid({ students, assessment, onSaveGrades, isSaving }:
             onClick={() => toggleSort('name')}
             className="flex items-center gap-1 hover:text-foreground transition-colors text-left"
           >
-            Student
+            {t('student')}
             <ArrowUpDown className="h-3 w-3" />
           </button>
           <button
             onClick={() => toggleSort('regNumber')}
             className="flex items-center gap-1 hover:text-foreground transition-colors text-left"
           >
-            Reg. #
+            {t('regNumber')}
             <ArrowUpDown className="h-3 w-3" />
           </button>
-          <div className="text-center">Score</div>
-          <div className="text-center">Grade</div>
+          <div className="text-center">{t('score')}</div>
+          <div className="text-center">{t('grade')}</div>
         </div>
 
         {/* Table Body */}
@@ -367,7 +367,7 @@ export function GradeEntryGrid({ students, assessment, onSaveGrades, isSaving }:
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t">
             <div className="text-xs text-muted-foreground">
-              Showing {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filteredStudents.length)} of {filteredStudents.length}
+              {t('showing', { from: (currentPage - 1) * pageSize + 1, to: Math.min(currentPage * pageSize, filteredStudents.length), total: filteredStudents.length })}
             </div>
             <div className="flex gap-1">
               <Button

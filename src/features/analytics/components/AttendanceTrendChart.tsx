@@ -5,20 +5,41 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 import { AttendanceTrendEntry } from "../types";
 import { useTranslations } from "next-intl";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 interface AttendanceTrendChartProps {
   data: AttendanceTrendEntry[];
   isLoading?: boolean;
+  days?: number;
+  onDaysChange?: (days: number) => void;
 }
 
-export function AttendanceTrendChart({ data, isLoading }: AttendanceTrendChartProps) {
+export function AttendanceTrendChart({ data, isLoading, days = 30, onDaysChange }: AttendanceTrendChartProps) {
   const t = useTranslations("analytics.charts");
 
   return (
-    <Card className="col-span-full lg:col-span-4 shadow-md border-none">
+    <Card className="shadow-md border-none">
       <CardHeader>
-        <CardTitle className="text-lg">{t("attendanceTrend")}</CardTitle>
-        <CardDescription>{t("attendanceTrendSubtitle")}</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg">{t("attendanceTrend")}</CardTitle>
+            <CardDescription>{t("attendanceTrendSubtitle")}</CardDescription>
+          </div>
+          {onDaysChange && (
+            <div className="flex gap-2">
+              {[7, 30, 90].map((d) => (
+                <Button
+                  key={d}
+                  variant={days === d ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onDaysChange(d)}
+                >
+                  {d}d
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="h-[300px] w-full">
@@ -42,25 +63,54 @@ export function AttendanceTrendChart({ data, isLoading }: AttendanceTrendChartPr
                   tick={{ fontSize: 12, fill: '#64748b' }}
                 />
                 <YAxis 
-                  domain={[0, 100]}
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 12, fill: '#64748b' }}
-                  tickFormatter={(val) => `${val}%`}
                 />
                 <Tooltip 
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   labelFormatter={(val) => format(new Date(val), 'MMMM d, yyyy')}
-                  formatter={(val: any) => [`${Number(val).toFixed(1)}%`, 'Attendance Rate']}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="present" 
+                  stroke="#10b981" 
+                  strokeWidth={2}
+                  dot={{ r: 3, strokeWidth: 2, fill: '#fff' }}
+                  activeDot={{ r: 5, strokeWidth: 0 }}
+                  animationDuration={1500}
+                  name={t("present")}
                 />
                 <Line 
                   type="monotone" 
-                  dataKey="rate" 
-                  stroke="#3b82f6" 
-                  strokeWidth={3}
-                  dot={{ r: 4, strokeWidth: 2, fill: '#fff' }}
-                  activeDot={{ r: 6, strokeWidth: 0 }}
+                  dataKey="absent" 
+                  stroke="#ef4444" 
+                  strokeWidth={2}
+                  dot={{ r: 3, strokeWidth: 2, fill: '#fff' }}
+                  activeDot={{ r: 5, strokeWidth: 0 }}
                   animationDuration={1500}
+                  name={t("absent")}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="late" 
+                  stroke="#f59e0b" 
+                  strokeWidth={2}
+                  dot={{ r: 3, strokeWidth: 2, fill: '#fff' }}
+                  activeDot={{ r: 5, strokeWidth: 0 }}
+                  animationDuration={1500}
+                  name={t("late")}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="excused" 
+                  stroke="#3b82f6" 
+                  strokeWidth={2}
+                  dot={{ r: 3, strokeWidth: 2, fill: '#fff' }}
+                  activeDot={{ r: 5, strokeWidth: 0 }}
+                  animationDuration={1500}
+                  name={t("excused")}
                 />
               </LineChart>
             </ResponsiveContainer>

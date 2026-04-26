@@ -58,9 +58,11 @@ export function useAddInterventionNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ studentId, note }: { studentId: string; note: string }) => {
-      const { data } = await axiosInstance.post(`/students/${studentId}/intervention-notes`, {
+    mutationFn: async ({ studentId, note, type }: { studentId: string; note: string; type?: string }) => {
+      const { data } = await axiosInstance.post(`/analytics/interventions`, {
+        student_id: studentId,
         note,
+        type: type || 'counseling',
         date: new Date().toISOString()
       });
       return data;

@@ -110,4 +110,9 @@ export const queryKeys = {
     detail: (id: string) => ['notifications', 'detail', id] as const,
     alertRules: ['notifications', 'alert-rules'] as const,
   },
+  settings: {
+    schoolInfo: ['settings', 'school-info'] as const,
+    academic: ['settings', 'academic'] as const,
+    notifications: ['settings', 'notifications'] as const,
+  },
 };

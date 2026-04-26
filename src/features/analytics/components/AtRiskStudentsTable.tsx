@@ -19,17 +19,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { RiskBadge } from "./RiskBadge";
 import { StudentRisk } from "../types";
 import { useTranslations } from "next-intl";
-import { MoreHorizontal, FileDown, User, Bell, MessageSquare, AlertCircle } from "lucide-react";
+import { MoreHorizontal, FileDown, User, Bell, MessageSquare, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { NotifyGuardianModal } from "./NotifyGuardianModal";
 import { InterventionNoteModal } from "./InterventionNoteModal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AtRiskStudentsTableProps {
   students: StudentRisk[];
   isLoading?: boolean;
 }
+
+const ITEMS_PER_PAGE = 10;
 
 export function AtRiskStudentsTable({ students, isLoading }: AtRiskStudentsTableProps) {
   const t = useTranslations("analytics.atRiskTable");
@@ -38,12 +41,22 @@ export function AtRiskStudentsTable({ students, isLoading }: AtRiskStudentsTable
   const [selectedStudent, setSelectedStudent] = useState<StudentRisk | null>(null);
   const [isNotifyOpen, setIsNotifyOpen] = useState(false);
   const [isNoteOpen, setIsNoteOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [riskLevelFilter, setRiskLevelFilter] = useState<string>('all');
+
+  const filteredStudents = students.filter(s => 
+    riskLevelFilter === 'all' || s.level === riskLevelFilter
+  );
+
+  const totalPages = Math.ceil(filteredStudents.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedStudents = filteredStudents.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const handleExportCsv = () => {
-    if (students.length === 0) return;
+    if (filteredStudents.length === 0) return;
     
     const headers = [t("name"), t("id"), t("class"), t("section"), t("attendance"), t("gradeAvg"), t("riskLevel"), t("riskFactors"), t("guardian"), t("phone")];
-    const rows = students.map(s => [
+    const rows = filteredStudents.map(s => [
       s.studentName,
       s.registrationNumber,
       s.className,
@@ -68,22 +81,40 @@ export function AtRiskStudentsTable({ students, isLoading }: AtRiskStudentsTable
     document.body.removeChild(link);
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <Card className="shadow-md border-none overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+      <CardHeader className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0 gap-4">
         <div className="space-y-1">
           <CardTitle className="text-xl flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-destructive" /> {t("title")}
           </CardTitle>
           <CardDescription>{t("subtitle")}</CardDescription>
         </div>
-        <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={students.length === 0}>
-          <FileDown className="mr-2 h-4 w-4" /> {t("exportCsv")}
-        </Button>
+        <div className="flex items-center gap-3">
+          <Select value={riskLevelFilter} onValueChange={(value) => { setRiskLevelFilter(value); setCurrentPage(1); }}>
+            <SelectTrigger className="w-[150px] h-9">
+              <SelectValue placeholder={t("filterByRisk")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allRisks")}</SelectItem>
+              <SelectItem value="critical">{t("critical")}</SelectItem>
+              <SelectItem value="high">{t("high")}</SelectItem>
+              <SelectItem value="medium">{t("medium")}</SelectItem>
+              <SelectItem value="low">{t("low")}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={filteredStudents.length === 0}>
+            <FileDown className="mr-2 h-4 w-4" /> {t("exportCsv")}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="rounded-md border-x border-b">
-          <Table>
+        <div className="overflow-x-auto rounded-md border-x border-b">
+          <Table className="min-w-full">
             <TableHeader className="bg-muted/50">
               <TableRow>
                 <TableHead className="font-bold">{t("student")}</TableHead>
@@ -102,14 +133,14 @@ export function AtRiskStudentsTable({ students, isLoading }: AtRiskStudentsTable
                     <TableCell colSpan={7} className="h-12 animate-pulse bg-muted/10" />
                   </TableRow>
                 ))
-              ) : students.length === 0 ? (
+              ) : filteredStudents.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="h-24 text-center text-muted-foreground whitespace-pre-wrap">
                     {t("noAtRiskStudents")}
                   </TableCell>
                 </TableRow>
               ) : (
-                students.map((student) => (
+                paginatedStudents.map((student) => (
                   <TableRow key={student.studentId} className="hover:bg-muted/5 transition-colors">
                     <TableCell>
                       <div className="flex flex-col">
@@ -189,6 +220,42 @@ export function AtRiskStudentsTable({ students, isLoading }: AtRiskStudentsTable
             </TableBody>
           </Table>
         </div>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t">
+            <div className="text-sm text-muted-foreground">
+              {t("showing", { start: startIndex + 1, end: Math.min(startIndex + ITEMS_PER_PAGE, filteredStudents.length), total: filteredStudents.length })}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handlePageChange(page)}
+                  className="w-8 h-8 p-0"
+                >
+                  {page}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
 
       {selectedStudent && (

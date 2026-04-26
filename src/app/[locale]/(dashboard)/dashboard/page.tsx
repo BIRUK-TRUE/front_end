@@ -53,7 +53,7 @@ export default function DashboardPage() {
               title={t('totalUsers')}
               value={userStats?.total?.toString() || '0'}
               icon={Users}
-              description={userLoading ? tc('loading') : `${userStats?.active || 0} active users`}
+              description={userLoading ? tc('loading') : `${userStats?.active || 0} ${t('activeUsers')}`}
               trend={userStats?.growth !== undefined ? { value: userStats.growth, positive: userStats.growth >= 0 } : undefined}
             />
           )}
@@ -62,7 +62,7 @@ export default function DashboardPage() {
               title={t('activeStudents')}
               value={studentStats?.active?.toString() || '0'}
               icon={GraduationCap}
-              description={studentLoading ? tc('loading') : `Total: ${studentStats?.total || 0}`}
+              description={studentLoading ? tc('loading') : `${t('total')}: ${studentStats?.total || 0}`}
               trend={studentStats?.growth !== undefined ? { value: studentStats.growth, positive: studentStats.growth >= 0 } : undefined}
             />
           )}
@@ -71,7 +71,7 @@ export default function DashboardPage() {
               title={t('activeTeachers')}
               value={teacherStats?.active?.toString() || '0'}
               icon={BookOpen}
-              description={teacherLoading ? tc('loading') : `Total: ${teacherStats?.total || 0}`}
+              description={teacherLoading ? tc('loading') : `${t('total')}: ${teacherStats?.total || 0}`}
               trend={teacherStats?.growth !== undefined ? { value: teacherStats.growth, positive: teacherStats.growth >= 0 } : undefined}
             />
           )}
@@ -80,7 +80,7 @@ export default function DashboardPage() {
               title={t('totalGuardians')}
               value={guardianStats?.total?.toString() || '0'}
               icon={UserCheck}
-              description={guardianLoading ? tc('loading') : `${guardianStats?.active || 0} verified`}
+              description={guardianLoading ? tc('loading') : `${guardianStats?.active || 0} ${t('verified')}`}
             />
           )}
         </div>

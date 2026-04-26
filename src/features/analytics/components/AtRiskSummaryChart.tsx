@@ -30,7 +30,7 @@ export function AtRiskSummaryChart({ data, isLoading }: AtRiskSummaryChartProps)
   ].filter(d => d.value > 0);
 
   return (
-    <Card className="col-span-full lg:col-span-4 shadow-md border-none">
+    <Card className="shadow-md border-none">
       <CardHeader>
         <CardTitle className="text-lg">{t("atRiskBreakdown")}</CardTitle>
         <CardDescription>{ta("subtitle")}</CardDescription>

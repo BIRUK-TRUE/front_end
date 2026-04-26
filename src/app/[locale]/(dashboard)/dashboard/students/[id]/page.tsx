@@ -5,15 +5,19 @@ import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useStudent } from '@/hooks/use-students';
 import { useGuardiansForStudent } from '@/hooks/use-guardians';
+import { useDeleteStudent, useRestoreStudent } from '@/hooks/use-students';
+import { usePermissions } from '@/hooks/use-permissions';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatusBadge, RoleBadge } from '@/components/shared/status-badge';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Link } from '@/i18n/navigation';
-import { ArrowLeft, Pencil, Mail, Phone, MapPin, Calendar, BookOpen, User, Hash, History, UserPlus, MoreHorizontal, ArrowRightLeft, UserMinus } from 'lucide-react';
+import { ArrowLeft, Pencil, Mail, Phone, MapPin, Calendar, BookOpen, User, Hash, History, UserPlus, MoreHorizontal, ArrowRightLeft, UserMinus, Trash2, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarCheck, GraduationCap } from 'lucide-react';
@@ -36,22 +40,26 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { EmptyState } from '@/components/shared/empty-state';
 
-export default function StudentDetailPage() {
+function StudentDetailPage() {
   const t = useTranslations('students');
   const tc = useTranslations('common');
   const tg = useTranslations('guardians');
   const te = useTranslations('enrollments');
   const { id } = useParams<{ id: string }>();
+  const { canManageStudents, canDeleteStudent, canRestoreStudent } = usePermissions();
   const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [selectedEnrollment, setSelectedEnrollment] = useState<Enrollment | null>(null);
   const [attendancePage, setAttendancePage] = useState(1);
   const [selectedTerm, setSelectedTerm] = useState<string>('');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: student, isLoading } = useStudent(id);
   const { data: guardians } = useGuardiansForStudent(id);
   const { data: enrollments, isLoading: isLoadingEnrollments } = useStudentEnrollmentHistory(id);
+  const deleteStudent = useDeleteStudent();
+  const restoreStudent = useRestoreStudent();
   
   const activeEnrollment = enrollments?.find(e => e.status === 'active');
   const { data: attendanceData, isLoading: isLoadingAttendance } = useStudentAttendance(id, attendancePage, 20);
@@ -63,6 +71,14 @@ export default function StudentDetailPage() {
   const transferStudent = useTransferStudent(selectedEnrollment?.id || '');
   const withdrawStudent = useWithdrawStudent(selectedEnrollment?.id || '');
 
+  const handleDelete = () => {
+    if (deleteId) {
+      deleteStudent.mutate(deleteId, {
+        onSuccess: () => setDeleteId(null),
+      });
+    }
+  };
+
   if (isLoading) return <LoadingSpinner fullPage text={tc('loading')} />;
   if (!student) return null;
 
@@ -70,6 +86,15 @@ export default function StudentDetailPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
+        <Link href="/dashboard/students" className="hover:text-foreground">
+          {t('title')}
+        </Link>
+        <span>/</span>
+        <span className="text-foreground">{student.full_name}</span>
+      </nav>
+
       <PageHeader
         title={t('studentDetails')}
         actions={
@@ -78,7 +103,7 @@ export default function StudentDetailPage() {
             
             <Dialog open={isEnrollModalOpen} onOpenChange={setIsEnrollModalOpen}>
               <DialogTrigger asChild>
-              {!activeEnrollment && (
+              {!activeEnrollment && canManageStudents && (
                 <Button className="gap-2 min-h-[44px] bg-primary hover:bg-primary/90">
                   <UserPlus className="h-4 w-4" />
                   {t('enrollStudent')}
@@ -104,7 +129,31 @@ export default function StudentDetailPage() {
               </DialogContent>
             </Dialog>
 
-            <Link href={`/dashboard/students/${id}/edit`}><Button className="gap-2 min-h-[44px]" variant="secondary"><Pencil className="h-4 w-4" aria-hidden="true" />{tc('edit')}</Button></Link>
+            {canManageStudents && (
+              <Link href={`/dashboard/students/${id}/edit`}><Button className="gap-2 min-h-[44px]" variant="secondary"><Pencil className="h-4 w-4" aria-hidden="true" />{tc('edit')}</Button></Link>
+            )}
+
+            {!student.is_active && canRestoreStudent && (
+              <Button
+                variant="outline"
+                onClick={() => restoreStudent.mutate(id)}
+                className="gap-2 min-h-[44px]"
+              >
+                <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                {tc('restore')}
+              </Button>
+            )}
+
+            {canDeleteStudent && student.is_active && (
+              <Button
+                variant="destructive"
+                onClick={() => setDeleteId(id)}
+                className="gap-2 min-h-[44px]"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+                {tc('delete')}
+              </Button>
+            )}
           </div>
         }
       />
@@ -485,6 +534,14 @@ export default function StudentDetailPage() {
         }}
         isLoading={withdrawStudent.isPending}
       />
+
+      {/* Delete confirmation */}
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={handleDelete}
+        isLoading={deleteStudent.isPending}
+      />
     </div>
   );
 }
@@ -501,4 +558,8 @@ function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value
       </div>
     </div>
   );
+}
+
+export default function StudentDetailPageWrapper() {
+  return <ProtectedRoute><StudentDetailPage /></ProtectedRoute>;
 }

@@ -25,7 +25,7 @@ export function MetricCard({
   return (
     <Card className={cn("overflow-hidden border-none shadow-md", className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+        <CardTitle className="text-sm font-semibold text-muted-foreground leading-tight line-clamp-2">
           {title}
         </CardTitle>
         <div className="bg-primary/10 p-2 rounded-full">

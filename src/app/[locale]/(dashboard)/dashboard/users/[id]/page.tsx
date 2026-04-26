@@ -1,26 +1,48 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useUser } from '@/hooks/use-users';
 import { usePermissions } from '@/hooks/use-permissions';
+import { useAuthStore } from '@/lib/store/auth-store';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatusBadge, RoleBadge } from '@/components/shared/status-badge';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Link } from '@/i18n/navigation';
-import { ArrowLeft, Pencil, Mail, Phone, MapPin, Calendar } from 'lucide-react';
+import { ArrowLeft, Pencil, Mail, Phone, MapPin, Calendar, Trash2, RotateCcw, ShieldCheck } from 'lucide-react';
 import { format } from 'date-fns';
+import { useDeleteUser, useRestoreUser } from '@/hooks/use-users';
 
-export default function UserDetailPage() {
+function UserDetailPage() {
   const t = useTranslations('users');
   const tc = useTranslations('common');
   const tr = useTranslations('roles');
   const { id } = useParams<{ id: string }>();
   const { data: user, isLoading } = useUser(id);
+  const { canEditUser, canDeleteUser, canRestoreUser } = usePermissions();
+  const { user: currentUser } = useAuthStore();
+  const deleteUser = useDeleteUser();
+  const restoreUser = useRestoreUser();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const userRoles = (user?.roles || []).map((r: any) => typeof r === 'string' ? r : r.name);
+  const canEdit = canEditUser(userRoles);
+  const canDelete = canDeleteUser(userRoles);
+  const isOwnProfile = currentUser?.id === id;
+
+  const handleDelete = () => {
+    if (deleteId) {
+      deleteUser.mutate(deleteId, {
+        onSuccess: () => setDeleteId(null),
+      });
+    }
+  };
 
   if (isLoading) return <LoadingSpinner fullPage text={tc('loading')} />;
   if (!user) return null;
@@ -34,6 +56,15 @@ export default function UserDetailPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
+        <Link href="/dashboard/users" className="hover:text-foreground">
+          {t('title')}
+        </Link>
+        <span>/</span>
+        <span className="text-foreground">{user.full_name}</span>
+      </nav>
+
       <PageHeader
         title={t('userDetails')}
         actions={
@@ -44,12 +75,34 @@ export default function UserDetailPage() {
                 {tc('back')}
               </Button>
             </Link>
-            <Link href={`/dashboard/users/${id}/edit`}>
-              <Button className="gap-2 min-h-[44px]">
-                <Pencil className="h-4 w-4" aria-hidden="true" />
-                {tc('edit')}
+            {canEdit && !isOwnProfile && (
+              <Link href={`/dashboard/users/${id}/edit`}>
+                <Button className="gap-2 min-h-[44px]">
+                  <Pencil className="h-4 w-4" aria-hidden="true" />
+                  {tc('edit')}
+                </Button>
+              </Link>
+            )}
+            {!user.is_active && canRestoreUser && (
+              <Button
+                variant="outline"
+                onClick={() => restoreUser.mutate(id)}
+                className="gap-2 min-h-[44px]"
+              >
+                <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                {tc('restore')}
               </Button>
-            </Link>
+            )}
+            {canDelete && !isOwnProfile && user.is_active && (
+              <Button
+                variant="destructive"
+                onClick={() => setDeleteId(id)}
+                className="gap-2 min-h-[44px]"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+                {tc('delete')}
+              </Button>
+            )}
           </div>
         }
       />
@@ -106,8 +159,20 @@ export default function UserDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete confirmation */}
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={handleDelete}
+        isLoading={deleteUser.isPending}
+      />
     </div>
   );
+}
+
+export default function UserDetailPageWrapper() {
+  return <ProtectedRoute><UserDetailPage /></ProtectedRoute>;
 }
 
 function InfoRow({

@@ -7,36 +7,49 @@ import { z } from 'zod';
 import { useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useCreateStudent } from '@/hooks/use-students';
+import { useGuardians } from '@/hooks/use-guardians';
+import { usePermissions } from '@/hooks/use-permissions';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, ArrowRight, Loader2, AlertCircle, Upload, X } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 
-export default function CreateStudentPage() {
+function CreateStudentForm() {
   const t = useTranslations('students');
   const tc = useTranslations('common');
   const tv = useTranslations('validation');
   const router = useRouter();
   const createStudent = useCreateStudent();
+  const { data: guardians } = useGuardians();
   const [step, setStep] = useState(1);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const studentSchema = z.object({
     email: z.string().min(1, tv('emailRequired')).email(tv('invalidEmail')),
     full_name: z.string().min(2, tv('nameMinLength')),
-    phone_number: z.string().optional(),
+    phone_number: z.string().regex(/^\+251\d{9}$/, { message: t('phoneInvalid') }).optional(),
     address: z.string().optional(),
     password: z.string().optional(),
     admission_date: z.string().min(1, tv('admissionDateRequired')),
-    date_of_birth: z.string().min(1, tv('dateOfBirthRequired')),
+    date_of_birth: z.string().refine((val) => {
+      const date = new Date(val);
+      const now = new Date();
+      const minAge = new Date(now.getFullYear() - 25, now.getMonth(), now.getDate());
+      const maxAge = new Date(now.getFullYear() - 10, now.getMonth(), now.getDate());
+      return date >= minAge && date <= maxAge;
+    }, { message: t('dateOfBirthInvalid') }),
     sex: z.enum(['M', 'F'], { message: tv('sexRequired') }),
     nationality: z.string().optional(),
     previous_school: z.string().optional(),
     ministry_exam_result: z.coerce.number().min(0).max(100).optional(),
+    guardian_id: z.string().optional(),
   });
 
   type StudentForm = z.infer<typeof studentSchema>;
@@ -48,7 +61,6 @@ export default function CreateStudentPage() {
     watch,
     trigger,
     formState: { errors },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } = useForm<StudentForm>({
     resolver: zodResolver(studentSchema) as any,
     defaultValues: {
@@ -67,6 +79,20 @@ export default function CreateStudentPage() {
 
   const sex = watch('sex');
 
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setPhotoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removePhoto = () => {
+    setPhotoPreview(null);
+    setValue('profile_image_url' as any, '');
+  };
+
   const goToStep2 = async () => {
     const valid = await trigger(['email', 'full_name', 'phone_number', 'address']);
     if (valid) setStep(2);
@@ -74,7 +100,7 @@ export default function CreateStudentPage() {
 
   const onSubmit = (data: StudentForm) => {
     createStudent.mutate(data as any, {
-      onSuccess: () => router.push('/dashboard/students'),
+      onSuccess: (result) => router.push(`/dashboard/students/${result.id}`),
     });
   };
 
@@ -110,6 +136,38 @@ export default function CreateStudentPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
             {step === 1 && (
               <>
+                {/* Photo Upload */}
+                <div className="space-y-2">
+                  <Label>{t('photo')}</Label>
+                  <div className="flex items-start gap-4">
+                    {photoPreview ? (
+                      <div className="relative h-24 w-24 rounded-lg overflow-hidden border">
+                        <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={removePhoto}
+                          className="absolute top-1 right-1 bg-destructive text-white rounded-full p-1 hover:bg-destructive/90"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="h-24 w-24 rounded-lg border border-dashed flex items-center justify-center bg-muted">
+                        <Upload className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="h-11"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">{t('uploadPhoto')}</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="email">{tc('email')} *</Label>
                   <Input id="email" type="email" {...register('email')} aria-invalid={!!errors.email} className="h-11" />
@@ -123,12 +181,26 @@ export default function CreateStudentPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="phone_number">{tc('phone')}</Label>
-                    <Input id="phone_number" {...register('phone_number')} className="h-11" />
+                    <Input id="phone_number" placeholder="+2519XXXXXXXX" {...register('phone_number')} aria-invalid={!!errors.phone_number} className="h-11" />
+                    {errors.phone_number && <p className="text-sm text-destructive flex items-center gap-1.5" role="alert"><AlertCircle className="h-3.5 w-3.5" />{errors.phone_number.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="address">{tc('address')}</Label>
                     <Input id="address" {...register('address')} className="h-11" />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="guardian_id">{t('guardian')}</Label>
+                  <Select onValueChange={(v) => setValue('guardian_id', v)}>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder={t('selectGuardian')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {guardians?.items?.map((g: any) => (
+                        <SelectItem key={g.id} value={g.id}>{g.full_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password <span className="text-muted-foreground text-xs">(auto-generated if empty)</span></Label>
@@ -200,5 +272,13 @@ export default function CreateStudentPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function CreateStudentPage() {
+  return (
+    <ProtectedRoute requireRoles={['admin', 'registrar']}>
+      <CreateStudentForm />
+    </ProtectedRoute>
   );
 }

@@ -80,9 +80,9 @@ export function AudienceSelector({ onTypeChange, onTargetChange, selectedType, s
               <SelectValue placeholder={t('selectPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
-              {classes?.items?.map((cls: any) => (
+              {classes?.items?.filter(cls => !!cls.id).map((cls: any) => (
                 <SelectItem key={cls.id} value={cls.id}>
-                  {cls.name}
+                  <span className="truncate max-w-[200px] block">{cls.name}</span>
                 </SelectItem>
               ))}
             </SelectContent>

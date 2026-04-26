@@ -41,17 +41,23 @@ export interface AnalyticsSummary {
 
 export interface AttendanceTrendEntry {
   date: string;
+  present: number;
+  absent: number;
+  late: number;
+  excused: number;
   rate: number;
 }
 
 export interface GradeDistributionEntry {
-  range: string;
+  grade_letter: string;
   count: number;
+  percentage: number;
 }
 
 export interface ClassPerformanceEntry {
   classId: string;
   className: string;
+  sectionName: string;
   avgAttendance: number;
   avgGrade: number;
   atRiskCount: number;

@@ -73,15 +73,39 @@ export function useCreateScheduleEntry() {
 export function useDeleteScheduleEntry() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id }: { id: string }) => {
+    mutationFn: async ({ id, sectionId, termId }: { id: string; sectionId: string; termId: string }) => {
       await axiosInstance.delete(`/schedule/${id}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: scheduleKeys.all });
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: scheduleKeys.bySection(variables.sectionId, variables.termId),
+      });
       toast.success('Schedule entry deleted');
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to delete entry');
+    },
+  });
+}
+
+export function useUpdateScheduleEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, payload }: { id: string; payload: Partial<CreateScheduleEntryPayload> }) => {
+      const { data } = await axiosInstance.patch(`/schedule/${id}`, payload);
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      if (variables.payload.section_id && variables.payload.term_id) {
+        queryClient.invalidateQueries({
+          queryKey: scheduleKeys.bySection(variables.payload.section_id, variables.payload.term_id),
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: scheduleKeys.all });
+      toast.success('Schedule entry updated');
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(error.response?.data?.detail || 'Failed to update entry');
     },
   });
 }

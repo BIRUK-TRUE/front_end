@@ -59,17 +59,62 @@ export interface StudentGradeSummary {
 }
 
 export interface ReportCard {
-  student_id: string;
-  student_name: string;
-  registration_number: string;
-  term_name: string;
+  student: {
+    id: string;
+    full_name: string;
+    registration_number: string;
+    photo_url?: string;
+    date_of_birth: string;
+    sex: string;
+  };
+  school: {
+    name: string;
+    address: string;
+    phone: string;
+    logo_url?: string;
+  };
   academic_year: string;
+  term: {
+    name: string;
+    start_date: string;
+    end_date: string;
+  };
   class_name: string;
   section_name: string;
-  subjects: StudentGradeSummary[];
-  overall_average: number;
-  rank?: number;
-  total_students?: number;
-  conduct?: string;
-  teacher_comment?: string;
+  subjects: ReportCardSubject[];
+  summary: {
+    total_subjects: number;
+    subjects_passed: number;
+    subjects_failed: number;
+    overall_average: number;
+    overall_letter_grade: string;
+    rank?: number;
+    total_students?: number;
+    attendance_rate: number;
+    total_school_days: number;
+    days_present: number;
+    days_absent: number;
+    teacher_remarks?: string;
+    director_remarks?: string;
+  };
+  promotion_status: 'promoted' | 'retained' | 'pending';
+}
+
+export interface ReportCardSubject {
+  subject_name: string;
+  subject_category: string;
+  teacher_name: string;
+  assessments: {
+    name: string;
+    type: string;
+    score: number;
+    max_score: number;
+    weight: number;
+  }[];
+  total_score: number;
+  max_total: number;
+  percentage: number;
+  letter_grade: string;
+  passed: boolean;
+  remarks?: string;
 }

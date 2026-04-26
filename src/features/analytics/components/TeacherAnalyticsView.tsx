@@ -60,14 +60,14 @@ export function TeacherAnalyticsView() {
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-12">
-        <div className="lg:col-span-8">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
+        <div className="lg:col-span-2">
           <AttendanceTrendChart 
             data={trendData || []} 
             isLoading={isLoadingTrend} 
           />
         </div>
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-1">
           <AtRiskSummaryChart 
             data={summary?.atRiskCounts || { critical: 0, high: 0, medium: 0, low: 0 }} 
             isLoading={isLoadingSummary} 

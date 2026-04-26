@@ -210,7 +210,7 @@ export default function AttendancePage() {
                 <SelectContent>
                   {yearsData?.items?.map((year: any) => (
                     <SelectItem key={year.id} value={year.id}>
-                      {year.name} {year.is_current ? `(${tc('current')})` : ''}
+                      {year.name} {year.is_current ? `(${t('current')})` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -226,7 +226,7 @@ export default function AttendancePage() {
                 <SelectContent>
                   {classesData?.items?.map((cls: any) => (
                     <SelectItem key={cls.id} value={cls.id}>
-                      {cls.name} (Grade {cls.grade_level})
+                      {cls.name} ({tc('class')} {cls.grade_level})
                     </SelectItem>
                   ))}
                 </SelectContent>

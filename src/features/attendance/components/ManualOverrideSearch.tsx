@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Search, UserPlus, CheckCircle2 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { AttendanceStatus } from '../types';
+import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, UserPlus, CheckCircle2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { AttendanceStatus } from "../types";
 
 interface Student {
   id: string;
@@ -22,23 +22,26 @@ interface ManualOverrideSearchProps {
   className?: string;
 }
 
-export function ManualOverrideSearch({ 
-  students, 
-  onMark, 
+export function ManualOverrideSearch({
+  students,
+  onMark,
   markedStudents,
-  className 
+  className,
 }: ManualOverrideSearchProps) {
-  const t = useTranslations('faceAttendance.station');
-  const tc = useTranslations('common');
-  const [query, setQuery] = useState('');
+  const t = useTranslations("faceAttendance.station");
+  const ta = useTranslations("attendancePage");
+  const [query, setQuery] = useState("");
 
   const filteredStudents = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
-    return students.filter(s => 
-      s.name.toLowerCase().includes(q) || 
-      s.registration_number.toLowerCase().includes(q)
-    ).slice(0, 5); // Limit results for clean UI
+    return students
+      .filter(
+        (s) =>
+          s.name.toLowerCase().includes(q) ||
+          s.registration_number.toLowerCase().includes(q),
+      )
+      .slice(0, 5); // Limit results for clean UI
   }, [students, query]);
 
   return (
@@ -46,7 +49,7 @@ export function ManualOverrideSearch({
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder={t('searchStudent')}
+          placeholder={t("searchStudent")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="pl-9 h-11"
@@ -61,44 +64,46 @@ export function ManualOverrideSearch({
                 {filteredStudents.map((student) => {
                   const isMarked = markedStudents.has(student.id);
                   return (
-                    <div 
+                    <div
                       key={student.id}
                       className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors"
                     >
                       <div>
                         <p className="text-sm font-semibold">{student.name}</p>
-                        <p className="text-xs text-muted-foreground font-mono">{student.registration_number}</p>
+                        <p className="text-xs text-muted-foreground font-mono">
+                          {student.registration_number}
+                        </p>
                       </div>
-                      
+
                       {isMarked ? (
                         <div className="flex items-center gap-1 text-emerald-600 text-xs font-medium">
                           <CheckCircle2 className="h-4 w-4" />
-                          Marked
+                          {t("alreadyMarked")}
                         </div>
                       ) : (
                         <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="secondary"
                             onClick={() => {
                               onMark(student.id, AttendanceStatus.PRESENT);
-                              setQuery('');
+                              setQuery("");
                             }}
                             className="h-8 gap-1"
                           >
                             <UserPlus className="h-3 w-3" />
-                            {t('present')}
+                            {ta("present")}
                           </Button>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             onClick={() => {
                               onMark(student.id, AttendanceStatus.LATE);
-                              setQuery('');
+                              setQuery("");
                             }}
                             className="h-8 gap-1"
                           >
-                            {t('late')}
+                            {ta("late")}
                           </Button>
                         </div>
                       )}
