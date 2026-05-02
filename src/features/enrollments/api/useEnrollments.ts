@@ -39,8 +39,8 @@ export const useStudentEnrollmentHistory = (studentId: string) => {
   return useQuery({
     queryKey: enrollmentKeys.byStudent(studentId),
     queryFn: async () => {
-      const { data } = await axiosInstance.get<Enrollment[]>(`/enrollments/student/${studentId}`);
-      return data;
+      const { data } = await axiosInstance.get<PaginatedResponse<Enrollment>>(`/enrollments/student/${studentId}`);
+      return data.items || [];
     },
     enabled: !!studentId,
   });

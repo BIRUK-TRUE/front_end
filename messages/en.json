@@ -119,7 +119,9 @@
     "guardianUpdated": "Guardian updated successfully",
     "guardianUpdateFailed": "Failed to update guardian",
     "guardianDeleted": "Guardian deleted successfully",
-    "guardianDeleteFailed": "Failed to delete guardian"
+    "guardianDeleteFailed": "Failed to delete guardian",
+    "optional": "Optional",
+    "none": "None"
   },
   "auth": {
     "login": "Login",

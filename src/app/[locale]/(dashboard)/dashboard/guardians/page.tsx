@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { useGuardians, useDeleteGuardian, useRestoreGuardian } from '@/hooks/use-guardians';
+import { useGuardians, useDeleteGuardian } from '@/hooks/use-guardians';
 import { usePermissions } from '@/hooks/use-permissions';
 import { PageHeader } from '@/components/shared/page-header';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -30,7 +30,6 @@ export default function GuardiansPage() {
   const filters = { page, size: 20, search: search || undefined, is_active: statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined };
   const { data, isLoading } = useGuardians(filters);
   const deleteGuardian = useDeleteGuardian();
-  const restoreGuardian = useRestoreGuardian();
 
   const columns: ColumnDef<any>[] = [
     {
@@ -90,13 +89,9 @@ export default function GuardiansPage() {
                   <Pencil className="h-4 w-4" />{tc('edit')}
                 </Link>
               </DropdownMenuItem>
-              {guardian.is_active ? (
+              {guardian.is_active && (
                 <DropdownMenuItem onClick={() => setDeleteId(guardian.id)} className="text-destructive focus:text-destructive flex items-center gap-2">
                   <Trash2 className="h-4 w-4" />{tc('delete')}
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem onClick={() => restoreGuardian.mutate(guardian.id)} className="text-green-600 focus:text-green-600 flex items-center gap-2">
-                  <UserCheck className="h-4 w-4" />{tc('restore')}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>

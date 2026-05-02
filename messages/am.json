@@ -111,7 +111,9 @@
     "guardianUpdated": "ሞግዚት በተሳካ ሁኔታ ተዘምኗል",
     "guardianUpdateFailed": "ሞግዚት ማዘምን አልተሳካም",
     "guardianDeleted": "ሞግዚት በተሳካ ሁኔታ ተሰርዟል",
-    "guardianDeleteFailed": "ሞግዚት መሰርዝ አልተሳካም"
+    "guardianDeleteFailed": "ሞግዚት መሰርዝ አልተሳካም",
+    "optional": "አማራጭ",
+    "none": "ምንም"
   },
   "auth": {
     "login": "ግባ",
