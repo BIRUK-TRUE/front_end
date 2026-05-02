@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Download, Printer, ChevronLeft, ChevronRight } from "lucide-react";
 import type { ScheduleEntry } from "../types";
 
 export function StudentWeeklyTimetable({
@@ -8,6 +11,59 @@ export function StudentWeeklyTimetable({
   schedule: ScheduleEntry[];
 }) {
   const t = useTranslations("studentPortal.schedule");
+  const tc = useTranslations("common");
+  const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
+  
+  // Find max period number to determine grid rows
+  const maxPeriod = Math.max(...schedule.map((s) => s.periodNumber), 0);
+  const periods = Array.from({ length: maxPeriod }, (_, i) => i + 1);
+
+  const handleExport = () => {
+    const dayNames = ["monday", "tuesday", "wednesday", "thursday", "friday"] as const;
+    const csvContent = [
+      ["Period", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      ...periods.map((periodNum) => {
+        const row = [periodNum.toString()];
+        dayNames.forEach((day) => {
+          const entry = schedule.find((s) => s.dayOfWeek === day && s.periodNumber === periodNum);
+          if (entry) {
+            row.push(`${entry.subjectName} - ${entry.teacherName} (${entry.startTime}-${entry.endTime})`);
+          } else {
+            row.push("");
+          }
+        });
+        return row;
+      }),
+    ]
+      .map((row) => row.join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `student-schedule-week-${currentWeekOffset}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const goToPreviousWeek = () => {
+    setCurrentWeekOffset((prev) => prev - 1);
+  };
+
+  const goToNextWeek = () => {
+    setCurrentWeekOffset((prev) => prev + 1);
+  };
+
+  const goToCurrentWeek = () => {
+    setCurrentWeekOffset(0);
+  };
   
   if (!schedule || schedule.length === 0) {
     return (
@@ -26,10 +82,6 @@ export function StudentWeeklyTimetable({
   // Pre-process schedule into a grid: 
   // Map Day -> Period Number -> Entry
   const dayNames = ["monday", "tuesday", "wednesday", "thursday", "friday"] as const;
-  
-  // Find max period number to determine grid rows
-  const maxPeriod = Math.max(...schedule.map((s) => s.periodNumber), 0);
-  const periods = Array.from({ length: maxPeriod }, (_, i) => i + 1);
 
   const grid: Record<string, Record<number, ScheduleEntry>> = {
     monday: {},
@@ -57,8 +109,62 @@ export function StudentWeeklyTimetable({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("subtitle")}</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>{t("title")}</CardTitle>
+            <CardDescription>{t("subtitle")}</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousWeek}
+              disabled={currentWeekOffset <= -4}
+              className="gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              {tc("previous")}
+            </Button>
+            {currentWeekOffset !== 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={goToCurrentWeek}
+              >
+                {tc("today")}
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextWeek}
+              disabled={currentWeekOffset >= 4}
+              className="gap-1"
+            >
+              {tc("next")}
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <div className="w-px h-6 bg-border mx-1" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              className="gap-1"
+            >
+              <Download className="h-4 w-4" />
+              {tc("export")}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrint}
+              className="gap-1"
+            >
+              <Printer className="h-4 w-4" />
+              {tc("print")}
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">

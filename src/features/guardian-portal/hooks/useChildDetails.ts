@@ -5,6 +5,20 @@ import { useAuthStore } from '@/lib/store/auth-store';
 import type { ChildDetails } from '../types';
 import type { AttendanceRecord, PaginatedResponse } from '../../student-portal/types';
 
+interface AttendanceFilters {
+  page?: number;
+  size?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  status?: string;
+}
+
+interface GradeFilters {
+  termId?: string;
+  subjectId?: string;
+  yearId?: string;
+}
+
 export function useChildDetails(studentId: string) {
   const { isHydrated } = useAuthStore();
 
@@ -12,7 +26,7 @@ export function useChildDetails(studentId: string) {
     queryKey: queryKeys.guardianPortal.childDetails(studentId),
     queryFn: async () => {
       const { data } = await api.get<ChildDetails>(
-        `/api/students/${studentId}/guardian-view`
+        `/students/${studentId}/guardian-view`
       );
       return data;
     },
@@ -20,14 +34,14 @@ export function useChildDetails(studentId: string) {
   });
 }
 
-export function useChildAttendance(studentId: string, filters: any) {
+export function useChildAttendance(studentId: string, filters: AttendanceFilters) {
   const { isHydrated } = useAuthStore();
 
   return useQuery({
     queryKey: queryKeys.guardianPortal.attendance(studentId, filters),
     queryFn: async () => {
       const { data } = await api.get<PaginatedResponse<AttendanceRecord>>(
-        `/api/students/${studentId}/attendance/records`,
+        `/students/${studentId}/attendance/records`,
         { params: filters }
       );
       return data;
@@ -36,14 +50,14 @@ export function useChildAttendance(studentId: string, filters: any) {
   });
 }
 
-export function useChildGrades(studentId: string, filters: any) {
+export function useChildGrades(studentId: string, filters: GradeFilters) {
   const { isHydrated } = useAuthStore();
 
   return useQuery({
     queryKey: queryKeys.guardianPortal.grades(studentId, filters),
     queryFn: async () => {
       const { data } = await api.get(
-        `/api/students/${studentId}/grades`,
+        `/students/${studentId}/grades`,
         { params: filters }
       );
       return data;
@@ -59,7 +73,7 @@ export function useChildSchedule(studentId: string) {
     queryKey: queryKeys.guardianPortal.schedule(studentId),
     queryFn: async () => {
       const { data } = await api.get(
-        `/api/students/${studentId}/schedule`
+        `/students/${studentId}/schedule`
       );
       return data;
     },

@@ -48,6 +48,7 @@ export function TermModal({
     resolver: zodResolver(termSchema) as any,
     defaultValues: {
       name: '',
+      term_number: 1,
       start_date: '',
       end_date: '',
     },
@@ -59,12 +60,14 @@ export function TermModal({
       if (term) {
         form.reset({
           name: term.name,
+          term_number: term.term_number,
           start_date: term.start_date.split('T')[0],
           end_date: term.end_date.split('T')[0],
         });
       } else {
         form.reset({
           name: '',
+          term_number: 1,
           start_date: '',
           end_date: '',
         });
@@ -100,6 +103,26 @@ export function TermModal({
                   <FormLabel>{ta('termName')} <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
                     <Input placeholder={ta('termNamePlaceholder')} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="term_number"
+              render={({ field }: { field: any }) => (
+                <FormItem>
+                  <FormLabel>{ta('termNumber', 'Term Number')} <span className="text-destructive">*</span></FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      min={1} 
+                      max={4} 
+                      {...field} 
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -11,13 +11,13 @@ import type {
 
 export function useMySubjectSummary(termId?: string) {
   const { user, isHydrated } = useAuthStore();
-  const studentId = user?.id ?? '';
+  const studentId = user?.student_id || user?.id || '';
 
   return useQuery({
     queryKey: queryKeys.studentPortal.grades(studentId, { type: 'summary', termId }),
     queryFn: async () => {
       const { data } = await api.get<GradesSummaryResponse>(
-        `/api/students/${studentId}/grades/summary`,
+        `/students/${studentId}/grades/summary`,
         { params: { termId } }
       );
       return data;
@@ -33,13 +33,13 @@ export function useMyAssessmentGrades(filters: {
   size: number;
 }) {
   const { user, isHydrated } = useAuthStore();
-  const studentId = user?.id ?? '';
+  const studentId = user?.student_id || user?.id || '';
 
   return useQuery({
     queryKey: queryKeys.studentPortal.grades(studentId, { type: 'assessments', ...filters }),
     queryFn: async () => {
       const { data } = await api.get<PaginatedResponse<AssessmentGradeRecord>>(
-        `/api/students/${studentId}/grades/assessments`,
+        `/students/${studentId}/grades/assessments`,
         { params: filters }
       );
       return data;
@@ -50,13 +50,13 @@ export function useMyAssessmentGrades(filters: {
 
 export function useMyReportCard(termId: string) {
   const { user, isHydrated } = useAuthStore();
-  const studentId = user?.id ?? '';
+  const studentId = user?.student_id || user?.id || '';
 
   return useQuery({
     queryKey: queryKeys.studentPortal.reportCard(studentId, termId),
     queryFn: async () => {
       const { data } = await api.get<ReportCardData>(
-        `/api/students/${studentId}/grades/report-card`,
+        `/students/${studentId}/grades/report-card`,
         { params: { termId } }
       );
       return data;

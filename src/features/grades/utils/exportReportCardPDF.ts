@@ -32,7 +32,6 @@ export async function exportReportCardAsPDF(
     // Save PDF
     pdf.save(filename);
   } catch (error) {
-    console.error('Failed to export PDF:', error);
     throw new Error('Failed to generate PDF');
   }
 }

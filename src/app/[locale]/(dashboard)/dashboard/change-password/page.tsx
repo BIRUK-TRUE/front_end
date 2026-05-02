@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Loader2, AlertCircle, Save } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { toast } from 'sonner';
+import { authService } from '@/lib/api/auth.service';
 type PasswordForm = {
   current_password: string;
   new_password: string;
@@ -45,14 +46,13 @@ export default function ChangePasswordPage() {
 
   const onSubmit = async (data: PasswordForm) => {
     try {
-      // In a real app, you'd call an API here
-      // await authService.changePassword(data);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API
+      await authService.changePassword(data.current_password, data.new_password, data.confirm_password);
       toast.success(t('passwordChanged'));
       reset();
       router.push('/dashboard/profile');
-    } catch (_error) {
-      toast.error(t('changePasswordFailed'));
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { detail?: string } } };
+      toast.error(err.response?.data?.detail || t('changePasswordFailed'));
     }
   };
 

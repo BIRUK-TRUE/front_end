@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { useStudent, useUpdateStudent } from '@/hooks/use-students';
-import { useGuardiansForStudent, useLinkStudent, useUnlinkStudent } from '@/hooks/use-guardians';
+import { useGuardiansForStudent, useLinkStudent, useUnlinkStudent, useGuardians } from '@/hooks/use-guardians';
 import { usePermissions } from '@/hooks/use-permissions';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageHeader } from '@/components/shared/page-header';
@@ -25,13 +25,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 
 const editStudentSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
-  phone_number: z.string().regex(/^\+251\d{9}$/, { message: 'Invalid phone format' }).optional().or(z.literal('')),
+  phone_number: z.string().optional(),
   address: z.string().optional(),
   nationality: z.string().optional(),
   previous_school: z.string().optional(),
   ministry_exam_result: z.coerce.number().min(0).max(100).optional().or(z.literal('')),
   status: z.string().optional(),
   is_active: z.boolean().optional(),
+  profile_image_url: z.string().optional(),
 });
 
 type EditStudentForm = z.infer<typeof editStudentSchema>;
@@ -43,6 +44,7 @@ function EditStudentForm() {
   const { id } = useParams<{ id: string }>();
   const { data: student, isLoading } = useStudent(id);
   const { data: guardians } = useGuardiansForStudent(id);
+  const { data: availableGuardians } = useGuardians({ is_active: true });
   const updateStudent = useUpdateStudent();
   const linkStudent = useLinkStudent();
   const unlinkStudent = useUnlinkStudent();
@@ -50,6 +52,8 @@ function EditStudentForm() {
   const [step, setStep] = useState(1);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isGuardianModalOpen, setIsGuardianModalOpen] = useState(false);
+  const [selectedGuardianId, setSelectedGuardianId] = useState<string>('');
+  const [relationshipType, setRelationshipType] = useState<string>('guardian');
 
   const {
     register,
@@ -58,7 +62,7 @@ function EditStudentForm() {
     setValue,
     formState: { errors, isDirty },
   } = useForm<EditStudentForm>({
-    resolver: zodResolver(editStudentSchema),
+    resolver: zodResolver(editStudentSchema) as any,
   });
 
   useEffect(() => {
@@ -86,18 +90,22 @@ function EditStudentForm() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setPhotoPreview(reader.result as string);
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setPhotoPreview(result);
+        setValue('profile_image_url', result);
+      };
       reader.readAsDataURL(file);
     }
   };
 
   const removePhoto = () => {
     setPhotoPreview(null);
-    setValue('profile_image_url' as any, '');
+    setValue('profile_image_url' as keyof EditStudentForm, '');
   };
 
   const onSubmit = (data: EditStudentForm) => {
-    const payload: any = { ...data };
+    const payload: Partial<EditStudentForm> = { ...data };
     if (payload.ministry_exam_result === '' || payload.ministry_exam_result === undefined) {
       delete payload.ministry_exam_result;
     }
@@ -107,6 +115,27 @@ function EditStudentForm() {
     updateStudent.mutate(
       { id, data: payload },
       { onSuccess: () => router.push(`/dashboard/students/${id}`) }
+    );
+  };
+
+  const handleLinkGuardian = () => {
+    if (!selectedGuardianId) return;
+    linkStudent.mutate(
+      {
+        guardianId: selectedGuardianId,
+        payload: {
+          student_id: id,
+          relationship_type: relationshipType as any,
+          is_primary: guardians?.length === 0,
+        },
+      },
+      {
+        onSuccess: () => {
+          setIsGuardianModalOpen(false);
+          setSelectedGuardianId('');
+          setRelationshipType('guardian');
+        },
+      }
     );
   };
 
@@ -152,7 +181,7 @@ function EditStudentForm() {
 
       <Card className="max-w-2xl">
         <CardContent className="p-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+          <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-5" noValidate>
             {step === 1 && (
               <>
                 {/* Read-only Registration Number */}
@@ -291,13 +320,70 @@ function EditStudentForm() {
                     <DialogHeader>
                       <DialogTitle>{t('linkGuardian')}</DialogTitle>
                     </DialogHeader>
-                    <p className="text-sm text-muted-foreground">Guardian linking functionality would go here</p>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="guardian-select">{tc('guardian')}</Label>
+                        <Select value={selectedGuardianId} onValueChange={setSelectedGuardianId}>
+                          <SelectTrigger id="guardian-select">
+                            <SelectValue placeholder={t('selectGuardian')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableGuardians?.items?.map((g: { id: string; full_name: string }) => (
+                              <SelectItem key={g.id} value={g.id}>
+                                {g.full_name} ({g.email})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="relationship-type">{t('relationshipType')}</Label>
+                        <Select value={relationshipType} onValueChange={setRelationshipType}>
+                          <SelectTrigger id="relationship-type">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="father">{t('father')}</SelectItem>
+                            <SelectItem value="mother">{t('mother')}</SelectItem>
+                            <SelectItem value="guardian">{t('guardian')}</SelectItem>
+                            <SelectItem value="uncle">{t('uncle')}</SelectItem>
+                            <SelectItem value="aunt">{t('aunt')}</SelectItem>
+                            <SelectItem value="grandparent">{t('grandparent')}</SelectItem>
+                            <SelectItem value="sibling">{t('sibling')}</SelectItem>
+                            <SelectItem value="other">{t('other')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex gap-3 pt-2">
+                        <Button
+                          onClick={handleLinkGuardian}
+                          disabled={!selectedGuardianId || linkStudent.isPending}
+                          className="flex-1"
+                        >
+                          {linkStudent.isPending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              {tc('loading')}
+                            </>
+                          ) : (
+                            t('linkGuardian')
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsGuardianModalOpen(false)}
+                          className="flex-1"
+                        >
+                          {tc('cancel')}
+                        </Button>
+                      </div>
+                    </div>
                   </DialogContent>
                 </Dialog>
               </div>
             ) : (
               <div className="space-y-3">
-                {guardians.map((g: any) => (
+                {guardians.map((g: { id: string; full_name: string; relationship_type: string; is_primary: boolean }) => (
                   <div key={g.id || g.guardian_id} className="flex items-center justify-between p-3 rounded-lg border">
                     <div>
                       <p className="font-medium">{g.full_name || g.guardian_name}</p>

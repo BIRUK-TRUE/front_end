@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from '@/i18n/navigation';
-import { useUser, useUpdateUser } from '@/hooks/use-users';
+import { useUser, useUpdateUser, useUpdateRoles } from '@/hooks/use-users';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { usePermissions } from '@/hooks/use-permissions';
 import { ProtectedRoute } from '@/components/auth/protected-route';
@@ -43,6 +43,7 @@ function EditUserForm() {
   const router = useRouter();
   const { data: user, isLoading: loadingUser } = useUser(id);
   const updateUser = useUpdateUser();
+  const updateRoles = useUpdateRoles();
   const { user: currentUser } = useAuthStore();
   const { canManageRoles } = usePermissions();
   const [isEditingRoles, setIsEditingRoles] = useState(false);
@@ -62,7 +63,7 @@ function EditUserForm() {
 
   useEffect(() => {
     if (user) {
-      const userRoles = (user.roles || []).map((r: any) => typeof r === 'string' ? r : r.name);
+      const userRoles = (user.roles || []).map((r: string | { name: string }) => typeof r === 'string' ? r : r.name);
       setSelectedRoles(userRoles);
       reset({
         full_name: user.full_name,
@@ -95,9 +96,10 @@ function EditUserForm() {
 
   const onRolesSubmit = (data: EditUserForm) => {
     if (!data.role_names || data.role_names.length === 0) return;
-    // Update roles separately using the users service
-    // This would need a separate mutation hook for role updates
-    setIsEditingRoles(false);
+    updateRoles.mutate(
+      { id, roleNames: data.role_names },
+      { onSuccess: () => setIsEditingRoles(false) }
+    );
   };
 
   if (loadingUser) return <LoadingSpinner fullPage text={tc('loading')} />;
@@ -164,9 +166,22 @@ function EditUserForm() {
               <Switch
                 id="is_active"
                 checked={isActive}
-                onCheckedChange={(checked) => setValue('is_active', checked)}
+                onCheckedChange={(checked) => {
+                  if (isOwnProfile && !checked) {
+                    // Prevent deactivating own account
+                    return;
+                  }
+                  setValue('is_active', checked);
+                }}
+                disabled={isOwnProfile}
               />
             </div>
+
+            {isOwnProfile && (
+              <p className="text-xs text-muted-foreground">
+                You cannot deactivate your own account.
+              </p>
+            )}
 
             <div className="flex gap-3 pt-2">
               <Button
@@ -236,9 +251,16 @@ function EditUserForm() {
                     type="button"
                     onClick={handleSubmit(onRolesSubmit)}
                     className="min-h-[44px]"
-                    disabled={updateUser.isPending}
+                    disabled={updateRoles.isPending}
                   >
-                    {tc('save')}
+                    {updateRoles.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                        {tc('loading')}
+                      </>
+                    ) : (
+                      tc('save')
+                    )}
                   </Button>
                   <Button
                     type="button"

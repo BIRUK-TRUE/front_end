@@ -15,20 +15,12 @@ export function useSectionSchedule(sectionId: string, termId: string) {
   return useQuery({
     queryKey: scheduleKeys.bySection(sectionId, termId),
     queryFn: async (): Promise<ScheduleEntry[]> => {
-      // Mocked endpoint: the backend doesn't exist yet, we will handle 404 or return [] safely.
-      try {
-        const { data } = await axiosInstance.get(`/schedule/section/${sectionId}`, {
-          params: { term_id: termId },
-        });
-        return data;
-      } catch (error: any) {
-        if (error.response?.status === 404) return [];
-        throw error;
-      }
+      const { data } = await axiosInstance.get(`/schedule/section/${sectionId}`, {
+        params: { term_id: termId },
+      });
+      return data;
     },
     enabled: !!sectionId && !!termId,
-    // Provide some dummy initialData if we want to visually test a timetable
-    // initialData: []
   });
 }
 
@@ -36,16 +28,10 @@ export function useTeacherSchedule(teacherId: string, termId: string) {
   return useQuery({
     queryKey: scheduleKeys.byTeacher(teacherId, termId),
     queryFn: async (): Promise<ScheduleEntry[]> => {
-      // Mocked endpoint
-      try {
-        const { data } = await axiosInstance.get(`/schedule/teacher/${teacherId}`, {
-          params: { term_id: termId },
-        });
-        return data;
-      } catch (error: any) {
-        if (error.response?.status === 404) return [];
-        throw error;
-      }
+      const { data } = await axiosInstance.get(`/schedule/teacher/${teacherId}`, {
+        params: { term_id: termId },
+      });
+      return data;
     },
     enabled: !!teacherId && !!termId,
   });

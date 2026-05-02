@@ -8,7 +8,7 @@ export enum EnrollmentStatus {
 export interface Enrollment {
   id: string;
   student_id: string;
-  student_name: string;
+  full_name: string;
   academic_year_id: string;
   academic_year_name: string;
   class_id: string;

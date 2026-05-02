@@ -17,7 +17,7 @@ export function useAttendanceBySection(sectionId: string, date: string) {
   return useQuery({
     queryKey: attendanceKeys.bySection(sectionId, date),
     queryFn: async (): Promise<AttendanceRecord[]> => {
-      const { data } = await axiosInstance.get(`/attendance/section/${sectionId}`, {
+      const { data } = await axiosInstance.get(`/attendance/sections/${sectionId}/students`, {
         params: { date },
       });
       return data;

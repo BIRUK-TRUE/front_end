@@ -8,7 +8,6 @@ export interface GuardianFilters {
   has_students?: boolean;
   sort_by?: 'created_at' | 'full_name' | 'email';
   sort_order?: 'asc' | 'desc';
-  [key: string]: any;
 }
 
 export interface StudentLinkPayload {

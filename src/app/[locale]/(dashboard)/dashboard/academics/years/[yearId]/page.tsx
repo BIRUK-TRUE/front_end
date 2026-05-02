@@ -3,20 +3,23 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { useAcademicYear } from '@/features/academics/api/useAcademicYears';
+import { useAcademicYear, useDeleteAcademicYear } from '@/features/academics/api/useAcademicYears';
 import { AcademicYearStatus } from '@/features/academics/types';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, BookOpen, GraduationCap, ArrowLeft, Loader2, Plus, Edit, Archive, CheckCircle, MoreHorizontal } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CalendarDays, BookOpen, GraduationCap, ArrowLeft, Loader2, Plus, Edit, Archive, CheckCircle, MoreHorizontal, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { useTerms, useCreateTerm, useUpdateTerm, useDeleteTerm } from '@/features/academics/api/useTerms';
 import { TermModal } from '@/features/academics/components/TermModal';
 import { type TermForm, type ClassForm } from '@/features/academics/types/schemas';
 import { type Term, type Class } from '@/features/academics/types';
-import { useClasses, useCreateClass, useUpdateClass } from '@/features/academics/api/useClasses';
+import { useClasses, useCreateClass, useUpdateClass, useDeleteClass } from '@/features/academics/api/useClasses';
 import { ClassModal } from '@/features/academics/components/ClassModal';
 import {
   DropdownMenu,
@@ -26,6 +29,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { EmptyState } from '@/components/shared/empty-state';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 
 export default function AcademicYearDetailPage() {
   const t = useTranslations('common');
@@ -40,12 +44,26 @@ export default function AcademicYearDetailPage() {
 
   const createTerm = useCreateTerm(yearId);
   const updateTerm = useUpdateTerm(yearId);
+  const deleteTerm = useDeleteTerm(yearId);
   
   const createClass = useCreateClass(yearId);
   const updateClass = useUpdateClass(yearId);
+  const deleteClass = useDeleteClass(yearId);
+  const deleteYear = useDeleteAcademicYear();
 
   const [isTermModalOpen, setIsTermModalOpen] = useState(false);
   const [editingTerm, setEditingTerm] = useState<Term | null>(null);
+  const [deleteTermId, setDeleteTermId] = useState<string | null>(null);
+
+  const [isClassModalOpen, setIsClassModalOpen] = useState(false);
+  const [editingClass, setEditingClass] = useState<Class | null>(null);
+  const [deleteClassId, setDeleteClassId] = useState<string | null>(null);
+  const [deleteYearDialogOpen, setDeleteYearDialogOpen] = useState(false);
+  
+  const [classSearch, setClassSearch] = useState('');
+  const [classGradeFilter, setClassGradeFilter] = useState('all');
+  const [classPage, setClassPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const openCreateTermModal = () => {
     setEditingTerm(null);
@@ -65,12 +83,10 @@ export default function AcademicYearDetailPage() {
         await createTerm.mutateAsync(formData);
       }
       setIsTermModalOpen(false);
-    } catch (error) {
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || t('error'));
     }
   };
-
-  const [isClassModalOpen, setIsClassModalOpen] = useState(false);
-  const [editingClass, setEditingClass] = useState<Class | null>(null);
 
   const openCreateClassModal = () => {
     setEditingClass(null);
@@ -90,7 +106,8 @@ export default function AcademicYearDetailPage() {
         await createClass.mutateAsync(formData);
       }
       setIsClassModalOpen(false);
-    } catch (error) {
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || t('error'));
     }
   };
 
@@ -100,6 +117,16 @@ export default function AcademicYearDetailPage() {
       data: { status: 'active' } as any
     });
   };
+
+  const filteredClasses = classesData?.items?.filter(c => {
+    const matchesSearch = c.name.toLowerCase().includes(classSearch.toLowerCase());
+    const matchesGrade = classGradeFilter === 'all' || c.grade_level === classGradeFilter;
+    return matchesSearch && matchesGrade;
+  }) || [];
+
+  const totalPages = Math.ceil(filteredClasses.length / ITEMS_PER_PAGE);
+  const startIndex = (classPage - 1) * ITEMS_PER_PAGE;
+  const paginatedClasses = filteredClasses.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const getStatusBadge = (status?: AcademicYearStatus, isCurrent?: boolean, t?: any) => {
     const translate = t || ((key: string) => key);
@@ -243,6 +270,14 @@ export default function AcademicYearDetailPage() {
                                   </DropdownMenuItem>
                                 </>
                               )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => setDeleteTermId(term.id)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                {ta('delete')}
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                        </div>
@@ -255,7 +290,7 @@ export default function AcademicYearDetailPage() {
         </TabsContent>
 
         <TabsContent value="classes" className="space-y-4 outline-none">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-medium">{ta('classes')}</h3>
               <p className="text-sm text-muted-foreground">{ta('manageClasses')}</p>
@@ -265,6 +300,39 @@ export default function AcademicYearDetailPage() {
               {ta('addClass')}
             </Button>
           </div>
+          
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={ta('searchClasses')}
+                value={classSearch}
+                onChange={(e) => { setClassSearch(e.target.value); setClassPage(1); }}
+                className="pl-9"
+              />
+            </div>
+            <Select value={classGradeFilter} onValueChange={(value) => { setClassGradeFilter(value); setClassPage(1); }}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder={ta('allGrades')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{ta('allGrades')}</SelectItem>
+                <SelectItem value="1">Grade 1</SelectItem>
+                <SelectItem value="2">Grade 2</SelectItem>
+                <SelectItem value="3">Grade 3</SelectItem>
+                <SelectItem value="4">Grade 4</SelectItem>
+                <SelectItem value="5">Grade 5</SelectItem>
+                <SelectItem value="6">Grade 6</SelectItem>
+                <SelectItem value="7">Grade 7</SelectItem>
+                <SelectItem value="8">Grade 8</SelectItem>
+                <SelectItem value="9">Grade 9</SelectItem>
+                <SelectItem value="10">Grade 10</SelectItem>
+                <SelectItem value="11">Grade 11</SelectItem>
+                <SelectItem value="12">Grade 12</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
           <Card>
             <CardContent className="p-0">
                <div className="relative overflow-x-auto min-h-[200px]">
@@ -272,7 +340,7 @@ export default function AcademicYearDetailPage() {
                   <div className="flex h-48 items-center justify-center">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
-                ) : !classesData?.items?.length ? (
+                ) : !filteredClasses.length ? (
                   <EmptyState
                     icon={BookOpen}
                     title={ta('noClassesConfigured')}
@@ -283,7 +351,7 @@ export default function AcademicYearDetailPage() {
                   />
                 ) : (
                   <div className="divide-y">
-                     {classesData.items.map((classItem) => (
+                     {paginatedClasses.map((classItem) => (
                        <div key={classItem.id} className="flex items-center justify-between p-4 hover:bg-muted/30">
                           <div>
                             <div className="flex items-center gap-2 mb-1">
@@ -328,10 +396,46 @@ export default function AcademicYearDetailPage() {
                                 <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
                                 {ta('editDetails')}
                               </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => setDeleteClassId(classItem.id)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                {ta('delete')}
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                        </div>
                      ))}
+                  </div>
+                )}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between px-4 py-3 border-t">
+                    <div className="text-sm text-muted-foreground">
+                      {ta('showing', { start: startIndex + 1, end: Math.min(startIndex + ITEMS_PER_PAGE, filteredClasses.length), total: filteredClasses.length })}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setClassPage(p => Math.max(1, p - 1))}
+                        disabled={classPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm font-medium">
+                        {classPage} / {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setClassPage(p => Math.min(totalPages, p + 1))}
+                        disabled={classPage === totalPages}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 )}
                </div>
@@ -380,6 +484,46 @@ export default function AcademicYearDetailPage() {
         classItem={editingClass}
         onSubmit={handleClassSubmit}
         isLoading={createClass.isPending || updateClass.isPending}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTermId}
+        onOpenChange={(open) => { if (!open) setDeleteTermId(null); }}
+        onConfirm={async () => {
+          if (deleteTermId) {
+            await deleteTerm.mutateAsync(deleteTermId);
+            setDeleteTermId(null);
+          }
+        }}
+        title={ta('deleteTermTitle')}
+        description={ta('deleteTermDescription')}
+        isLoading={deleteTerm.isPending}
+      />
+
+      <ConfirmDialog
+        open={!!deleteClassId}
+        onOpenChange={(open) => { if (!open) setDeleteClassId(null); }}
+        onConfirm={async () => {
+          if (deleteClassId) {
+            await deleteClass.mutateAsync(deleteClassId);
+            setDeleteClassId(null);
+          }
+        }}
+        title={ta('deleteClassTitle')}
+        description={ta('deleteClassDescription')}
+        isLoading={deleteClass.isPending}
+      />
+
+      <ConfirmDialog
+        open={deleteYearDialogOpen}
+        onOpenChange={setDeleteYearDialogOpen}
+        onConfirm={async () => {
+          await deleteYear.mutateAsync(yearId);
+          router.push('/dashboard/academics/years');
+        }}
+        title={ta('deleteYearTitle')}
+        description={ta('deleteYearDescription')}
+        isLoading={deleteYear.isPending}
       />
     </div>
   );

@@ -5,14 +5,18 @@ import { axiosInstance } from "@/lib/api/axios";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { TeacherDashboardStats } from "../types";
 
+type TeacherScheduleApiEntry = {
+  id: string;
+  section_id: string;
+  day_of_week: number;
+};
+
 export function useTeacherDashboard(teacherId: string) {
   return useQuery({
     queryKey: queryKeys.teacher.dashboard(teacherId),
     queryFn: async (): Promise<TeacherDashboardStats> => {
-      // BACKEND REQUIRED: GET /teachers/{teacherId}/dashboard-stats
-      // Expected response: { todayClasses, totalStudents, pendingGrades, attendanceTakenToday, recentActivity, currentTermName }
-      const { data } = await axiosInstance.get(
-        `/teachers/${teacherId}/dashboard-stats`,
+      const { data } = await axiosInstance.get<TeacherDashboardStats>(
+        `/teachers/${teacherId}/dashboard-stats`
       );
       return data;
     },

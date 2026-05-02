@@ -38,6 +38,7 @@ const editTeacherSchema = z.object({
   emergency_contact_phone: z.string().optional(),
   office_location: z.string().optional(),
   status: z.string().optional(),
+  profile_image_url: z.string().optional(),
 });
 
 type EditTeacherForm = z.infer<typeof editTeacherSchema>;
@@ -85,7 +86,11 @@ function EditTeacherForm() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setPhotoPreview(reader.result as string);
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setPhotoPreview(result);
+        setValue('profile_image_url', result);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -147,7 +152,7 @@ function EditTeacherForm() {
 
             {/* Photo Upload */}
             <div className="space-y-2">
-              <Label>{ts('photo')}</Label>
+              <Label>{tc('photo')}</Label>
               <div className="flex items-start gap-4">
                 {photoPreview ? (
                   <div className="relative h-24 w-24 rounded-lg overflow-hidden border">
@@ -172,7 +177,7 @@ function EditTeacherForm() {
                     onChange={handlePhotoUpload}
                     className="h-11"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">{ts('changePhoto')}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('changePhoto')}</p>
                 </div>
               </div>
             </div>

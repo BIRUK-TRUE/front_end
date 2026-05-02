@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useEnrollments, useTransferStudent, useWithdrawStudent } from '@/features/enrollments/api/useEnrollments';
+import { useEnrollments, useTransferStudent, useWithdrawStudent, useUpdateEnrollment, useDeleteEnrollment } from '@/features/enrollments/api/useEnrollments';
 import { type Enrollment } from '@/features/enrollments/types';
 import { useAcademicYears } from '@/features/academics/api/useAcademicYears';
 import { PageHeader } from '@/components/shared/page-header';
@@ -39,6 +39,8 @@ import { format } from 'date-fns';
 import { EmptyState } from '@/components/shared/empty-state';
 import { TransferModal } from '@/features/enrollments/components/TransferModal';
 import { WithdrawModal } from '@/features/enrollments/components/WithdrawModal';
+import { EditEnrollmentModal } from '@/features/enrollments/components/EditEnrollmentModal';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 
 export default function EnrollmentsPage() {
   const t = useTranslations('enrollments');
@@ -66,6 +68,11 @@ export default function EnrollmentsPage() {
 
   const transferStudent = useTransferStudent(selectedEnrollment?.id || '');
   const withdrawStudent = useWithdrawStudent(selectedEnrollment?.id || '');
+  const updateEnrollment = useUpdateEnrollment();
+  const deleteEnrollment = useDeleteEnrollment();
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [deleteEnrollmentId, setDeleteEnrollmentId] = useState<string | null>(null);
 
   const handleResetFilters = () => {
     setSearch('');
@@ -81,7 +88,7 @@ export default function EnrollmentsPage() {
       cell: ({ row }) => (
         <div className="flex flex-col">
           <span className="font-semibold text-foreground text-base">
-            {row.original.student_name}
+            {row.original.full_name}
           </span>
           <span className="text-xs text-muted-foreground font-mono">
             ID: {row.original.id.split('-')[0].toUpperCase()}
@@ -152,6 +159,15 @@ export default function EnrollmentsPage() {
                   Student History
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="flex items-center gap-2"
+                onClick={() => {
+                  setSelectedEnrollment(enrollment);
+                  setIsEditModalOpen(true);
+                }}
+              >
+                {t('editEnrollment')}
+              </DropdownMenuItem>
               {enrollment.status === 'active' && (
                 <>
                   <DropdownMenuItem 
@@ -176,6 +192,12 @@ export default function EnrollmentsPage() {
                   </DropdownMenuItem>
                 </>
               )}
+              <DropdownMenuItem 
+                className="flex items-center gap-2 text-destructive focus:text-destructive"
+                onClick={() => setDeleteEnrollmentId(enrollment.id)}
+              >
+                {t('deleteEnrollment')}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -306,6 +328,31 @@ export default function EnrollmentsPage() {
           setIsWithdrawModalOpen(false);
         }}
         isLoading={withdrawStudent.isPending}
+      />
+
+      <EditEnrollmentModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        enrollment={selectedEnrollment}
+        onSubmit={async (data) => {
+          await updateEnrollment.mutateAsync({ id: selectedEnrollment?.id || '', data });
+          setIsEditModalOpen(false);
+        }}
+        isLoading={updateEnrollment.isPending}
+      />
+
+      <ConfirmDialog
+        open={!!deleteEnrollmentId}
+        onOpenChange={(open) => { if (!open) setDeleteEnrollmentId(null); }}
+        onConfirm={async () => {
+          if (deleteEnrollmentId) {
+            await deleteEnrollment.mutateAsync(deleteEnrollmentId);
+            setDeleteEnrollmentId(null);
+          }
+        }}
+        title={t('deleteEnrollmentTitle')}
+        description={t('deleteEnrollmentDescription')}
+        isLoading={deleteEnrollment.isPending}
       />
     </div>
   );

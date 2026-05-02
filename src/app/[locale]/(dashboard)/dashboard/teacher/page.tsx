@@ -7,5 +7,5 @@ export default function TeacherHomePage() {
   const { user } = useAuthStore();
   if (!user) return null;
 
-  return <TeacherDashboardHome teacherId={user.id} teacherName={user.full_name} />;
+  return <TeacherDashboardHome teacherId={user.teacher_id || user.id} teacherName={user.full_name} />;
 }

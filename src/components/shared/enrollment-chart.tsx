@@ -11,17 +11,12 @@ interface EnrollmentChartProps {
   }[];
 }
 
-const fallbackData = [
-  { year: '2019', students: 850 },
-  { year: '2020', students: 890 },
-  { year: '2021', students: 950 },
-  { year: '2022', students: 1020 },
-  { year: '2023', students: 1100 },
-  { year: '2024', students: 1250 },
-];
+import { useHistoricalEnrollment } from '@/hooks/use-enrollment-stats';
+import { Loader2 } from 'lucide-react';
 
-export function EnrollmentChart({ data = fallbackData }: EnrollmentChartProps) {
+export function EnrollmentChart() {
   const t = useTranslations('dashboard');
+  const { data, isLoading } = useHistoricalEnrollment();
 
   return (
     <Card className="col-span-full lg:col-span-4 shadow-sm border overflow-hidden">
@@ -30,50 +25,60 @@ export function EnrollmentChart({ data = fallbackData }: EnrollmentChartProps) {
         <CardDescription>Number of students enrolled over recent academic years.</CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-              <XAxis 
-                dataKey="year" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                dy={10}
-              />
-              <YAxis 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))',
-                  borderColor: 'hsl(var(--border))',
-                  borderRadius: 'var(--radius)',
-                  color: 'hsl(var(--foreground))',
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                }}
-                itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}
-              />
-              <Area 
-                type="monotone" 
-                dataKey="students" 
-                stroke="hsl(var(--primary))" 
-                strokeWidth={3}
-                fillOpacity={1} 
-                fill="url(#colorStudents)" 
-                activeDot={{ r: 6, strokeWidth: 0 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        {isLoading ? (
+          <div className="flex h-[300px] w-full items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : !data || data.length === 0 ? (
+          <div className="flex h-[300px] w-full items-center justify-center text-muted-foreground">
+            No enrollment data available.
+          </div>
+        ) : (
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <XAxis 
+                  dataKey="year" 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))',
+                    borderColor: 'hsl(var(--border))',
+                    borderRadius: 'var(--radius)',
+                    color: 'hsl(var(--foreground))',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  }}
+                  itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="students" 
+                  stroke="hsl(var(--primary))" 
+                  strokeWidth={3}
+                  fillOpacity={1} 
+                  fill="url(#colorStudents)" 
+                  activeDot={{ r: 6, strokeWidth: 0 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -15,9 +15,7 @@ export function useSectionStudents(sectionId?: string) {
     queryKey: queryKeys.sectionStudents.list(sectionId || ''),
     queryFn: async (): Promise<SectionStudent[]> => {
       if (!sectionId) return [];
-      // BACKEND REQUIRED: GET /sections/{sectionId}/students
-      // Expected response: { items: SectionStudent[] }
-      const { data } = await axiosInstance.get(`/sections/${sectionId}/students`);
+      const { data } = await axiosInstance.get(`/academics/sections/${sectionId}/students`);
       return data.items || [];
     },
     enabled: !!sectionId,

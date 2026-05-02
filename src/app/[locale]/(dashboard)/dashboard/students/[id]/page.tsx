@@ -237,7 +237,7 @@ function StudentDetailPage() {
                   <p className="text-sm text-muted-foreground">{tg('noLinkedStudents')}</p>
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {guardians.map((g: any) => (
+                    {guardians.map((g: { id?: string; guardian_id?: string; full_name?: string; guardian_name?: string; relationship_type?: string; is_primary?: boolean }) => (
                       <Link key={g.id || g.guardian_id} href={`/dashboard/guardians/${g.id || g.guardian_id}`}>
                         <div className="rounded-lg border p-4 hover:bg-accent transition-colors cursor-pointer">
                           <p className="font-medium">{g.full_name || g.guardian_name}</p>
@@ -428,7 +428,7 @@ function StudentDetailPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {attendanceData.items.map((record: any) => (
+                      {attendanceData.items.map((record: { id: string; date: string; status: string; className: string; sectionName: string }) => (
                         <TableRow key={record.id}>
                           <TableCell className="font-medium">{format(new Date(record.date), 'MMM d, yyyy')}</TableCell>
                           <TableCell>
@@ -471,7 +471,7 @@ function StudentDetailPage() {
                   onChange={(e) => setSelectedTerm(e.target.value)}
                 >
                   <option value="">{t('selectTerm')}</option>
-                  {terms?.items?.map((term: any) => (
+                  {terms?.items?.map((term: { id: string; name: string }) => (
                     <option key={term.id} value={term.id}>{term.name}</option>
                   ))}
                 </select>
@@ -493,7 +493,7 @@ function StudentDetailPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {reportCard.subjects.map((sub: any) => (
+                    {reportCard.subjects.map((sub: { name: string; grade: string; credits: number }) => (
                       <TableRow key={sub.subject_id}>
                         <TableCell className="font-medium">{sub.subject_name}</TableCell>
                         <TableCell className="text-center font-mono">{sub.total_score}</TableCell>
@@ -546,7 +546,7 @@ function StudentDetailPage() {
   );
 }
 
-function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+function InfoRow({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
   return (
     <div className="flex items-start gap-3">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">

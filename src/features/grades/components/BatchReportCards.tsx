@@ -77,7 +77,6 @@ export function BatchReportCards() {
         successCount++;
         setGeneratedCount(successCount);
       } catch (error) {
-        console.error(`Failed to generate report card for ${student.name}:`, error);
         failedCount++;
       }
 

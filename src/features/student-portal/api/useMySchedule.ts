@@ -4,15 +4,16 @@ import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/lib/store/auth-store';
 import type { ScheduleResponse } from '../types';
 
-export function useMySchedule() {
+export function useMySchedule(weekOffset: number = 0) {
   const { user, isHydrated } = useAuthStore();
-  const studentId = user?.id ?? '';
+  const studentId = user?.student_id || user?.id || '';
 
   return useQuery({
-    queryKey: queryKeys.studentPortal.schedule(studentId),
+    queryKey: queryKeys.studentPortal.schedule(studentId, weekOffset),
     queryFn: async () => {
       const { data } = await api.get<ScheduleResponse>(
-        `/api/students/${studentId}/schedule`
+        `/students/${studentId}/schedule`,
+        { params: { week_offset: weekOffset } }
       );
       return data;
     },

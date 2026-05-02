@@ -28,6 +28,7 @@ interface AlertRuleEditModalProps {
 
 export function AlertRuleEditModal({ rule, isOpen, onClose, onSave, isPending }: AlertRuleEditModalProps) {
   const t = useTranslations('notifications.alertRules');
+  const tc = useTranslations('common');
   const [formData, setFormData] = useState<Partial<AlertRule>>({});
 
   useMemo(() => {
@@ -58,7 +59,6 @@ export function AlertRuleEditModal({ rule, isOpen, onClose, onSave, isPending }:
   if (!rule) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[550px] rounded-[32px] p-0 overflow-hidden border-none shadow-2xl flex flex-col max-h-[85vh]">
         <DialogHeader className="bg-primary/5 px-8 py-8 border-b border-primary/10 shrink-0">

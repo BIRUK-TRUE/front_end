@@ -185,7 +185,7 @@ function TeacherDetailPage() {
                     <SelectValue placeholder={tc('selectAcademicYear')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {years?.items?.map((y: any) => (
+                    {years?.items?.map((y: { id: string; name: string }) => (
                       <SelectItem key={y.id} value={y.id}>{y.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -196,7 +196,7 @@ function TeacherDetailPage() {
                     <SelectValue placeholder={tc('selectTerm')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {terms?.items?.map((t: any) => (
+                    {terms?.items?.map((t: { id: string; name: string }) => (
                       <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                     ))}
                   </SelectContent>

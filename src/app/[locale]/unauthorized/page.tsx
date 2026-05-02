@@ -12,6 +12,22 @@ export default function UnauthorizedPage() {
 
   const userRole = user?.roles?.[0] || "guest";
 
+  const getDashboardPath = () => {
+    switch (userRole) {
+      case "admin":
+      case "director":
+        return "/dashboard";
+      case "teacher":
+        return "/dashboard/teacher";
+      case "guardian":
+        return "/dashboard/guardian";
+      case "student":
+        return "/dashboard/student";
+      default:
+        return "/dashboard";
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-muted/30">
       <div className="max-w-md w-full text-center space-y-6 bg-background p-8 rounded-2xl shadow-xl border border-border/50 animate-in fade-in zoom-in duration-300">
@@ -36,7 +52,7 @@ export default function UnauthorizedPage() {
 
         <div className="flex flex-col gap-3">
           <Button asChild size="lg" className="w-full h-12 shadow-md">
-            <Link href="/dashboard" className="gap-2">
+            <Link href={getDashboardPath()} className="gap-2">
               <Home className="h-4 w-4" /> {t("goToDashboard")}
             </Link>
           </Button>

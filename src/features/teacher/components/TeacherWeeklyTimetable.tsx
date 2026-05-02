@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Download, Printer, ChevronLeft, ChevronRight } from "lucide-react";
 import type { TeacherScheduleEntry } from "../types";
 
 const DAYS = [1, 2, 3, 4, 5];
@@ -11,6 +13,7 @@ const DAYS = [1, 2, 3, 4, 5];
 export function TeacherWeeklyTimetable({ entries }: { entries: TeacherScheduleEntry[] }) {
   const t = useTranslations("teacher.schedule");
   const tc = useTranslations("common");
+  const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
   const today = new Date();
   const currentDay = today.getDay() === 0 ? 7 : today.getDay();
   const currentMinutes = today.getHours() * 60 + today.getMinutes();
@@ -26,13 +29,111 @@ export function TeacherWeeklyTimetable({ entries }: { entries: TeacherScheduleEn
     return t(`days.${keys[day - 1]}`);
   };
 
+  const handleExport = () => {
+    const csvContent = [
+      ["Period", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      ...periods.map((period) => {
+        const row = [period.toString()];
+        DAYS.forEach((day) => {
+          const entry = entries.find((e) => e.dayOfWeek === day && e.periodNumber === period);
+          if (entry) {
+            row.push(`${entry.subjectName} - ${entry.className} ${entry.sectionName} (${entry.startTime}-${entry.endTime})`);
+          } else {
+            row.push("");
+          }
+        });
+        return row;
+      }),
+    ]
+      .map((row) => row.join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `schedule-week-${currentWeekOffset}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const goToPreviousWeek = () => {
+    setCurrentWeekOffset((prev) => prev - 1);
+  };
+
+  const goToNextWeek = () => {
+    setCurrentWeekOffset((prev) => prev + 1);
+  };
+
+  const goToCurrentWeek = () => {
+    setCurrentWeekOffset(0);
+  };
+
   return (
     <Card className="shadow-lg border-muted/60 overflow-hidden">
       <CardHeader className="bg-muted/30 border-b">
-        <CardTitle className="text-xl flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-          {t("title")}
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            {t("title")}
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousWeek}
+              disabled={currentWeekOffset <= -4}
+              className="gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              {tc("previous")}
+            </Button>
+            {currentWeekOffset !== 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={goToCurrentWeek}
+              >
+                {tc("today")}
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextWeek}
+              disabled={currentWeekOffset >= 4}
+              className="gap-1"
+            >
+              {tc("next")}
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <div className="w-px h-6 bg-border mx-1" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              className="gap-1"
+            >
+              <Download className="h-4 w-4" />
+              {tc("export")}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrint}
+              className="gap-1"
+            >
+              <Printer className="h-4 w-4" />
+              {tc("print")}
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         {entries.length === 0 ? (

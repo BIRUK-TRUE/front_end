@@ -12,37 +12,58 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { StudentRisk } from "../types";
+import { StudentRisk, Intervention } from "../types";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useAddInterventionNote } from "../hooks/useAtRiskStudents";
-import { Loader2, MessageSquarePlus } from "lucide-react";
+import { useAddInterventionNote, useUpdateIntervention, useDeleteIntervention } from "../hooks/useAtRiskStudents";
+import { Loader2, MessageSquarePlus, Edit2, Trash2 } from "lucide-react";
 
 interface InterventionNoteModalProps {
   student: StudentRisk;
   isOpen: boolean;
   onClose: () => void;
+  intervention?: Intervention | null;
 }
 
 type InterventionType = 'counseling' | 'parent_meeting' | 'tutoring' | 'other';
 
-export function InterventionNoteModal({ student, isOpen, onClose }: InterventionNoteModalProps) {
+export function InterventionNoteModal({ student, isOpen, onClose, intervention }: InterventionNoteModalProps) {
   const t = useTranslations("analytics.interventionNote");
-  const [note, setNote] = useState("");
-  const [interventionType, setInterventionType] = useState<InterventionType>('counseling');
+  const [note, setNote] = useState(intervention?.note || "");
+  const [interventionType, setInterventionType] = useState<InterventionType>(intervention?.type as InterventionType || 'counseling');
 
   const noteMutation = useAddInterventionNote();
+  const updateMutation = useUpdateIntervention();
+  const deleteMutation = useDeleteIntervention();
 
   const handleSave = async () => {
     if (!note.trim()) return;
-    await noteMutation.mutateAsync({
-      studentId: student.studentId,
-      note,
-      type: interventionType
-    });
+    
+    if (intervention) {
+      await updateMutation.mutateAsync({
+        id: intervention.id,
+        note,
+        type: interventionType
+      });
+    } else {
+      await noteMutation.mutateAsync({
+        studentId: student.studentId,
+        note,
+        type: interventionType
+      });
+    }
     setNote("");
     setInterventionType('counseling');
     onClose();
+  };
+
+  const handleDelete = async () => {
+    if (intervention) {
+      await deleteMutation.mutateAsync(intervention.id);
+      setNote("");
+      setInterventionType('counseling');
+      onClose();
+    }
   };
 
   return (
@@ -50,10 +71,11 @@ export function InterventionNoteModal({ student, isOpen, onClose }: Intervention
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <MessageSquarePlus className="h-5 w-5 text-primary" /> {t("title")}
+            {intervention ? <Edit2 className="h-5 w-5 text-primary" /> : <MessageSquarePlus className="h-5 w-5 text-primary" />}
+            {intervention ? t("editTitle") : t("title")}
           </DialogTitle>
           <DialogDescription>
-            {t("description", { name: student.studentName })}
+            {intervention ? t("editDescription", { name: student.studentName }) : t("description", { name: student.studentName })}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
@@ -99,15 +121,29 @@ export function InterventionNoteModal({ student, isOpen, onClose }: Intervention
           </div>
         </div>
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="ghost" onClick={onClose} disabled={noteMutation.isPending}>
+          {intervention && (
+            <Button 
+              variant="destructive" 
+              onClick={handleDelete} 
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              {t("delete")}
+            </Button>
+          )}
+          <Button variant="ghost" onClick={onClose} disabled={noteMutation.isPending || updateMutation.isPending || deleteMutation.isPending}>
             {t("cancel")}
           </Button>
           <Button 
             onClick={handleSave} 
-            disabled={noteMutation.isPending || !note.trim()}
+            disabled={noteMutation.isPending || updateMutation.isPending || deleteMutation.isPending || !note.trim()}
             className="px-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md transition-all active:scale-95"
           >
-            {noteMutation.isPending ? (
+            {noteMutation.isPending || updateMutation.isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <MessageSquarePlus className="mr-2 h-4 w-4" />

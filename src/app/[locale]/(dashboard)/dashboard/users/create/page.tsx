@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useRouter } from '@/i18n/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCreateUser } from '@/hooks/use-users';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { PageHeader } from '@/components/shared/page-header';
@@ -15,6 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
+import { useEffect } from 'react';
 
 const allRoles = ['admin', 'director', 'registrar', 'teacher', 'student', 'guardian'];
 
@@ -24,6 +25,7 @@ function CreateUserForm() {
   const tr = useTranslations('roles');
   const tv = useTranslations('validation');
   const router = useRouter();
+  const searchParams = useSearchParams();
   const createUser = useCreateUser();
 
   const createUserSchema = z
@@ -55,6 +57,14 @@ function CreateUserForm() {
   });
 
   const selectedRoles = watch('role_names');
+
+  // Preselect role from URL parameter
+  useEffect(() => {
+    const roleParam = searchParams.get('role');
+    if (roleParam && allRoles.includes(roleParam)) {
+      setValue('role_names', [roleParam], { shouldValidate: true });
+    }
+  }, [searchParams, setValue]);
 
   const toggleRole = (role: string) => {
     const current = selectedRoles || [];

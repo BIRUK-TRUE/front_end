@@ -35,9 +35,8 @@ export function useFaceEnrollment(sectionId?: string) {
       queryClient.invalidateQueries({ queryKey: ['attendance', 'enrollment-status'] });
       toast.success(t('enrollSuccess'));
     },
-    onError: (error: any) => {
-      console.error('Face enrollment error:', error);
-      toast.error(t('enrollFailed'));
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(error.response?.data?.detail || t('enrollFailed'));
     },
   });
 

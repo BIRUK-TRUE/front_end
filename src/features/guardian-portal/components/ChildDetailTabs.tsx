@@ -135,7 +135,7 @@ export function ChildDetailTabs({ child }: Props) {
       </TabsContent>
 
       <TabsContent value="fees">
-        <GuardianFeesView studentId={child.id} />
+        <GuardianFeesView studentId={child.id} studentName={child.fullName} />
       </TabsContent>
 
       <TabsContent value="schedule">

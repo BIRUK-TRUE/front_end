@@ -31,7 +31,7 @@ export const useCreateTerm = (yearId: string) => {
       queryClient.invalidateQueries({ queryKey: academicsKeys.years.detail(yearId) }); // Invalidate year to update term_count
       toast.success('Term created successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to create term');
     }
   });
@@ -49,7 +49,7 @@ export const useUpdateTerm = (yearId: string) => {
       queryClient.invalidateQueries({ queryKey: [...academicsKeys.years.detail(yearId), 'terms'] });
       toast.success('Term updated successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to update term');
     }
   });
@@ -67,7 +67,7 @@ export const useDeleteTerm = (yearId: string) => {
       queryClient.invalidateQueries({ queryKey: academicsKeys.years.detail(yearId) }); // Update term count
       toast.success('Term deleted successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to delete term. Ensure it has no active dependencies.');
     }
   });

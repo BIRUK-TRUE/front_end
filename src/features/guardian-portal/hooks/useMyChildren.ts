@@ -6,13 +6,13 @@ import type { ChildSummary } from '../types';
 
 export function useMyChildren() {
   const { user, isHydrated } = useAuthStore();
-  const guardianId = user?.id ?? '';
+  const guardianId = user?.guardian_id ?? '';
 
   return useQuery({
     queryKey: queryKeys.guardianPortal.children(guardianId),
     queryFn: async () => {
       const { data } = await api.get<ChildSummary[]>(
-        `/api/guardians/${guardianId}/students`
+        `/guardians/${guardianId}/students`
       );
       return data;
     },

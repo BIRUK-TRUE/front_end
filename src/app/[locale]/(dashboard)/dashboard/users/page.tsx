@@ -80,7 +80,7 @@ export default function UsersPage() {
       header: tr('admin').split(' ')[0] + 's',
       cell: ({ row }) => (
         <div className="flex flex-wrap gap-1">
-          {(row.original.roles || []).map((role: any) => (
+          {(row.original.roles || []).map((role: string | { name: string }) => (
             <RoleBadge
               key={typeof role === 'string' ? role : role.name}
               role={typeof role === 'string' ? role : role.name}

@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CreditCard, History, Wallet, CheckCircle2 } from "lucide-react";
+import { CreditCard, History, Wallet, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useFeeBalance, usePaymentHistory } from "../hooks/useGuardianPayments";
 import { ChapaPaymentModal } from "../../payments/components/ChapaPaymentModal";
 import { format } from "date-fns";
@@ -15,9 +15,10 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   studentId: string;
+  studentName?: string;
 }
 
-export function GuardianFeesView({ studentId }: Props) {
+export function GuardianFeesView({ studentId, studentName }: Props) {
   const t = useTranslations("guardianPortal.payments");
   const tc = useTranslations("common");
   const { data: balance, isLoading: loadingBalance, refetch: refetchBalance } = useFeeBalance(studentId);
@@ -25,10 +26,16 @@ export function GuardianFeesView({ studentId }: Props) {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFeeId, setSelectedFeeId] = useState<string | null>(null);
+  const [historyPage, setHistoryPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   if (loadingBalance || loadingHistory) {
     return <Skeleton className="h-96 w-full" />;
   }
+
+  const totalPages = history ? Math.ceil(history.length / ITEMS_PER_PAGE) : 1;
+  const startIndex = (historyPage - 1) * ITEMS_PER_PAGE;
+  const paginatedHistory = history ? history.slice(startIndex, startIndex + ITEMS_PER_PAGE) : [];
 
   const handlePayClick = (feeId: string) => {
     setSelectedFeeId(feeId);
@@ -44,7 +51,7 @@ export function GuardianFeesView({ studentId }: Props) {
   // We'll mock the missing properties needed by the modal if necessary
   const studentAdapter = {
     id: studentId,
-    name: "Child Name", // In a real app, this would come from a student query or parent prop
+    name: studentName || "Student",
     registration_number: studentId,
     class_name: "",
     section_name: "",
@@ -162,7 +169,8 @@ export function GuardianFeesView({ studentId }: Props) {
               <p className="text-muted-foreground italic">{t("noPayments")}</p>
             </div>
           ) : (
-            <div className="rounded-lg border overflow-hidden">
+            <div className="space-y-4">
+              <div className="rounded-lg border overflow-hidden">
                <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow>
@@ -174,7 +182,7 @@ export function GuardianFeesView({ studentId }: Props) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {history.map((pay) => (
+                  {paginatedHistory.map((pay) => (
                     <TableRow key={pay.id} className="hover:bg-muted/30">
                       <TableCell>{format(new Date(pay.date), "PPP")}</TableCell>
                       <TableCell className="font-bold">ETB {pay.amount.toLocaleString()}</TableCell>
@@ -201,6 +209,35 @@ export function GuardianFeesView({ studentId }: Props) {
                 </TableBody>
               </Table>
             </div>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-2">
+                <div className="text-sm text-muted-foreground">
+                  {t("showing", { start: startIndex + 1, end: Math.min(startIndex + ITEMS_PER_PAGE, history.length), total: history.length })}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                    disabled={historyPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm font-medium">
+                    {historyPage} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setHistoryPage(p => Math.min(totalPages, p + 1))}
+                    disabled={historyPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
           )}
         </CardContent>
       </Card>

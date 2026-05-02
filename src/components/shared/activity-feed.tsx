@@ -7,57 +7,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { Plus, Pencil, GraduationCap, History, UserPlus } from 'lucide-react';
 
-interface ActivityItem {
-  id: string;
-  type: 'enrollment' | 'grade' | 'attendance' | 'user' | 'system';
-  title: string;
-  description: string;
-  timestamp: string;
-  user: string;
-}
+import { useNotificationHistory } from '@/features/notifications/api/useNotificationHistory';
+import { Loader2, Bell } from 'lucide-react';
 
-const fallbackActivities: ActivityItem[] = [
-  {
-    id: '1',
-    type: 'enrollment',
-    title: 'New Student Enrolled',
-    description: 'Sarah Jenkins was enrolled in Class 10A.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
-    user: 'Admin User',
-  },
-  {
-    id: '2',
-    type: 'grade',
-    title: 'Grades Published',
-    description: 'Mathematics mid-term grades published for Class 9B.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-    user: 'Mr. Smith',
-  },
-  {
-    id: '3',
-    type: 'attendance',
-    title: 'Attendance Marked',
-    description: 'Attendance submitted for Class 12A.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
-    user: 'Mrs. Davis',
-  },
-  {
-    id: '4',
-    type: 'user',
-    title: 'Guardian Account Linked',
-    description: 'A new guardian account was linked to John Doe.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-    user: 'Admin User',
-  },
-  {
-    id: '5',
-    type: 'system',
-    title: 'New Academic Term Started',
-    description: 'Term 2 has officially commenced in the system.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(), // 3 days ago
-    user: 'System Administrator',
-  },
-];
+export function ActivityFeed() {
+  const t = useTranslations('dashboard');
+  
+  // Fetch the 5 most recent notifications
+  const { data, isLoading } = useNotificationHistory({
+    page: 1,
+    limit: 5,
+  });
 
 const getIconForType = (type: string) => {
   switch (type) {
@@ -76,12 +36,7 @@ const getIconForType = (type: string) => {
   }
 };
 
-interface ActivityFeedProps {
-  activities?: ActivityItem[];
-}
 
-export function ActivityFeed({ activities = fallbackActivities }: ActivityFeedProps) {
-  const t = useTranslations('dashboard');
 
   return (
     <Card className="col-span-full lg:col-span-3 shadow-sm border">
@@ -91,29 +46,40 @@ export function ActivityFeed({ activities = fallbackActivities }: ActivityFeedPr
       </CardHeader>
       <CardContent className="p-0">
         <ScrollArea className="h-[300px] w-full rounded-md">
-          <div className="p-4 space-y-4">
-            {activities.map((activity) => (
-              <div key={activity.id} className="flex items-start gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-background shadow-sm">
-                  {getIconForType(activity.type)}
-                </div>
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium leading-none">{activity.title}</p>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                      {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
-                    </span>
+          {isLoading ? (
+            <div className="flex h-full min-h-[300px] w-full items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : !data || data.items.length === 0 ? (
+            <div className="flex h-full min-h-[300px] w-full flex-col items-center justify-center text-muted-foreground">
+              <Bell className="h-8 w-8 mb-2 opacity-50" />
+              <p>No recent activity</p>
+            </div>
+          ) : (
+            <div className="p-4 space-y-4">
+              {data.items.map((activity) => (
+                <div key={activity.id} className="flex items-start gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-background shadow-sm">
+                    {getIconForType(activity.type)}
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {activity.description}
-                  </p>
-                  <p className="text-xs font-mono text-muted-foreground mt-1">
-                    By {activity.user}
-                  </p>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium leading-none">{activity.title}</p>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                        {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {activity.content}
+                    </p>
+                    <p className="text-xs font-mono text-muted-foreground mt-1">
+                      By {activity.sender?.full_name || 'System'}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </ScrollArea>
       </CardContent>
     </Card>

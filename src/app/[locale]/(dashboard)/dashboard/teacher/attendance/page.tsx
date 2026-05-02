@@ -15,7 +15,7 @@ export default function TeacherAttendancePage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
       </div>
-      <TeacherAttendanceForm teacherId={user.id} />
+      <TeacherAttendanceForm teacherId={user.teacher_id || user.id} />
     </div>
   );
 }

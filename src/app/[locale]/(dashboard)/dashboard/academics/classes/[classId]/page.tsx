@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { useClass, useCreateSection, useUpdateSection } from '@/features/academics/api/useClasses';
+import { useClass, useCreateSection, useUpdateSection, useDeleteSection } from '@/features/academics/api/useClasses';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,6 +17,7 @@ import { useClassSubjects, useAssignSubject, useRemoveSubject } from '@/features
 import { type SectionForm } from '@/features/academics/types/schemas';
 import { type Section } from '@/features/academics/types';
 import { EmptyState } from '@/components/shared/empty-state';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 
 export default function ClassDetailPage() {
   const t = useTranslations('academics');
@@ -28,10 +29,12 @@ export default function ClassDetailPage() {
 
   const createSection = useCreateSection(classId);
   const updateSection = useUpdateSection(classId);
+  const deleteSection = useDeleteSection(classId);
 
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
+  const [deleteSectionId, setDeleteSectionId] = useState<string | null>(null);
 
   const openCreateSectionModal = () => {
     setEditingSection(null);
@@ -52,6 +55,13 @@ export default function ClassDetailPage() {
       }
       setIsSectionModalOpen(false);
     } catch (error) {
+    }
+  };
+
+  const handleDeleteSection = async () => {
+    if (deleteSectionId) {
+      await deleteSection.mutateAsync(deleteSectionId);
+      setDeleteSectionId(null);
     }
   };
 
@@ -211,6 +221,14 @@ export default function ClassDetailPage() {
                                       {tp('viewRoster')}
                                    </Link>
                                 </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="text-muted-foreground hover:text-destructive"
+                                  onClick={() => setDeleteSectionId(section.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                             </div>
                          </div>
                        ))}
@@ -287,6 +305,15 @@ export default function ClassDetailPage() {
         onAssign={async (id) => { await assignSubject.mutateAsync(id); }}
         onRemove={async (id) => { await removeSubject.mutateAsync(id); }}
         isLoading={assignSubject.isPending || removeSubject.isPending}
+      />
+
+      <ConfirmDialog
+        open={!!deleteSectionId}
+        onOpenChange={(open) => { if (!open) setDeleteSectionId(null); }}
+        onConfirm={handleDeleteSection}
+        title={tp('deleteSectionTitle')}
+        description={tp('deleteSectionDescription')}
+        isLoading={deleteSection.isPending}
       />
     </div>
   );

@@ -16,7 +16,8 @@ import {
   AlertTriangle, 
   ChevronDown,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Download
 } from "lucide-react";
 import { 
   useAnalyticsSummary 
@@ -86,6 +87,32 @@ export function AnalyticsOverview() {
     refetchPerformance();
   };
 
+  const handleExport = () => {
+    const exportData = {
+      summary,
+      trendData,
+      distributionData,
+      atRiskData,
+      performanceData,
+      filters: {
+        termId: currentTermId,
+        classId: selectedClass,
+        timeRange
+      },
+      exportedAt: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `analytics-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 min-w-0">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -94,9 +121,14 @@ export function AnalyticsOverview() {
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         
-        <Button variant="outline" size="sm" onClick={handleRefreshAll} className="gap-2">
-          <RefreshCw className="h-4 w-4" /> {t("refresh")}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
+            <Download className="h-4 w-4" /> {t("export")}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleRefreshAll} className="gap-2">
+            <RefreshCw className="h-4 w-4" /> {t("refresh")}
+          </Button>
+        </div>
       </div>
       
       {/* Filter Bar */}

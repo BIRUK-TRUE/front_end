@@ -61,14 +61,19 @@ export default function ResetPasswordPage() {
   const password = watch('newPassword', '');
 
   const onSubmit = async (data: ResetForm) => {
+    if (!token) {
+      setServerError(t('tokenRequired'));
+      return;
+    }
     setIsLoading(true);
     setServerError('');
     try {
       await authService.resetPassword(token, data.newPassword, data.confirmPassword);
       toast.success(t('passwordChanged'));
       router.push('/login');
-    } catch (error: any) {
-      setServerError(error.response?.data?.detail || t('resetPasswordFailed'));
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { detail?: string } } };
+      setServerError(err.response?.data?.detail || t('resetPasswordFailed'));
     } finally {
       setIsLoading(false);
     }

@@ -44,7 +44,7 @@ export const useCreateClass = (yearId: string) => {
       queryClient.invalidateQueries({ queryKey: academicsKeys.years.detail(yearId) }); // Update class count
       toast.success('Class created successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to create class');
     }
   });
@@ -63,8 +63,26 @@ export const useUpdateClass = (yearId: string) => {
       queryClient.invalidateQueries({ queryKey: academicsKeys.classes.detail(variables.id) });
       toast.success('Class updated successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to update class');
+    }
+  });
+};
+
+export const useDeleteClass = (yearId: string) => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await axiosInstance.delete(`/academics/classes/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...academicsKeys.years.detail(yearId), 'classes'] });
+      queryClient.invalidateQueries({ queryKey: academicsKeys.years.detail(yearId) });
+      toast.success('Class deleted successfully');
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(error.response?.data?.detail || 'Failed to delete class. Ensure it has no active dependencies.');
     }
   });
 };
@@ -83,7 +101,7 @@ export const useCreateSection = (classId: string) => {
       queryClient.invalidateQueries({ queryKey: academicsKeys.classes.detail(classId) });
       toast.success('Section created successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to create section');
     }
   });
@@ -101,7 +119,7 @@ export const useUpdateSection = (classId: string) => {
       queryClient.invalidateQueries({ queryKey: academicsKeys.classes.detail(classId) });
       toast.success('Section updated successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to update section');
     }
   });
@@ -115,6 +133,23 @@ export const useSection = (sectionId: string) => {
       return data;
     },
     enabled: !!sectionId,
+  });
+};
+
+export const useDeleteSection = (classId: string) => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await axiosInstance.delete(`/academics/sections/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: academicsKeys.classes.detail(classId) });
+      toast.success('Section deleted successfully');
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(error.response?.data?.detail || 'Failed to delete section. Ensure it has no active dependencies.');
+    }
   });
 };
 // --- CLASS SUBJECTS ---
@@ -142,7 +177,7 @@ export const useAssignSubject = (classId: string) => {
       queryClient.invalidateQueries({ queryKey: [...academicsKeys.classes.detail(classId), 'subjects'] });
       toast.success('Subject assigned successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to assign subject');
     }
   });
@@ -159,7 +194,7 @@ export const useRemoveSubject = (classId: string) => {
       queryClient.invalidateQueries({ queryKey: [...academicsKeys.classes.detail(classId), 'subjects'] });
       toast.success('Subject removed successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to remove subject');
     }
   });

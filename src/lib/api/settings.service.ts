@@ -6,6 +6,11 @@ export interface SchoolInfo {
   phone: string;
   email: string;
   logo_url: string | null;
+  school_code?: string | null;
+  website?: string | null;
+  region?: string | null;
+  zone?: string | null;
+  woreda?: string | null;
 }
 
 export interface AcademicSettings {

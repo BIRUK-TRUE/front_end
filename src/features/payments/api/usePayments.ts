@@ -88,7 +88,7 @@ export function useVerifyChapaPayment() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ reference }: { reference: string }) => {
-      const { data } = await axiosInstance.post('/payments/chapa/verify', { reference });
+      const { data } = await axiosInstance.post(`/payments/chapa/verify/${reference}`);
       return data;
     },
     onSuccess: () => {

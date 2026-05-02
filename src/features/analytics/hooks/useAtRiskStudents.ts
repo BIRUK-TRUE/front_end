@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
-import { StudentRisk, analyticsKeys } from "../types";
+import { StudentRisk, analyticsKeys, Intervention } from "../types";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
@@ -16,17 +16,11 @@ export function useAtRiskStudents(filters?: {
   return useQuery({
     queryKey: analyticsKeys.atRisk(filters),
     queryFn: async (): Promise<{ students: StudentRisk[]; total: number }> => {
-      const { data } = await axiosInstance.get<{ students: any[]; total: number }>('/analytics/at-risk-students', {
+      const { data } = await axiosInstance.get<{ students: StudentRisk[]; total: number }>('/analytics/at-risk-students', {
         params: filters,
       });
       
-      // The backend returns raw student data, we map it to StudentRisk on the frontend 
-      // if the backend doesn't already provide the calculated risk object.
-      // Assuming backend returns correctly formatted StudentRisk for now.
-      return {
-        students: data.students as StudentRisk[],
-        total: data.total
-      };
+      return data;
     },
     enabled: true,
   });
@@ -73,6 +67,59 @@ export function useAddInterventionNote() {
     },
     onError: () => {
       toast.error(t("saveFailed"));
+    }
+  });
+}
+
+export function useStudentInterventions(studentId: string) {
+  return useQuery({
+    queryKey: analyticsKeys.interventions(studentId),
+    queryFn: async (): Promise<Intervention[]> => {
+      const { data } = await axiosInstance.get(`/analytics/interventions`, {
+        params: { student_id: studentId }
+      });
+      return data;
+    },
+    enabled: !!studentId,
+  });
+}
+
+export function useUpdateIntervention() {
+  const t = useTranslations("analytics.interventionNote");
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, note, type }: { id: string; note: string; type?: string }) => {
+      const { data } = await axiosInstance.patch(`/analytics/interventions/${id}`, {
+        note,
+        type,
+      });
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.interventions(variables.id) });
+      toast.success(t("updateSuccess"));
+    },
+    onError: () => {
+      toast.error(t("updateFailed"));
+    }
+  });
+}
+
+export function useDeleteIntervention() {
+  const t = useTranslations("analytics.interventionNote");
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await axiosInstance.delete(`/analytics/interventions/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.atRisk() });
+      toast.success(t("deleteSuccess"));
+    },
+    onError: () => {
+      toast.error(t("deleteFailed"));
     }
   });
 }

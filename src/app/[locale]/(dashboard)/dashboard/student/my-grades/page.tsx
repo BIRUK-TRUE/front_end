@@ -7,7 +7,7 @@ import {
   useMyAssessmentGrades,
   useMyReportCard,
 } from "@/features/student-portal/api/useMyGrades";
-import { useAcademicSettings } from "@/features/student-portal/api/useAcademicSettings";
+import { useAcademicSettings, useStudentTerms } from "@/features/student-portal/api/useAcademicSettings";
 import { GradeFilters } from "@/features/student-portal/components/GradeFilters";
 import { SubjectScoreSummaryTable } from "@/features/student-portal/components/SubjectScoreSummaryTable";
 import { AssessmentDetailsTable } from "@/features/student-portal/components/AssessmentDetailsTable";
@@ -27,6 +27,13 @@ export default function MyGradesPage() {
   // Settings
   const settingsQ = useAcademicSettings();
   const passingThreshold = settingsQ.data?.passingThreshold ?? 50;
+
+  // Terms for filter
+  const termsQ = useStudentTerms();
+  const availableTerms = termsQ.data?.map((t: any) => ({
+    id: t.id,
+    name: t.name,
+  })) || [];
 
   // Real Queries
   const summaryQ = useMySubjectSummary(termIdFilter === "all" ? undefined : termIdFilter);
@@ -74,9 +81,6 @@ export default function MyGradesPage() {
     name: s.subjectName,
   })) || [];
 
-  // TODO: `availableTerms` needs a global endpoint or we mock. We leave empty for now assuming it flows from an API if wired,
-  // or the backend just expects them to exist. 
-
   return (
     <div className="space-y-6">
       <div className="no-print">
@@ -95,6 +99,7 @@ export default function MyGradesPage() {
             setSubjectIdFilter(v);
             setPage(1);
           }}
+          availableTerms={availableTerms}
           availableSubjects={availableSubjects}
         />
       </div>

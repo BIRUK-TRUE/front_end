@@ -9,7 +9,6 @@ export interface TeacherFilters {
   specialization?: string;
   sort_by?: 'created_at' | 'full_name' | 'employee_id' | 'hire_date';
   sort_order?: 'asc' | 'desc';
-  [key: string]: any;
 }
 
 export const teachersService = {

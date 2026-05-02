@@ -71,4 +71,14 @@ export const analyticsKeys = {
   distribution: (filters?: object) => ['analytics', 'grade-distribution', filters] as const,
   performance: (termId?: string) => ['analytics', 'class-performance', termId] as const,
   summary: () => ['analytics', 'summary'] as const,
+  interventions: (studentId: string) => ['analytics', 'interventions', studentId] as const,
 };
+
+export interface Intervention {
+  id: string;
+  studentId: string;
+  type: 'counseling' | 'parent_meeting' | 'tutoring' | 'other';
+  note: string;
+  createdAt: string;
+  createdBy: string;
+}

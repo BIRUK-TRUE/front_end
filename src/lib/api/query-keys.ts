@@ -6,7 +6,7 @@ export const queryKeys = {
     dashboard: (teacherId: string) => ['teacher', 'dashboard', teacherId] as const,
     classes: (teacherId: string) => ['teacher', 'classes', teacherId] as const,
     classRoster: (sectionId: string) => ['teacher', 'roster', sectionId] as const,
-    schedule: (teacherId: string) => ['teacher', 'schedule', teacherId] as const,
+    schedule: (teacherId: string, weekOffset?: number) => ['teacher', 'schedule', teacherId, weekOffset] as const,
     attendanceRecords: (teacherId: string, filters?: object) =>
       ['teacher', 'attendance', teacherId, filters] as const,
     assessments: (teacherId: string, filters?: object) =>
@@ -54,8 +54,8 @@ export const queryKeys = {
       ['studentPortal', 'grades', studentId, filters] as const,
     reportCard: (studentId: string, termId: string) =>
       ['studentPortal', 'reportCard', studentId, termId] as const,
-    schedule: (studentId: string) =>
-      ['studentPortal', 'schedule', studentId] as const,
+    schedule: (studentId: string, weekOffset?: number) =>
+      ['studentPortal', 'schedule', studentId, weekOffset] as const,
     profile: (studentId: string) =>
       ['studentPortal', 'profile', studentId] as const,
   },

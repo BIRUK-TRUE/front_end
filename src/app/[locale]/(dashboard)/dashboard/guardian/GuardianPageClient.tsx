@@ -24,5 +24,5 @@ export default function GuardianPageClient() {
     return null;
   }
 
-  return <GuardianDashboardHome guardianId={user.id} />;
+  return <GuardianDashboardHome guardianId={user.guardian_id || user.id} />;
 }

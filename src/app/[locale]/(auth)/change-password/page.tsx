@@ -71,9 +71,10 @@ export default function ChangePasswordPage() {
       updateUser({ must_change_password: false });
       toast.success(t('passwordChanged'));
       router.push('/dashboard');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { detail?: string } } };
       setServerError(
-        error.response?.data?.detail || t('changePasswordFailed')
+        err.response?.data?.detail || t('changePasswordFailed')
       );
     } finally {
       setIsLoading(false);

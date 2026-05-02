@@ -98,3 +98,22 @@ export function useRestoreUser() {
     },
   });
 }
+
+export function useUpdateRoles() {
+  const queryClient = useQueryClient();
+  const t = useTranslations('common');
+  return useMutation({
+    mutationFn: ({ id, roleNames }: { id: string; roleNames: string[] }) =>
+      usersService.updateRoles(id, roleNames),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.users.detail(variables.id),
+      });
+      toast.success(t('rolesUpdated'));
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(error.response?.data?.detail || t('rolesUpdateFailed'));
+    },
+  });
+}

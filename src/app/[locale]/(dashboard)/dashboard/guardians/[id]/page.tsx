@@ -258,7 +258,7 @@ function GuardianDetailPage() {
         onOpenChange={(open) => !open && setDeleteId(null)}
         onConfirm={handleDelete}
         isLoading={deleteGuardian.isPending}
-        message={linkedStudentCount > 0 ? t('deleteWarning').replace('{count}', linkedStudentCount.toString()) : undefined}
+        description={linkedStudentCount > 0 ? t('deleteWarning').replace('{count}', linkedStudentCount.toString()) : undefined}
       />
 
       {/* Unlink confirmation */}
@@ -267,7 +267,7 @@ function GuardianDetailPage() {
         onOpenChange={(open) => !open && setUnlinkId(null)}
         onConfirm={handleUnlink}
         isLoading={unlinkStudent.isPending}
-        message={t('unlinkConfirm')}
+        description={t('unlinkConfirm')}
       />
     </div>
   );

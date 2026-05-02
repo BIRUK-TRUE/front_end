@@ -34,22 +34,25 @@ function CreateStudentForm() {
   const studentSchema = z.object({
     email: z.string().min(1, tv('emailRequired')).email(tv('invalidEmail')),
     full_name: z.string().min(2, tv('nameMinLength')),
-    phone_number: z.string().regex(/^\+251\d{9}$/, { message: t('phoneInvalid') }).optional(),
+    phone_number: z.string().optional().refine((val) => !val || /^\+251\d{9}$/.test(val), { message: t('phoneInvalid') }),
     address: z.string().optional(),
     password: z.string().optional(),
     admission_date: z.string().min(1, tv('admissionDateRequired')),
     date_of_birth: z.string().refine((val) => {
+      if (!val) return false;
       const date = new Date(val);
       const now = new Date();
-      const minAge = new Date(now.getFullYear() - 25, now.getMonth(), now.getDate());
-      const maxAge = new Date(now.getFullYear() - 10, now.getMonth(), now.getDate());
+      const minAge = new Date(now.getFullYear() - 60, now.getMonth(), now.getDate());
+      const maxAge = new Date(now.getFullYear() - 4, now.getMonth(), now.getDate());
       return date >= minAge && date <= maxAge;
     }, { message: t('dateOfBirthInvalid') }),
     sex: z.enum(['M', 'F'], { message: tv('sexRequired') }),
     nationality: z.string().optional(),
     previous_school: z.string().optional(),
-    ministry_exam_result: z.coerce.number().min(0).max(100).optional(),
+    ministry_exam_result: z.preprocess((val) => (val === '' ? undefined : val), z.coerce.number().min(0).max(100).optional()),
     guardian_id: z.string().optional(),
+    relationship_type: z.string().optional(),
+    profile_image_url: z.string().optional(),
   });
 
   type StudentForm = z.infer<typeof studentSchema>;
@@ -83,7 +86,11 @@ function CreateStudentForm() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setPhotoPreview(reader.result as string);
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setPhotoPreview(result);
+        setValue('profile_image_url', result);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -190,15 +197,37 @@ function CreateStudentForm() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="guardian_id">{t('guardian')}</Label>
-                  <Select onValueChange={(v) => setValue('guardian_id', v)}>
+                  <Label htmlFor="guardian_id">{t('guardian')} ({tc('optional')})</Label>
+                  <Select onValueChange={(v) => setValue('guardian_id', v === 'none' ? undefined : v)}>
                     <SelectTrigger className="h-11">
                       <SelectValue placeholder={t('selectGuardian')} />
                     </SelectTrigger>
                     <SelectContent>
-                      {guardians?.items?.map((g: any) => (
-                        <SelectItem key={g.id} value={g.id}>{g.full_name}</SelectItem>
+                      <SelectItem value="none">{tc('none')}</SelectItem>
+                      {guardians?.items?.map((g: { id: string; full_name: string; email: string }) => (
+                        <SelectItem key={g.id} value={g.id}>
+                          {g.full_name} <span className="text-muted-foreground text-xs ml-1">({g.email})</span>
+                        </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="relationship_type">{t('relationshipType')} ({tc('optional')})</Label>
+                  <Select onValueChange={(v) => setValue('relationship_type', v === 'none' ? undefined : v)}>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder={t('selectRelationship')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{tc('none')}</SelectItem>
+                      <SelectItem value="father">{t('father')}</SelectItem>
+                      <SelectItem value="mother">{t('mother')}</SelectItem>
+                      <SelectItem value="guardian">{t('guardian')}</SelectItem>
+                      <SelectItem value="uncle">{t('uncle')}</SelectItem>
+                      <SelectItem value="aunt">{t('aunt')}</SelectItem>
+                      <SelectItem value="grandparent">{t('grandparent')}</SelectItem>
+                      <SelectItem value="sibling">{t('sibling')}</SelectItem>
+                      <SelectItem value="other">{t('other')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

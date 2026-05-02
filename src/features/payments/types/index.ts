@@ -102,3 +102,33 @@ export interface CreatePaymentRequest {
   amount: number;
   payment_method: PaymentMethod;
 }
+
+export interface FeeConfig {
+  id: string;
+  name: string;
+  type: FeeType;
+  amount: number;
+  academic_year_id: string;
+  term_id?: string;
+  grade_level?: string;
+  due_date?: string;
+  description?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateFeeConfig {
+  name: string;
+  type: FeeType;
+  amount: number;
+  academic_year_id: string;
+  term_id?: string;
+  grade_level?: string;
+  due_date?: string;
+  description?: string;
+}
+
+export interface UpdateFeeConfig extends Partial<CreateFeeConfig> {
+  id: string;
+}

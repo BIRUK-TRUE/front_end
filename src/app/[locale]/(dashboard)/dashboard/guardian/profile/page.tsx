@@ -13,12 +13,44 @@ import { useMyChildren } from "@/features/guardian-portal/hooks/useMyChildren";
 import { Link } from "@/i18n/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { authService } from "@/lib/api/auth.service";
+import { toast } from "sonner";
 
 export default function GuardianProfilePage() {
   const t = useTranslations("guardianPortal.profile");
   const tc = useTranslations("common");
   const { user } = useAuthStore();
   const { data: children, isLoading } = useMyChildren();
+
+  const [passwords, setPasswords] = useState({
+    current: "",
+    new: "",
+    confirm: ""
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handlePasswordUpdate = async () => {
+    if (!passwords.current || !passwords.new || !passwords.confirm) {
+      toast.error(t("errorAllFields"));
+      return;
+    }
+    if (passwords.new !== passwords.confirm) {
+      toast.error(t("errorMatch"));
+      return;
+    }
+    
+    setIsUpdating(true);
+    try {
+      await authService.changePassword(passwords.current, passwords.new, passwords.confirm);
+      toast.success(t("success"));
+      setPasswords({ current: "", new: "", confirm: "" });
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || tc("error"));
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   if (!user) return null;
 
@@ -142,21 +174,42 @@ export default function GuardianProfilePage() {
                 <Label htmlFor="current" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                   {t("currentPassword")}
                 </Label>
-                <Input id="current" type="password" />
+                <Input 
+                  id="current" 
+                  type="password" 
+                  value={passwords.current} 
+                  onChange={(e) => setPasswords({...passwords, current: e.target.value})}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="new" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                   {t("newPassword")}
                 </Label>
-                <Input id="new" type="password" />
+                <Input 
+                  id="new" 
+                  type="password" 
+                  value={passwords.new} 
+                  onChange={(e) => setPasswords({...passwords, new: e.target.value})}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="confirm" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                   {t("confirmPassword")}
                 </Label>
-                <Input id="confirm" type="password" />
+                <Input 
+                  id="confirm" 
+                  type="password" 
+                  value={passwords.confirm} 
+                  onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
+                />
               </div>
-              <Button className="w-full mt-2 font-bold shadow-sm">{t("updatePassword")}</Button>
+              <Button 
+                className="w-full mt-2 font-bold shadow-sm"
+                onClick={handlePasswordUpdate}
+                disabled={isUpdating}
+              >
+                {isUpdating ? t("updating") : t("updatePassword")}
+              </Button>
             </CardContent>
           </Card>
 

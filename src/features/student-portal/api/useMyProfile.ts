@@ -7,13 +7,13 @@ import type { StudentProfile } from '../types';
 
 export function useMyProfile() {
   const { user, isHydrated } = useAuthStore();
-  const studentId = user?.id ?? '';
+  const studentId = user?.student_id || user?.id || '';
 
   return useQuery({
     queryKey: queryKeys.studentPortal.profile(studentId),
     queryFn: async () => {
       const { data } = await api.get<StudentProfile>(
-        `/api/students/${studentId}/profile`
+        `/students/${studentId}/profile`
       );
       return data;
     },
@@ -24,12 +24,12 @@ export function useMyProfile() {
 export function useUpdateProfilePhoto() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const studentId = user?.id ?? '';
+  const studentId = user?.student_id || user?.id || '';
 
   return useMutation({
     mutationFn: async (formData: FormData) => {
       const { data } = await api.patch(
-        `/api/students/${studentId}/photo`,
+        `/students/${studentId}/photo`,
         formData,
         {
           headers: {
@@ -47,8 +47,35 @@ export function useUpdateProfilePhoto() {
       }
       toast.success('Profile photo updated successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to update profile photo');
+    },
+  });
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const studentId = user?.student_id || user?.id || '';
+
+  return useMutation({
+    mutationFn: async (data: Partial<StudentProfile>) => {
+      const { data: response } = await api.patch(
+        `/students/${studentId}/profile`,
+        data
+      );
+      return response;
+    },
+    onSuccess: () => {
+      if (studentId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.studentPortal.profile(studentId),
+        });
+      }
+      toast.success('Profile updated successfully');
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(error.response?.data?.detail || 'Failed to update profile');
     },
   });
 }

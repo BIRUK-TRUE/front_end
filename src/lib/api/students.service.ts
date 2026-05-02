@@ -10,7 +10,6 @@ export interface StudentFilters {
   nationality?: string;
   sort_by?: 'created_at' | 'full_name' | 'registration_number' | 'admission_date';
   sort_order?: 'asc' | 'desc';
-  [key: string]: any;
 }
 
 export const studentsService = {
@@ -48,6 +47,8 @@ export const studentsService = {
     nationality?: string;
     previous_school?: string;
     ministry_exam_result?: number;
+    guardian_id?: string;
+    profile_image_url?: string;
   }) {
     const { data } = await axiosInstance.post('/students', payload);
     return data;

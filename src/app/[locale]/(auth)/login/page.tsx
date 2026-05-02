@@ -65,11 +65,30 @@ export default function LoginPage() {
       if (response.user.must_change_password) {
         router.push('/change-password');
       } else {
-        router.push('/dashboard');
+        // Redirect to role-specific dashboard based on user's primary role
+        const primaryRole = response.user.roles[0];
+        switch (primaryRole) {
+          case 'teacher':
+            router.push('/dashboard/teacher');
+            break;
+          case 'student':
+            router.push('/dashboard/student');
+            break;
+          case 'guardian':
+            router.push('/dashboard/guardian');
+            break;
+          case 'admin':
+          case 'director':
+          case 'registrar':
+          default:
+            router.push('/dashboard');
+            break;
+        }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { detail?: string } } };
       const msg =
-        error.response?.data?.detail || t('invalidCredentials');
+        err.response?.data?.detail || t('invalidCredentials');
       setServerError(msg);
     } finally {
       setIsLoading(false);

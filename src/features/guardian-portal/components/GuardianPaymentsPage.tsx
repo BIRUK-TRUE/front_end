@@ -75,7 +75,10 @@ export function GuardianPaymentsPage() {
           </CardContent>
         </Card>
       ) : (
-        <GuardianFeesView studentId={selectedStudentId} />
+        <GuardianFeesView 
+          studentId={selectedStudentId} 
+          studentName={children?.find(c => c.id === selectedStudentId)?.fullName} 
+        />
       )}
     </div>
   );

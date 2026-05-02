@@ -26,6 +26,7 @@ import {
 import { Link } from '@/i18n/navigation';
 import { FaceEnrollmentFlow } from '@/features/attendance/components/FaceEnrollmentFlow';
 import { EmptyState } from '@/components/shared/empty-state';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 
 export default function FaceEnrollmentPage() {
   const t = useTranslations('faceAttendance.enrollment');
@@ -34,6 +35,7 @@ export default function FaceEnrollmentPage() {
   const [selectedYearId, setSelectedYearId] = useState('');
   const [selectedClassId, setSelectedClassId] = useState('');
   const [selectedSectionId, setSelectedSectionId] = useState('');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   
   interface StudentBasic {
     id: string;
@@ -205,11 +207,7 @@ export default function FaceEnrollmentPage() {
                               variant="outline" 
                               size="sm" 
                               className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                              onClick={() => {
-                                if (confirm(t('deleteConfirm', { name: student.name }))) {
-                                  deleteEnrollment.mutate(student.id);
-                                }
-                              }}
+                              onClick={() => setDeleteId(student.id)}
                             >
                               <Trash2 className="h-3 w-3 mr-2" />
                               {t('deleteEnrollment')}
@@ -248,6 +246,22 @@ export default function FaceEnrollmentPage() {
           </div>
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) {
+            deleteEnrollment.mutate(deleteId, {
+              onSuccess: () => setDeleteId(null),
+            });
+          }
+        }}
+        title={tc('confirmDelete')}
+        description={t('deleteConfirm', { name: students.find(s => s.id === deleteId)?.name })}
+        isLoading={deleteEnrollment.isPending}
+      />
     </div>
   );
 }

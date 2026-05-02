@@ -46,7 +46,7 @@ export function useFaceAttendance(sectionId?: string) {
       // We don't show a toast for every recognition to avoid spam,
       // the UI will show the animation/log entry.
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { status?: number; data?: { detail?: string } } }) => {
       // Only toast on critical errors
       if (error.response?.status !== 409) { // 409 usually means already marked
         toast.error(t('markFailed'));

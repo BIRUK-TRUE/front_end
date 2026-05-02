@@ -8,17 +8,53 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Phone, Mail, Shield, Users, Lock, ChevronRight } from "lucide-react";
+import { User, Phone, Mail, Shield, Users, Lock, ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import { useMyChildren } from "@/features/guardian-portal/hooks/useMyChildren";
 import { Link } from "@/i18n/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { authService } from "@/lib/api/auth.service";
 
 export default function GuardianProfilePage() {
   const t = useTranslations("guardianPortal.profile");
   const tc = useTranslations("common");
+  const tv = useTranslations("validation");
   const { user } = useAuthStore();
   const { data: children, isLoading } = useMyChildren();
+
+  const passwordSchema = z.object({
+    current_password: z.string().min(1, tv('required')),
+    new_password: z.string().min(8, tv('passwordMinLength')),
+    confirm_password: z.string().min(1, tv('required')),
+  }).refine((data) => data.new_password === data.confirm_password, {
+    message: tv('passwordsDoNotMatch'),
+    path: ['confirm_password'],
+  });
+
+  type PasswordForm = z.infer<typeof passwordSchema>;
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<PasswordForm>({
+    resolver: zodResolver(passwordSchema),
+  });
+
+  const onPasswordSubmit = async (data: PasswordForm) => {
+    try {
+      await authService.changePassword(data.current_password, data.new_password);
+      toast.success(t('passwordChanged'));
+      reset();
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || t('changePasswordFailed'));
+    }
+  };
 
   if (!user) return null;
 
@@ -138,25 +174,76 @@ export default function GuardianProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="current" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {t("currentPassword")}
-                </Label>
-                <Input id="current" type="password" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="new" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {t("newPassword")}
-                </Label>
-                <Input id="new" type="password" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="confirm" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {t("confirmPassword")}
-                </Label>
-                <Input id="confirm" type="password" />
-              </div>
-              <Button className="w-full mt-2 font-bold shadow-sm">{t("updatePassword")}</Button>
+              <form onSubmit={handleSubmit(onPasswordSubmit)} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="current" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {t("currentPassword")}
+                  </Label>
+                  <Input 
+                    id="current" 
+                    type="password" 
+                    {...register('current_password')}
+                    aria-invalid={!!errors.current_password}
+                    className="h-11"
+                  />
+                  {errors.current_password && (
+                    <p className="text-sm text-destructive flex items-center gap-1.5" role="alert">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {errors.current_password.message}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="new" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {t("newPassword")}
+                  </Label>
+                  <Input 
+                    id="new" 
+                    type="password" 
+                    {...register('new_password')}
+                    aria-invalid={!!errors.new_password}
+                    className="h-11"
+                  />
+                  {errors.new_password && (
+                    <p className="text-sm text-destructive flex items-center gap-1.5" role="alert">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {errors.new_password.message}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirm" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {t("confirmPassword")}
+                  </Label>
+                  <Input 
+                    id="confirm" 
+                    type="password" 
+                    {...register('confirm_password')}
+                    aria-invalid={!!errors.confirm_password}
+                    className="h-11"
+                  />
+                  {errors.confirm_password && (
+                    <p className="text-sm text-destructive flex items-center gap-1.5" role="alert">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {errors.confirm_password.message}
+                    </p>
+                  )}
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full mt-2 font-bold shadow-sm min-h-[44px]" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {tc('loading')}
+                    </>
+                  ) : (
+                    t("updatePassword")
+                  )}
+                </Button>
+              </form>
             </CardContent>
           </Card>
 

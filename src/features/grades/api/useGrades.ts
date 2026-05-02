@@ -47,7 +47,7 @@ export function useGradesByAssessment(assessmentId: string) {
   return useQuery({
     queryKey: gradesKeys.gradesByAssessment(assessmentId),
     queryFn: async (): Promise<Grade[]> => {
-      const { data } = await axiosInstance.get(`/grades/assessment/${assessmentId}`);
+      const { data } = await axiosInstance.get(`/assessments/${assessmentId}/grades`);
       return data;
     },
     enabled: !!assessmentId,
@@ -58,7 +58,7 @@ export function useSubmitGrades() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: BulkGradePayload) => {
-      const { data } = await axiosInstance.post('/grades/bulk', payload);
+      const { data } = await axiosInstance.post(`/assessments/${payload.assessment_id}/grades/bulk`, payload);
       return data;
     },
     onSuccess: (_, variables) => {
@@ -77,8 +77,8 @@ export function useReportCard(studentId: string, termId: string) {
   return useQuery({
     queryKey: gradesKeys.reportCard(studentId, termId),
     queryFn: async (): Promise<ReportCard> => {
-      const { data } = await axiosInstance.get(`/grades/report-card/${studentId}`, {
-        params: { term_id: termId },
+      const { data } = await axiosInstance.get(`/assessments/grades/report-card/${studentId}`, {
+        params: { termId },
       });
       return data;
     },

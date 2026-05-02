@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { axiosInstance as api } from "@/lib/api/axios";
+import { authService } from "@/lib/api/auth.service";
 
 export function ChangePasswordForm() {
   const t = useTranslations("studentPortal.profile.changePassword");
@@ -43,14 +43,16 @@ export function ChangePasswordForm() {
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      await api.post("/api/auth/change-password", {
-        currentPassword: values.currentPassword,
-        newPassword: values.newPassword,
-      });
+      await authService.changePassword(
+        values.currentPassword,
+        values.newPassword,
+        values.confirmPassword
+      );
       toast.success(t("success"));
       form.reset();
-    } catch (e: any) {
-      toast.error(e.response?.data?.detail || tc("error"));
+    } catch (e: unknown) {
+      const error = e as { response?: { data?: { detail?: string } } };
+      toast.error(error.response?.data?.detail || tc("error"));
     } finally {
       setIsSubmitting(false);
     }

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useAlertRules, useDeleteAlertRule, useUpdateAlertRule } from '@/features/notifications/api/useNotifications';
 import { AlertRuleFormModal } from '@/features/notifications/components/AlertRuleFormModal';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import type { AlertRule } from '@/features/notifications/types';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -34,6 +35,7 @@ export default function AlertRulesPage() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<AlertRule | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const handleToggleActive = (rule: AlertRule) => {
     updateMutation.mutate({
@@ -42,9 +44,11 @@ export default function AlertRulesPage() {
     });
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm(t('deleteConfirm'))) {
-      deleteMutation.mutate(id);
+  const handleDelete = () => {
+    if (deleteId) {
+      deleteMutation.mutate(deleteId, {
+        onSuccess: () => setDeleteId(null),
+      });
     }
   };
 
@@ -164,7 +168,7 @@ export default function AlertRulesPage() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => handleDelete(rule.id)}
+                  onClick={() => setDeleteId(rule.id)}
                   disabled={deleteMutation.isPending}
                   className="text-destructive hover:text-destructive"
                 >
@@ -194,6 +198,16 @@ export default function AlertRulesPage() {
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         editingRule={editingRule}
+      />
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={handleDelete}
+        title={tc('confirmDelete')}
+        description={t('deleteConfirm')}
+        isLoading={deleteMutation.isPending}
       />
     </div>
   );

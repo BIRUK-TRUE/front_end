@@ -38,14 +38,14 @@ export const useUpdateSettings = (type: 'school' | 'academic' | 'notifications')
   const t = useTranslations("settings");
 
   return useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: SchoolInfo | AcademicSettings | NotificationSettings) => {
       switch (type) {
         case 'school':
-          return settingsService.updateSchoolInfo(data);
+          return settingsService.updateSchoolInfo(data as SchoolInfo);
         case 'academic':
-          return settingsService.updateAcademicSettings(data);
+          return settingsService.updateAcademicSettings(data as AcademicSettings);
         case 'notifications':
-          return settingsService.updateNotificationSettings(data);
+          return settingsService.updateNotificationSettings(data as NotificationSettings);
       }
     },
     onSuccess: () => {

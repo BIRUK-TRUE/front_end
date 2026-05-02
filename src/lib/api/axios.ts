@@ -11,6 +11,9 @@ export const axiosInstance = axios.create({
   },
 });
 
+// Concurrency control for token refresh
+let refreshPromise: Promise<any> | null = null;
+
 // Request interceptor: attach access token
 axiosInstance.interceptors.request.use(
   (config) => {
@@ -36,15 +39,23 @@ axiosInstance.interceptors.response.use(
       if (!refreshToken) {
         useAuthStore.getState().clearAuth();
         if (typeof window !== 'undefined') {
-          window.location.href = '/en/login';
+          // Get current locale from localStorage or default to 'en'
+          const locale = localStorage.getItem('locale') || 'en';
+          window.location.href = `/${locale}/login`;
         }
         return Promise.reject(error);
       }
 
       try {
-        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-          refresh_token: refreshToken,
-        });
+        // Use existing refresh promise if one is in progress (concurrency control)
+        if (!refreshPromise) {
+          refreshPromise = axios.post(`${API_BASE_URL}/auth/refresh`, {
+            refresh_token: refreshToken,
+          });
+        }
+
+        const { data } = await refreshPromise;
+        refreshPromise = null; // Clear after successful refresh
 
         useAuthStore
           .getState()
@@ -52,9 +63,12 @@ axiosInstance.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
         return axiosInstance(originalRequest);
       } catch {
+        refreshPromise = null; // Clear on error
         useAuthStore.getState().clearAuth();
         if (typeof window !== 'undefined') {
-          window.location.href = '/en/login';
+          // Get current locale from localStorage or default to 'en'
+          const locale = localStorage.getItem('locale') || 'en';
+          window.location.href = `/${locale}/login`;
         }
         return Promise.reject(error);
       }

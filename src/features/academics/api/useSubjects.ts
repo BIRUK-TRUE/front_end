@@ -58,7 +58,7 @@ export const useCreateSubject = () => {
       queryClient.invalidateQueries({ queryKey: academicsKeys.subjects.all() });
       toast.success('Subject created successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to create subject');
     }
   });
@@ -76,7 +76,7 @@ export const useUpdateSubject = () => {
       queryClient.invalidateQueries({ queryKey: academicsKeys.subjects.all() });
       toast.success('Subject updated successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to update subject');
     }
   });
@@ -94,7 +94,7 @@ export const useDeleteSubject = () => {
       queryClient.invalidateQueries({ queryKey: academicsKeys.subjects.all() });
       toast.success('Subject deleted successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to delete subject');
     }
   });

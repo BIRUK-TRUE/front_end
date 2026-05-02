@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useSection, useClass } from '@/features/academics/api/useClasses';
+import { useSectionStudents } from '@/features/academics/api/useSectionStudents';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -14,12 +16,15 @@ import {
   UserPlus,
   GraduationCap,
   School,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { EmptyState } from '@/components/shared/empty-state';
 import {
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -32,12 +37,19 @@ export default function SectionRosterPage() {
   const sectionId = params.sectionId as string;
   const classId = params.classId as string;
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
   const { data: section, isLoading: isSectionLoading } = useSection(sectionId);
   const { data: classData, isLoading: isClassLoading } = useClass(classId);
+  const { data: studentsResponse, isLoading: isStudentsLoading } = useSectionStudents(sectionId);
+  const students = studentsResponse?.items ?? [];
 
-  const students: unknown[] = [];
+  const totalPages = Math.ceil(students.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedStudents = students.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  if (isSectionLoading || isClassLoading) {
+  if (isSectionLoading || isClassLoading || isStudentsLoading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -143,19 +155,62 @@ export default function SectionRosterPage() {
                 }
               />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('studentName')}</TableHead>
-                    <TableHead>{t('idNumber')}</TableHead>
-                    <TableHead>{t('gender')}</TableHead>
-                    <TableHead className="text-right">{tc('actions')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {/* Student rows will go here in a later phase */}
-                </TableBody>
-              </Table>
+              <div className="space-y-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('studentName')}</TableHead>
+                      <TableHead>{t('idNumber')}</TableHead>
+                      <TableHead>{t('gender')}</TableHead>
+                      <TableHead className="text-right">{tc('actions')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedStudents.map((student) => (
+                      <TableRow key={student.id}>
+                        <TableCell className="font-medium">{student.full_name}</TableCell>
+                        <TableCell>{student.registration_number}</TableCell>
+                        <TableCell>{student.gender || t('notAvailable')}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link href={`/dashboard/students/${student.id}`}>
+                              {tc('view')}
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between px-6 py-3 border-t">
+                    <div className="text-sm text-muted-foreground">
+                      {t('showing', { start: startIndex + 1, end: Math.min(startIndex + ITEMS_PER_PAGE, students.length), total: students.length })}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm font-medium">
+                        {currentPage} / {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>

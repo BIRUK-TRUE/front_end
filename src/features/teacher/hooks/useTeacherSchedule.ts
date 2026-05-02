@@ -5,13 +5,13 @@ import { axiosInstance } from "@/lib/api/axios";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { TeacherScheduleEntry } from "../types";
 
-export function useTeacherSchedule(teacherId: string) {
+export function useTeacherSchedule(teacherId: string, weekOffset: number = 0) {
   return useQuery({
-    queryKey: queryKeys.teacher.schedule(teacherId),
+    queryKey: queryKeys.teacher.schedule(teacherId, weekOffset),
     queryFn: async (): Promise<TeacherScheduleEntry[]> => {
-      // BACKEND REQUIRED: GET /teachers/{teacherId}/schedule
-      // Expected response: TeacherScheduleEntry[]
-      const { data } = await axiosInstance.get(`/teachers/${teacherId}/schedule`);
+      const { data } = await axiosInstance.get(`/teachers/${teacherId}/schedule`, {
+        params: { week_offset: weekOffset },
+      });
       return data;
     },
     enabled: !!teacherId,

@@ -11,13 +11,13 @@ import type {
 
 export function useMyAttendanceSummary() {
   const { user, isHydrated } = useAuthStore();
-  const studentId = user?.id ?? '';
+  const studentId = user?.student_id || user?.id || '';
 
   return useQuery({
     queryKey: queryKeys.studentPortal.attendance(studentId, { type: 'summary' }),
     queryFn: async () => {
       const { data } = await api.get<AttendanceSummary>(
-        `/api/students/${studentId}/attendance/summary`
+        `/students/${studentId}/attendance/summary`
       );
       return data;
     },
@@ -27,7 +27,7 @@ export function useMyAttendanceSummary() {
 
 export function useMyAttendanceCalendar(month: number, year: number) {
   const { user, isHydrated } = useAuthStore();
-  const studentId = user?.id ?? '';
+  const studentId = user?.student_id || user?.id || '';
 
   return useQuery({
     queryKey: queryKeys.studentPortal.attendance(studentId, {
@@ -37,7 +37,7 @@ export function useMyAttendanceCalendar(month: number, year: number) {
     }),
     queryFn: async () => {
       const { data } = await api.get<AttendanceCalendarResponse>(
-        `/api/students/${studentId}/attendance/calendar`,
+        `/students/${studentId}/attendance/calendar`,
         { params: { month, year } }
       );
       return data;
@@ -54,7 +54,7 @@ export function useMyAttendanceRecords(filters: {
   size: number;
 }) {
   const { user, isHydrated } = useAuthStore();
-  const studentId = user?.id ?? '';
+  const studentId = user?.student_id || user?.id || '';
 
   return useQuery({
     queryKey: queryKeys.studentPortal.attendance(studentId, {
@@ -63,7 +63,7 @@ export function useMyAttendanceRecords(filters: {
     }),
     queryFn: async () => {
       const { data } = await api.get<PaginatedResponse<AttendanceRecord>>(
-        `/api/students/${studentId}/attendance/records`,
+        `/students/${studentId}/attendance/records`,
         { params: filters }
       );
       return data;

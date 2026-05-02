@@ -6,13 +6,13 @@ import type { GuardianDashboardData } from '../types';
 
 export function useGuardianDashboard() {
   const { user, isHydrated } = useAuthStore();
-  const guardianId = user?.id ?? '';
+  const guardianId = user?.guardian_id ?? '';
 
   return useQuery({
     queryKey: queryKeys.guardianPortal.dashboard(guardianId),
     queryFn: async () => {
       const { data } = await api.get<GuardianDashboardData>(
-        `/api/guardians/${guardianId}/dashboard`
+        `/guardians/${guardianId}/dashboard`
       );
       return data;
     },

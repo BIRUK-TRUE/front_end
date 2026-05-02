@@ -61,7 +61,6 @@ export function FaceRecognitionScanner({
         setIsModelLoading(false);
         toast.success(t('modelsLoaded'));
       } catch (error) {
-        console.error('Failed to load face-api:', error);
         toast.error(t('loadModelsFailed'));
         setIsModelLoading(false);
       }
@@ -97,7 +96,6 @@ export function FaceRecognitionScanner({
         toast.success(t('cameraStarted'));
       }
     } catch (error) {
-      console.error('Camera error:', error);
       toast.error(t('cameraAccessFailed'));
     }
   }, []);
@@ -170,7 +168,7 @@ export function FaceRecognitionScanner({
           faceApi.draw.drawFaceLandmarks(canvas, resizedDetections);
         }
       } catch (error) {
-        console.error('Detection error:', error);
+        // Silently handle detection errors to avoid spam
       }
     };
 

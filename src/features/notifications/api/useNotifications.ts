@@ -5,12 +5,20 @@ import { axiosInstance } from '@/lib/api/axios';
 import { toast } from 'sonner';
 import type { Notification, NotificationPreferences, CreateNotificationPayload, NotificationHistory, AlertRule, NotificationDetail } from '../types';
 
+interface NotificationHistoryFilters {
+  type?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  channel?: string;
+  target?: string;
+}
+
 const notificationsKeys = {
   all: ['notifications'] as const,
   list: (userId: string) => [...notificationsKeys.all, 'list', userId] as const,
   unread: (userId: string) => [...notificationsKeys.all, 'unread', userId] as const,
   preferences: (userId: string) => [...notificationsKeys.all, 'preferences', userId] as const,
-  history: (filters?: any) => [...notificationsKeys.all, 'history', filters] as const,
+  history: (filters?: NotificationHistoryFilters) => [...notificationsKeys.all, 'history', filters] as const,
   detail: (id: string) => [...notificationsKeys.all, 'detail', id] as const,
   alertRules: () => [...notificationsKeys.all, 'alertRules'] as const,
   alertRule: (id: string) => [...notificationsKeys.all, 'alertRule', id] as const,
@@ -76,7 +84,7 @@ export function useMarkAsRead() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      const { data } = await axiosInstance.post(`/notifications/${notificationId}/read`);
+      const { data } = await axiosInstance.patch(`/notifications/${notificationId}/read`);
       return data;
     },
     onSuccess: () => {
@@ -94,7 +102,7 @@ export function useMarkAllAsRead() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const { data } = await axiosInstance.post(`/notifications/read-all`);
+      const { data } = await axiosInstance.patch(`/notifications/me/read-all`);
       return data;
     },
     onSuccess: () => {

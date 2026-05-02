@@ -229,7 +229,7 @@ export function Sidebar({
       show: canManageStudents,
     },
     {
-      href: '/dashboard/academics/subjects',
+      href: '/dashboard/academics/years',
       label: t('academics'),
       icon: Building2,
       show: canManageAcademics,

@@ -3,16 +3,17 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import { useAcademicYears, useCreateAcademicYear, useUpdateAcademicYear } from '@/features/academics/api/useAcademicYears';
+import { useAcademicYears, useCreateAcademicYear, useUpdateAcademicYear, useDeleteAcademicYear } from '@/features/academics/api/useAcademicYears';
 import { type AcademicYearForm } from '@/features/academics/types/schemas';
 import { type AcademicYear, AcademicYearStatus } from '@/features/academics/types';
 import { AcademicYearModal } from '@/features/academics/components/AcademicYearModal';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Calendar, MoreHorizontal, Edit, CheckCircle, ChevronRight, Archive } from 'lucide-react';
+import { Plus, Calendar, MoreHorizontal, Edit, CheckCircle, ChevronRight, Archive, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/shared/empty-state';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import {
   Table,
   TableBody,
@@ -37,11 +38,13 @@ export default function AcademicYearsPage() {
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingYear, setEditingYear] = useState<AcademicYear | null>(null);
+  const [deleteYearId, setDeleteYearId] = useState<string | null>(null);
 
   const { data, isLoading } = useAcademicYears(page, 20);
 
   const createYear = useCreateAcademicYear();
   const updateYear = useUpdateAcademicYear();
+  const deleteYear = useDeleteAcademicYear();
 
   const openCreateModal = () => {
     setEditingYear(null);
@@ -201,9 +204,14 @@ export default function AcademicYearsPage() {
                               {year.status === AcademicYearStatus.COMPLETED && (
                                 <>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="text-muted-foreground">
-                                    <Archive className="mr-2 h-4 w-4" />
-                                    {t('archiveYear')}
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setDeleteYearId(year.id);
+                                    }}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    {t('deleteYear')}
                                   </DropdownMenuItem>
                                 </>
                               )}
@@ -226,6 +234,20 @@ export default function AcademicYearsPage() {
         year={editingYear}
         onSubmit={handleModalSubmit}
         isLoading={createYear.isPending || updateYear.isPending}
+      />
+
+      <ConfirmDialog
+        open={!!deleteYearId}
+        onOpenChange={(open) => { if (!open) setDeleteYearId(null); }}
+        onConfirm={async () => {
+          if (deleteYearId) {
+            await deleteYear.mutateAsync(deleteYearId);
+            setDeleteYearId(null);
+          }
+        }}
+        title={t('deleteYearTitle')}
+        description={t('deleteYearDescription')}
+        isLoading={deleteYear.isPending}
       />
     </div>
   );

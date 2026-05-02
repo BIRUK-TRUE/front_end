@@ -84,6 +84,7 @@ export interface Student {
   registration_number: string;
   email?: string;
   is_active?: boolean;
+  gender?: string;
 }
 
 export interface PaginatedResponse<T> {

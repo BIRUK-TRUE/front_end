@@ -75,7 +75,7 @@ export function WithdrawModal({
             Withdraw Student
           </DialogTitle>
           <DialogDescription>
-            You are about to withdraw <strong>{enrollment?.student_name}</strong> from <strong>{enrollment?.academic_year_name}</strong>. This action is significant.
+            You are about to withdraw <strong>{enrollment?.full_name}</strong> from <strong>{enrollment?.academic_year_name}</strong>. This action is significant.
           </DialogDescription>
         </DialogHeader>
 

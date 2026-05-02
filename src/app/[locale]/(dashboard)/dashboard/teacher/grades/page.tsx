@@ -15,7 +15,7 @@ export default function TeacherGradesPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
       </div>
-      <TeacherGradeEntry teacherId={user.id} />
+      <TeacherGradeEntry teacherId={user.teacher_id || user.id} />
     </div>
   );
 }

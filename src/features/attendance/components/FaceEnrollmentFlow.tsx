@@ -88,7 +88,6 @@ export function FaceEnrollmentFlow({
         
         setIsModelLoading(false);
       } catch (error) {
-        console.error('Failed to load face-api models:', error);
         toast.error(t('loadModelsFailed'));
       }
     };

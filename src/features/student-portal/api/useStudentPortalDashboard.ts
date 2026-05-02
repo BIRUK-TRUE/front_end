@@ -6,13 +6,13 @@ import type { StudentDashboardData } from '../types';
 
 export function useStudentDashboard() {
   const { user, isHydrated } = useAuthStore();
-  const studentId = user?.id ?? '';
+  const studentId = user?.student_id ?? '';
 
   return useQuery({
     queryKey: queryKeys.studentPortal.dashboard(studentId),
     queryFn: async () => {
       const { data } = await api.get<StudentDashboardData>(
-        `/api/students/${studentId}/dashboard`
+        `/students/${studentId}/dashboard`
       );
       return data;
     },

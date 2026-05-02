@@ -40,7 +40,7 @@ export const useCreateAcademicYear = () => {
       queryClient.invalidateQueries({ queryKey: academicsKeys.years.all() });
       toast.success('Academic Year created successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to create academic year');
     }
   });
@@ -59,8 +59,25 @@ export const useUpdateAcademicYear = () => {
       queryClient.invalidateQueries({ queryKey: academicsKeys.years.detail(variables.id) });
       toast.success('Academic Year updated successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to update academic year');
+    }
+  });
+};
+
+export const useDeleteAcademicYear = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await axiosInstance.delete(`/academics/years/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: academicsKeys.years.all() });
+      toast.success('Academic Year deleted successfully');
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(error.response?.data?.detail || 'Failed to delete academic year');
     }
   });
 };

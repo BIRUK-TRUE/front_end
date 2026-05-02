@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { useGuardians, useDeleteGuardian } from '@/hooks/use-guardians';
+import { useGuardians, useDeleteGuardian, useRestoreGuardian } from '@/hooks/use-guardians';
 import { usePermissions } from '@/hooks/use-permissions';
 import { PageHeader } from '@/components/shared/page-header';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -24,11 +24,13 @@ export default function GuardiansPage() {
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const filters = { page, size: 20, search: search || undefined };
+  const filters = { page, size: 20, search: search || undefined, is_active: statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined };
   const { data, isLoading } = useGuardians(filters);
   const deleteGuardian = useDeleteGuardian();
+  const restoreGuardian = useRestoreGuardian();
 
   const columns: ColumnDef<any>[] = [
     {
@@ -52,9 +54,18 @@ export default function GuardiansPage() {
       cell: ({ row }) => <span className="text-muted-foreground">{row.original.occupation || '—'}</span>,
     },
     {
-      id: 'student_links',
+      accessorKey: 'student_links',
       header: t('linkedStudents'),
       cell: ({ row }) => <span>{row.original.student_links?.length || 0}</span>,
+    },
+    {
+      accessorKey: 'is_active',
+      header: tc('status'),
+      cell: ({ row }) => (
+        <span className={row.original.is_active ? 'text-green-600' : 'text-muted-foreground'}>
+          {row.original.is_active ? tc('active') : tc('inactive')}
+        </span>
+      ),
     },
     {
       id: 'actions',
@@ -79,9 +90,15 @@ export default function GuardiansPage() {
                   <Pencil className="h-4 w-4" />{tc('edit')}
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setDeleteId(guardian.id)} className="text-destructive focus:text-destructive flex items-center gap-2">
-                <Trash2 className="h-4 w-4" />{tc('delete')}
-              </DropdownMenuItem>
+              {guardian.is_active ? (
+                <DropdownMenuItem onClick={() => setDeleteId(guardian.id)} className="text-destructive focus:text-destructive flex items-center gap-2">
+                  <Trash2 className="h-4 w-4" />{tc('delete')}
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => restoreGuardian.mutate(guardian.id)} className="text-green-600 focus:text-green-600 flex items-center gap-2">
+                  <UserCheck className="h-4 w-4" />{tc('restore')}
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -102,9 +119,37 @@ export default function GuardiansPage() {
 
       <Card>
         <CardContent className="p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder={t('searchGuardians')} value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="pl-9 h-11" aria-label={tc('search')} />
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder={t('searchGuardians')} value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="pl-9 h-11" aria-label={tc('search')} />
+            </div>
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
+              <Button
+                variant={statusFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                className="rounded-full h-9"
+                onClick={() => setStatusFilter('all')}
+              >
+                {tc('all')}
+              </Button>
+              <Button
+                variant={statusFilter === 'active' ? 'default' : 'outline'}
+                size="sm"
+                className="rounded-full h-9"
+                onClick={() => setStatusFilter('active')}
+              >
+                {tc('active')}
+              </Button>
+              <Button
+                variant={statusFilter === 'inactive' ? 'default' : 'outline'}
+                size="sm"
+                className="rounded-full h-9"
+                onClick={() => setStatusFilter('inactive')}
+              >
+                {tc('inactive')}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

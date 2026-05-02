@@ -10,12 +10,16 @@ import {
   Wallet, 
   CheckCircle2,
   Mail,
-  Filter
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  Trash2
 } from "lucide-react";
 import { 
   useGuardianNotifications, 
   useMarkNotificationRead, 
-  useMarkAllNotificationsRead 
+  useMarkAllNotificationsRead,
+  useDeleteNotification 
 } from "../hooks/useGuardianNotifications";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -27,9 +31,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export function GuardianNotificationList() {
   const t = useTranslations("guardianPortal.notifications");
   const [filter, setFilter] = useState("all");
-  const { data, isLoading } = useGuardianNotifications({ type: filter === "all" ? undefined : filter });
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+  const { data, isLoading } = useGuardianNotifications({ 
+    type: filter === "all" ? undefined : filter,
+    page: currentPage,
+    size: ITEMS_PER_PAGE
+  });
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
+  const deleteNotification = useDeleteNotification();
 
   if (isLoading) {
     return <Skeleton className="h-96 w-full" />;
@@ -73,7 +84,7 @@ export function GuardianNotificationList() {
         </Button>
       </div>
 
-      <Tabs value={filter} onValueChange={setFilter} className="space-y-4">
+      <Tabs value={filter} onValueChange={(val) => { setFilter(val); setCurrentPage(1); }} className="space-y-4">
         <TabsList className="bg-muted/50 p-1 rounded-lg">
           <TabsTrigger value="all">{t("filters.all")}</TabsTrigger>
           <TabsTrigger value="attendance">{t("filters.attendance")}</TabsTrigger>
@@ -124,9 +135,23 @@ export function GuardianNotificationList() {
                             </Badge>
                           )}
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(n.createdAt), "MMM d, h:mm a")}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(n.createdAt), "MMM d, h:mm a")}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNotification.mutate(n.id);
+                            }}
+                            disabled={deleteNotification.isPending}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                       <p className="text-sm font-bold leading-none">{n.title}</p>
                       <p className="text-sm text-foreground/80 leading-snug">{n.message}</p>
@@ -140,6 +165,39 @@ export function GuardianNotificationList() {
             )}
           </CardContent>
         </Card>
+        
+        {data && data.pages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t">
+            <div className="text-sm text-muted-foreground">
+              {t("showing", { 
+                start: ((currentPage - 1) * ITEMS_PER_PAGE) + 1, 
+                end: Math.min(currentPage * ITEMS_PER_PAGE, data.total), 
+                total: data.total 
+              })}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-medium">
+                {currentPage} / {data.pages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(data.pages, p + 1))}
+                disabled={currentPage === data.pages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </Tabs>
     </div>
   );

@@ -12,7 +12,7 @@ export function useFeeBalance(studentId: string) {
     queryKey: queryKeys.guardianPortal.fees(studentId),
     queryFn: async () => {
       const { data } = await api.get<ChildFeeBalance>(
-        `/api/students/${studentId}/fees/balance`
+        `/students/${studentId}/fees/balance`
       );
       return data;
     },
@@ -27,7 +27,7 @@ export function usePaymentHistory(studentId: string) {
     queryKey: queryKeys.guardianPortal.payments(studentId),
     queryFn: async () => {
       const { data } = await api.get<PaymentRecord[]>(
-        `/api/students/${studentId}/payments`
+        `/students/${studentId}/payments`
       );
       return data;
     },
@@ -40,7 +40,11 @@ export function useInitiatePayment() {
 
   return useMutation({
     mutationFn: async (payload: { studentId: string; amount: number; method: string }) => {
-      const { data } = await api.post('/api/payments/initiate', payload);
+      const { data } = await api.post('/payments/initiate', {
+        student_id: payload.studentId,
+        amount: payload.amount,
+        payment_method: payload.method,
+      });
       return data;
     },
     onSuccess: (_, variables) => {
@@ -52,7 +56,7 @@ export function useInitiatePayment() {
       });
       toast.success('Payment initiated successfully');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(error.response?.data?.detail || 'Failed to initiate payment');
     },
   });

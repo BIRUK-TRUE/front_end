@@ -31,7 +31,7 @@ function UserDetailPage() {
   const restoreUser = useRestoreUser();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const userRoles = (user?.roles || []).map((r: any) => typeof r === 'string' ? r : r.name);
+  const userRoles = (user?.roles || []).map((r: string | { name: string }) => typeof r === 'string' ? r : r.name);
   const canEdit = canEditUser(userRoles);
   const canDelete = canDeleteUser(userRoles);
   const isOwnProfile = currentUser?.id === id;
@@ -125,7 +125,7 @@ function UserDetailPage() {
               />
             </div>
             <div className="flex flex-wrap justify-center gap-1.5 mt-4">
-              {(user.roles || []).map((role: any) => (
+              {(user.roles || []).map((role: string | { name: string }) => (
                 <RoleBadge
                   key={typeof role === 'string' ? role : role.name}
                   role={typeof role === 'string' ? role : role.name}
