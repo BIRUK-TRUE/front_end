@@ -30,6 +30,9 @@ import {
   BarChart3,
   TrendingUp,
   ScanFace,
+  Package,
+  Send,
+  ShieldAlert,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -284,22 +287,16 @@ export function Sidebar({
     },
     // Notification section (admin/director only)
     {
-      href: '/dashboard/notifications/alert-rules',
-      label: t('alertRules'),
+      href: '/dashboard/notifications',
+      label: t('notifications'),
       icon: Bell,
       show: canManageNotifications,
     },
     {
-      href: '/dashboard/notifications/compose',
-      label: t('sendNotification'),
-      icon: Bell,
-      show: canManageNotifications,
-    },
-    {
-      href: '/dashboard/notifications/history',
-      label: t('notificationHistory'),
-      icon: Bell,
-      show: canManageNotifications,
+      href: '/dashboard/inventory',
+      label: t('inventory'),
+      icon: Package,
+      show: canManageAcademics || canViewUsers,
     },
   ];
 
@@ -426,13 +423,44 @@ export function Sidebar({
         <ScrollArea className="flex-1 px-3 py-4 overflow-y-auto">
           <nav className="space-y-1" aria-label={t('mainNavigation')}>
             {navItems.map((item) => (
-              <NavLink 
-                key={item.href} 
-                item={item} 
-                showBadge={item.href.includes('notifications')} 
+              <NavLink
+                key={item.href}
+                item={item}
+                showBadge={item.href === '/dashboard/notifications'}
               />
             ))}
           </nav>
+
+          {/* Grouped notifications sub-nav for admin/director */}
+          {canManageNotifications && !isCollapsed && (
+            <div className="mt-1 ml-3 pl-3 border-l border-border space-y-0.5">
+              {[
+                { href: '/dashboard/notifications/compose', label: 'Send Message', icon: Send },
+                { href: '/dashboard/notifications/alert-rules', label: 'Alert Rules', icon: ShieldAlert },
+                { href: '/dashboard/notifications/history', label: 'History', icon: History },
+              ].map(({ href, label, icon: Icon }) => {
+                const active = pathname.startsWith(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => { if (window.innerWidth < 1024) onClose(); }}
+                    className={cn(
+                      'flex items-center gap-2 rounded-md px-2 py-2 text-xs font-medium transition-all min-h-[36px]',
+                      'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                      active
+                        ? 'bg-sidebar-primary/60 text-sidebar-primary-foreground'
+                        : 'text-sidebar-foreground/60'
+                    )}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                    <span>{label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
 
           {/* Bottom nav */}
           <div className="border-t px-0 py-4 space-y-1 mt-4">

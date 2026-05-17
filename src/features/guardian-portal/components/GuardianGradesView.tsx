@@ -2,7 +2,14 @@
 
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useChildGrades } from "../hooks/useChildDetails";
 import { cn } from "@/lib/utils";
@@ -15,7 +22,7 @@ export function GuardianGradesView({ studentId }: Props) {
   const t = useTranslations("guardianPortal.childDetail");
   const tg = useTranslations("guardianPortal.childDetail.gradesTab");
   const tc = useTranslations("common");
-  const { data, isLoading } = useChildGrades(studentId, { term: "current" });
+  const { data, isLoading } = useChildGrades(studentId, { termId: "current" });
 
   if (isLoading) {
     return (
@@ -35,16 +42,24 @@ export function GuardianGradesView({ studentId }: Props) {
       </CardHeader>
       <CardContent className="pt-6">
         {grades.length === 0 ? (
-          <p className="text-sm text-center py-10 text-muted-foreground italic">{tg("noGradeRecords")}</p>
+          <p className="text-sm text-center py-10 text-muted-foreground italic">
+            {tg("noGradeRecords")}
+          </p>
         ) : (
           <div className="rounded-lg border overflow-hidden">
             <Table>
               <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead className="font-bold">{tg("subject")}</TableHead>
-                  <TableHead className="font-bold">{tg("assessment")}</TableHead>
-                  <TableHead className="font-bold text-center">{tg("score")}</TableHead>
-                  <TableHead className="font-bold text-center">{tg("total")}</TableHead>
+                  <TableHead className="font-bold">
+                    {tg("assessment")}
+                  </TableHead>
+                  <TableHead className="font-bold text-center">
+                    {tg("score")}
+                  </TableHead>
+                  <TableHead className="font-bold text-center">
+                    {tg("total")}
+                  </TableHead>
                   <TableHead className="font-bold">{tg("remarks")}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -58,10 +73,14 @@ export function GuardianGradesView({ studentId }: Props) {
                       {grade.assessmentName}
                     </TableCell>
                     <TableCell className="text-center font-bold">
-                      <span className={cn(
-                        "px-2 py-0.5 rounded",
-                        (grade.score / grade.totalMarks) >= 0.5 ? "text-green-700 bg-green-50" : "text-red-700 bg-red-50"
-                      )}>
+                      <span
+                        className={cn(
+                          "px-2 py-0.5 rounded",
+                          grade.score / grade.totalMarks >= 0.5
+                            ? "text-green-700 bg-green-50"
+                            : "text-red-700 bg-red-50",
+                        )}
+                      >
                         {grade.score}
                       </span>
                     </TableCell>

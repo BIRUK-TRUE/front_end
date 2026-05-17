@@ -41,10 +41,53 @@ export function useAnalyticsSummary(filters?: AnalyticsFilters) {
   return useQuery({
     queryKey: analyticsKeys.summary(filters),
     queryFn: async (): Promise<AnalyticsSummary> => {
-      const { data } = await axiosInstance.get<AnalyticsSummary>('/analytics/summary', {
-        params: filters,
+      const [summaryRes, atRiskRes] = await Promise.all([
+        axiosInstance.get<{
+          total_students: number;
+          total_teachers: number;
+          total_guardians: number;
+          total_classes: number;
+          active_enrollments: number;
+          attendance_rate: number;
+          average_grade: number;
+          pending_payments: number;
+        }>('/analytics/summary', { params: filters }),
+        axiosInstance.get<{
+          data: Array<{
+            student_id: string;
+            risk_factors: string[];
+          }>;
+        }>('/analytics/at-risk-students', { params: filters }).catch(() => ({ data: { data: [] } })),
+      ]);
+
+      const summaryData = summaryRes.data;
+      const atRiskList = atRiskRes.data?.data || [];
+      const atRiskCounts = {
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+      };
+
+      atRiskList.forEach(item => {
+        const factorCount = (item.risk_factors || []).length;
+        if (factorCount >= 3) {
+          atRiskCounts.critical++;
+        } else if (factorCount === 2) {
+          atRiskCounts.high++;
+        } else if (factorCount === 1) {
+          atRiskCounts.medium++;
+        } else {
+          atRiskCounts.low++;
+        }
       });
-      return data;
+
+      return {
+        totalStudents: summaryData.total_students,
+        schoolAttendanceRate: summaryData.attendance_rate,
+        schoolGradeAverage: summaryData.average_grade,
+        atRiskCounts,
+      };
     },
     enabled: true,
   });

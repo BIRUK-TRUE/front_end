@@ -1441,6 +1441,30 @@
       }
     }
   },
+  "classes": {
+    "detail": "የክፍል ዝርዝሮች",
+    "detailNotFound": "ስለዚህ ክፍል ዝርዝር መረጃ ይመልከቱ",
+    "notFound": "ክፍል አልተገኘም ወይም ዝርዝሮችን መጫን አልተሳካም",
+    "noDescription": "ምንም መግለጫ የለም",
+    "totalStudents": "ጠቅላላ ተማሪዎች",
+    "studentsInClass": "በዚህ ክፍል ውስጥ የተመዘገቡ ተማሪዎች",
+    "totalSections": "ጠቅላላ ክፍለ ክፍሎች",
+    "sections": "ክፍለ ክፍሎች",
+    "gradeLevel": "የደረጃ ደረጃ",
+    "grade": "ደረጃ",
+    "sectionsDescription": "በዚህ ክፍል ውስጥ ያሉ ሁሉም ክፍለ ክፍሎች",
+    "sectionName": "የክፍለ ክፍል ስም",
+    "room": "ክፍል",
+    "capacity": "አቅም",
+    "enrolled": "የተመዘገቡ",
+    "available": "የሚገኙ ቦታዎች",
+    "status": "ሁኔታ",
+    "full": "ተሞልቷል",
+    "open": "ክፍት",
+    "additionalInfo": "ተጨማሪ መረጃ",
+    "className": "የክፍል ስም",
+    "description": "መግለጫ"
+  },
   "notifications": {
     "center": {
       "title": "ማሳወቂያዎች",
@@ -2050,6 +2074,7 @@
     "title": "የትንታኔ ዳሽቦርድ",
     "subtitle": "የትምህርት ቤት አፈፃፀም አጠቃላይ እይታ እና አደጋ ላይ ያሉ ተማሪዎች ክትትል",
     "refresh": "አዘምን",
+    "export": "ወደ ውጪ ላክ",
     "teacher": {
       "title": "የክፍሌ ትንታኔ",
       "subtitle": "ለተመደቡልዎ ክፍሎች አፈፃፀም እና አደጋ ላይ ያሉ ተማሪዎች ማጠቃለያ",
@@ -2096,7 +2121,8 @@
     "riskFactors": {
       "attendance": "ተገኝነት {value}% (ወሰን፡ {threshold}%)",
       "grade": "የውጤት አማካይ {value}% (ወሰን፡ {threshold}%)",
-      "consecutive_absence": "{value} ተከታታይ ቀናት ቀርቷል (ወሰን፡ {threshold})"
+      "consecutive_absence": "{value} ተከታታይ ቀናት ቀርቷል (ወሰን፡ {threshold})",
+      "financial": "ያልተከፈለ ክፍያ {value} ብር"
     },
     "atRiskTable": {
       "title": "አደጋ ላይ ያሉ ተማሪዎች",
@@ -2171,5 +2197,30 @@
       "send": "ማሳወቂያ ላክ",
       "defaultMessage": "ውድ ሞግዚት፣ ስለ {studentName} የቅርብ ጊዜ አፈፃፀም እና ተገኝነት ለማነጋገር እንፈልጋለን። እባክዎ በቶሎ ወደ ትምህርት ቤቱ ያቅርቡ።"
     }
+  },
+  "classes": {
+    "detail": "የክፍል ዝርዝሮች",
+    "detailNotFound": "ስለዚህ ክፍል ዝርዝር መረጃ ይመልከቱ",
+    "notFound": "ክፍሉ አልተገኘም ወይም ዝርዝሮቹን ማስጫን አልተቻለም",
+    "noDescription": "ምንም መግለጫ የለም",
+    "totalStudents": "ጠቅላላ ተማሪዎች",
+    "studentsInClass": "በዚህ ክፍል ውስጥ የተመዘገቡ ተማሪዎች",
+    "totalSections": "ጠቅላላ ክፍሎች",
+    "sections": "ክፍሎች",
+    "gradeLevel": "የደረጃ ደረጃ",
+    "grade": "ደረጃ",
+    "academicYear": "የትምህርት ዓመት",
+    "sectionsDescription": "በዚህ ክፍል ውስጥ ያሉ ሁሉም ክፍሎች",
+    "sectionName": "የክፍል ስም",
+    "room": "ክፍል",
+    "capacity": "አቅም",
+    "enrolled": "ተመዝግቧል",
+    "available": "የሚገኙ ቦታዎች",
+    "status": "ሁኔታ",
+    "full": "ተሞልቷል",
+    "open": "ክፍት",
+    "additionalInfo": "ተጨማሪ መረጃ",
+    "className": "የክፍል ስም",
+    "description": "መግለጫ"
   }
 }

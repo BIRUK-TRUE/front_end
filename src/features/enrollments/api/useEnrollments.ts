@@ -1,9 +1,14 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { axiosInstance } from '@/lib/api/axios';
-import { type Enrollment, type EnrollmentHistory } from '../types';
-import { type EnrollmentForm, type TransferForm, type WithdrawalForm } from '../types/schemas';
-import { type PaginatedResponse } from '@/features/academics/types';
-import { toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { axiosInstance } from "@/lib/api/axios";
+import { type Enrollment, type EnrollmentHistory } from "../types";
+import {
+  type EnrollmentForm,
+  type TransferForm,
+  type WithdrawalForm,
+} from "../types/schemas";
+import { type PaginatedResponse } from "@/features/academics/types";
+import { toast } from "sonner";
+import { formatApiError } from "@/lib/utils/formatApiError";
 
 interface EnrollmentFilters {
   page?: number;
@@ -16,19 +21,24 @@ interface EnrollmentFilters {
 }
 
 export const enrollmentKeys = {
-  all: ['enrollments'] as const,
-  lists: () => [...enrollmentKeys.all, 'list'] as const,
-  list: (filters: EnrollmentFilters) => [...enrollmentKeys.lists(), filters] as const,
-  details: () => [...enrollmentKeys.all, 'detail'] as const,
+  all: ["enrollments"] as const,
+  lists: () => [...enrollmentKeys.all, "list"] as const,
+  list: (filters: EnrollmentFilters) =>
+    [...enrollmentKeys.lists(), filters] as const,
+  details: () => [...enrollmentKeys.all, "detail"] as const,
   detail: (id: string) => [...enrollmentKeys.details(), id] as const,
-  byStudent: (studentId: string) => [...enrollmentKeys.all, 'student', studentId] as const,
+  byStudent: (studentId: string) =>
+    [...enrollmentKeys.all, "student", studentId] as const,
 };
 
 export const useEnrollments = (filters: EnrollmentFilters = {}) => {
   return useQuery({
     queryKey: enrollmentKeys.list(filters),
     queryFn: async () => {
-      const { data } = await axiosInstance.get<PaginatedResponse<Enrollment>>('/enrollments', { params: filters });
+      const { data } = await axiosInstance.get<PaginatedResponse<Enrollment>>(
+        "/enrollments",
+        { params: filters },
+      );
       return data;
     },
     enabled: true,
@@ -39,7 +49,9 @@ export const useStudentEnrollmentHistory = (studentId: string) => {
   return useQuery({
     queryKey: enrollmentKeys.byStudent(studentId),
     queryFn: async () => {
-      const { data } = await axiosInstance.get<PaginatedResponse<Enrollment>>(`/enrollments/student/${studentId}`);
+      const { data } = await axiosInstance.get<PaginatedResponse<Enrollment>>(
+        `/enrollments/student/${studentId}`,
+      );
       return data.items || [];
     },
     enabled: !!studentId,
@@ -48,37 +60,40 @@ export const useStudentEnrollmentHistory = (studentId: string) => {
 
 export const useEnrollStudent = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (payload: EnrollmentForm) => {
-      const { data } = await axiosInstance.post('/enrollments', payload);
+      const { data } = await axiosInstance.post("/enrollments", payload);
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.all });
-      toast.success('Student enrolled successfully');
+      toast.success("Student enrolled successfully");
     },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to enroll student');
-    }
+    onError: (error: any) => {
+      toast.error(formatApiError(error, "Failed to enroll student"));
+    },
   });
 };
 
 export const useTransferStudent = (enrollmentId: string) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (payload: TransferForm) => {
-      const { data } = await axiosInstance.post(`/enrollments/${enrollmentId}/transfer`, payload);
+      const { data } = await axiosInstance.post(
+        `/enrollments/${enrollmentId}/transfer`,
+        payload,
+      );
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.all });
-      toast.success('Student transferred successfully');
+      toast.success("Student transferred successfully");
     },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to transfer student');
-    }
+    onError: (error: any) => {
+      toast.error(formatApiError(error, "Failed to transfer student"));
+    },
   });
 };
 
@@ -87,16 +102,19 @@ export const useWithdrawStudent = (enrollmentId: string) => {
 
   return useMutation({
     mutationFn: async (payload: WithdrawalForm) => {
-      const { data } = await axiosInstance.post(`/enrollments/${enrollmentId}/withdraw`, payload);
+      const { data } = await axiosInstance.post(
+        `/enrollments/${enrollmentId}/withdraw`,
+        payload,
+      );
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.all });
-      toast.success('Student withdrawn successfully');
+      toast.success("Student withdrawn successfully");
     },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to withdraw student');
-    }
+    onError: (error: any) => {
+      toast.error(formatApiError(error, "Failed to withdraw student"));
+    },
   });
 };
 
@@ -104,18 +122,29 @@ export const useUpdateEnrollment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data: enrollmentData }: { id: string; data: Partial<EnrollmentForm> }) => {
-      const { data } = await axiosInstance.patch(`/enrollments/${id}`, enrollmentData);
+    mutationFn: async ({
+      id,
+      data: enrollmentData,
+    }: {
+      id: string;
+      data: Partial<EnrollmentForm>;
+    }) => {
+      const { data } = await axiosInstance.patch(
+        `/enrollments/${id}`,
+        enrollmentData,
+      );
       return data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.all });
-      queryClient.invalidateQueries({ queryKey: enrollmentKeys.detail(variables.id) });
-      toast.success('Enrollment updated successfully');
+      queryClient.invalidateQueries({
+        queryKey: enrollmentKeys.detail(variables.id),
+      });
+      toast.success("Enrollment updated successfully");
     },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to update enrollment');
-    }
+    onError: (error: any) => {
+      toast.error(formatApiError(error, "Failed to update enrollment"));
+    },
   });
 };
 
@@ -128,10 +157,10 @@ export const useDeleteEnrollment = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.all });
-      toast.success('Enrollment deleted successfully');
+      toast.success("Enrollment deleted successfully");
     },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to delete enrollment');
-    }
+    onError: (error: any) => {
+      toast.error(formatApiError(error, "Failed to delete enrollment"));
+    },
   });
 };

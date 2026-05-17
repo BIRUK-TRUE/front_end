@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useEnrollments, useTransferStudent, useWithdrawStudent, useUpdateEnrollment, useDeleteEnrollment } from '@/features/enrollments/api/useEnrollments';
 import { type Enrollment } from '@/features/enrollments/types';
@@ -48,14 +48,27 @@ export default function EnrollmentsPage() {
   
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [yearFilter, setYearFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // Debounce search value
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [search]);
 
   const { data: yearsData } = useAcademicYears(1, 50);
   
   const enrollmentFilters = {
     page,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     academic_year_id: yearFilter !== 'all' ? yearFilter : undefined,
     status: statusFilter !== 'all' ? statusFilter : undefined,
   };
@@ -76,6 +89,7 @@ export default function EnrollmentsPage() {
 
   const handleResetFilters = () => {
     setSearch('');
+    setDebouncedSearch('');
     setYearFilter('all');
     setStatusFilter('all');
     setPage(1);

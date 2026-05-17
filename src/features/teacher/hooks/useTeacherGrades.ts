@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { queryKeys } from "@/lib/api/query-keys";
 import { toast } from "sonner";
+import { formatApiError } from "@/lib/utils/formatApiError";
 import { useTranslations } from "next-intl";
 import type { Assessment, Grade } from "@/features/grades/types";
 import type {
@@ -38,10 +39,13 @@ export function useTeacherAssessments(
 ) {
   return useQuery({
     queryKey: queryKeys.teacher.assessments(teacherId, filters),
-    queryFn: async (): Promise<{ items: TeacherAssessment[]; total: number }> => {
+    queryFn: async (): Promise<{
+      items: TeacherAssessment[];
+      total: number;
+    }> => {
       const { data } = await axiosInstance.get(
         `/teachers/${teacherId}/assessments`,
-        { params: filters }
+        { params: filters },
       );
       // The backend returns { teacher_id, assessments: [...] }
       // The hook expects { items, total }
@@ -101,25 +105,31 @@ export function useSubmitTeacherGrades() {
         }
       }
 
-      const { data } = await axiosInstance.post(`/assessments/${args.assessmentId}/grades/bulk`, {
-        entries: args.grades.map((grade) => ({
-          student_id: grade.studentId,
-          score: grade.score,
-          comment: grade.remarks,
-        })),
-      });
+      const { data } = await axiosInstance.post(
+        `/assessments/${args.assessmentId}/grades/bulk`,
+        {
+          entries: args.grades.map((grade) => ({
+            student_id: grade.studentId,
+            score: grade.score,
+            comment: grade.remarks,
+          })),
+        },
+      );
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher"] });
       toast.success(t("gradesSubmitted"));
     },
-    onError: (error: { message?: string; response?: { data?: { detail?: string } } }) => {
+    onError: (error: {
+      message?: string;
+      response?: { data?: { detail?: string } };
+    }) => {
       if (error.message === "INVALID_SCORE") {
         toast.error(t("scoreRangeError"));
         return;
       }
-      toast.error(error.response?.data?.detail || t("submitFailed"));
+      toast.error(formatApiError(error, t("submitFailed")));
     },
   });
 }

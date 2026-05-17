@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import { useClassRoster, useTeacherClasses } from "../hooks/useTeacherClasses";
 import { useSubmitTeacherAttendance, useTeacherAttendanceRecords } from "../hooks/useTeacherAttendance";
 import type { AttendanceStatus } from "../types";
 import { FaceRecognitionScanner } from "@/features/attendance/components/FaceRecognitionScanner";
-import { ScanFace } from "lucide-react";
+import { ScanFace, CheckCircle2 } from "lucide-react";
 
 export function TeacherAttendanceForm({ teacherId }: { teacherId: string }) {
   const t = useTranslations("teacher.attendance");
@@ -46,6 +46,29 @@ export function TeacherAttendanceForm({ teacherId }: { teacherId: string }) {
   });
 
   const rows = useMemo(() => roster.data?.students ?? [], [roster.data?.students]);
+
+  // Auto-select first class when classes load
+  useEffect(() => {
+    const list = classes.data ?? [];
+    if (list.length > 0 && !sectionId) {
+      setSectionId(list[0].sectionId);
+    }
+  }, [classes.data]);
+
+  // Default all students to "present" when the roster loads for a new session
+  useEffect(() => {
+    if (rows.length > 0) {
+      setStatuses((prev) => {
+        const next = { ...prev };
+        rows.forEach((student) => {
+          if (!next[student.id]) {
+            next[student.id] = 'present';
+          }
+        });
+        return next;
+      });
+    }
+  }, [rows]);
 
   const updateAll = (status: AttendanceStatus) => {
     const next: Record<string, AttendanceStatus> = {};
@@ -203,6 +226,14 @@ export function TeacherAttendanceForm({ teacherId }: { teacherId: string }) {
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    {/* Default-to-present tip */}
+                    <div className="flex items-start gap-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-700">
+                      <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
+                      <span>
+                        All <strong>{rows.length} students</strong> are defaulted to{' '}
+                        <strong>Present</strong>. Only change students who are absent, late, or excused.
+                      </span>
+                    </div>
                     <div className="rounded-lg border shadow-sm overflow-hidden">
                       <Table>
                         <TableHeader className="bg-muted/50">

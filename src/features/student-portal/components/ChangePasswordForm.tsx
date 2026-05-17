@@ -6,10 +6,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
+import { formatApiError } from "@/lib/utils/formatApiError";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { authService } from "@/lib/api/auth.service";
 
 export function ChangePasswordForm() {
@@ -17,17 +25,20 @@ export function ChangePasswordForm() {
   const tc = useTranslations("studentPortal.common");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const formSchema = z.object({
-    currentPassword: z.string().min(1, { message: t("errorCurrent") }),
-    newPassword: z.string().min(8, { message: t("errorLength") }),
-    confirmPassword: z.string()
-  }).refine((data) => data.newPassword === data.confirmPassword, {
-    message: t("errorMatch"),
-    path: ["confirmPassword"],
-  }).refine((data) => data.newPassword !== data.currentPassword, {
-    message: t("errorSame"),
-    path: ["newPassword"],
-  });
+  const formSchema = z
+    .object({
+      currentPassword: z.string().min(1, { message: t("errorCurrent") }),
+      newPassword: z.string().min(8, { message: t("errorLength") }),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: t("errorMatch"),
+      path: ["confirmPassword"],
+    })
+    .refine((data) => data.newPassword !== data.currentPassword, {
+      message: t("errorSame"),
+      path: ["newPassword"],
+    });
 
   type FormValues = z.infer<typeof formSchema>;
 
@@ -36,8 +47,8 @@ export function ChangePasswordForm() {
     defaultValues: {
       currentPassword: "",
       newPassword: "",
-      confirmPassword: ""
-    }
+      confirmPassword: "",
+    },
   });
 
   const onSubmit = async (values: FormValues) => {
@@ -46,13 +57,13 @@ export function ChangePasswordForm() {
       await authService.changePassword(
         values.currentPassword,
         values.newPassword,
-        values.confirmPassword
+        values.confirmPassword,
       );
       toast.success(t("success"));
       form.reset();
     } catch (e: unknown) {
-      const error = e as { response?: { data?: { detail?: string } } };
-      toast.error(error.response?.data?.detail || tc("error"));
+      const error = e as unknown;
+      toast.error(formatApiError(error, tc("error")));
     } finally {
       setIsSubmitting(false);
     }
@@ -105,7 +116,11 @@ export function ChangePasswordForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
               {isSubmitting ? t("submitting") : t("submit")}
             </Button>
           </form>

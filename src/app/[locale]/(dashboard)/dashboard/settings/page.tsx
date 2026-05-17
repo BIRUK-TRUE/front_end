@@ -16,8 +16,10 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
-import { Globe, Bell, Shield, Palette, Building, ScanFace, BookOpen, Save, RotateCcw, Upload, X, Loader2 } from 'lucide-react';
-import { useSchoolInfo, useAcademicSettings, useNotificationSettings, useUpdateSchoolInfo, useUpdateAcademicSettings, useUpdateNotificationSettings } from '@/hooks/use-settings';
+import { Globe, Bell, Shield, Palette, Building, ScanFace, BookOpen, Save, RotateCcw, Upload, X, Loader2, Percent, Ruler } from 'lucide-react';
+import { useSchoolInfo, useAcademicSettings, useNotificationSettings, useUpdateSchoolInfo, useUpdateAcademicSettings, useUpdateNotificationSettings, useSmsProviders, useSmsLogs, useActivateSmsProvider, useTestSms } from '@/hooks/use-settings';
+import { useGradeWeights, useGradingScales, useCreateGradeWeight, useCreateGradingScale } from '@/hooks/use-grades';
+import { useCurrentYear } from '@/hooks/use-academic-years';
 import { usePermissions } from '@/hooks/use-permissions';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
@@ -70,6 +72,7 @@ function SettingsPage() {
   const tc = useTranslations('common');
   const ts = useTranslations('settingsPage');
   const { canManageSettings } = usePermissions();
+  const { data: currentYear } = useCurrentYear();
   
   // Appearance settings (localStorage)
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
@@ -129,6 +132,12 @@ function SettingsPage() {
           <TabsTrigger value="academic" className="gap-2">
             <BookOpen className="h-4 w-4" /> {ts('tabs.academic')}
           </TabsTrigger>
+          <TabsTrigger value="gradeWeights" className="gap-2">
+            <Percent className="h-4 w-4" /> {ts('tabs.gradeWeights')}
+          </TabsTrigger>
+          <TabsTrigger value="gradingScales" className="gap-2">
+            <Ruler className="h-4 w-4" /> {ts('tabs.gradingScales')}
+          </TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2">
             <Bell className="h-4 w-4" /> {ts('tabs.notifications')}
           </TabsTrigger>
@@ -143,10 +152,15 @@ function SettingsPage() {
           <TabsTrigger value="attendance" className="gap-2">
             <ScanFace className="h-4 w-4" /> {ts('tabs.attendance')}
           </TabsTrigger>
+          <TabsTrigger value="sms" className="gap-2">
+            <Bell className="h-4 w-4" /> {ts('tabs.sms')}
+          </TabsTrigger>
         </TabsList>
 
         <SchoolInfoTab />
         <AcademicTab />
+        <GradeWeightsTab academicYearId={currentYear?.id || ''} />
+        <GradingScalesTab academicYearId={currentYear?.id || ''} />
         <NotificationsTab />
         <AppearanceTab
           theme={theme}
@@ -160,6 +174,7 @@ function SettingsPage() {
         />
         {canManageSettings && <SecurityTab />}
         <AttendanceTab />
+        {canManageSettings && <SmsTab />}
       </Tabs>
     </div>
   );
@@ -823,6 +838,301 @@ function AttendanceTab() {
     </TabsContent>
   );
 }
+
+
+function GradeWeightsTab({ academicYearId }: { academicYearId: string }) {
+  const ts = useTranslations('settingsPage.gradeWeights');
+  const tc = useTranslations('common');
+  const { data: weights, isLoading } = useGradeWeights(academicYearId);
+  const createWeight = useCreateGradeWeight();
+
+  const { register, handleSubmit, reset } = useForm({
+    defaultValues: {
+      grade_level_min: 1,
+      grade_level_max: 8,
+      ca_weight: 40,
+      exam_weight: 60,
+      academic_year_id: academicYearId,
+      is_active: true
+    }
+  });
+
+  const onSubmit = (data: any) => {
+    if (Number(data.ca_weight) + Number(data.exam_weight) !== 100) {
+      toast.error(ts('totalMustBe100'));
+      return;
+    }
+    createWeight.mutate({ ...data, academic_year_id: academicYearId }, {
+      onSuccess: () => reset()
+    });
+  };
+
+  if (isLoading) return <LoadingSpinner fullPage text={tc('loading')} />;
+
+  return (
+    <TabsContent value="gradeWeights">
+      <Card>
+        <CardHeader>
+          <CardTitle>{ts('title')}</CardTitle>
+          <CardDescription>{ts('description')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end border-b pb-6">
+            <div className="space-y-2">
+              <Label>{ts('minGrade')}</Label>
+              <Input type="number" {...register('grade_level_min', { valueAsNumber: true })} />
+            </div>
+            <div className="space-y-2">
+              <Label>{ts('maxGrade')}</Label>
+              <Input type="number" {...register('grade_level_max', { valueAsNumber: true })} />
+            </div>
+            <div className="space-y-2">
+              <Label>{ts('caWeight')}</Label>
+              <Input type="number" {...register('ca_weight', { valueAsNumber: true })} />
+            </div>
+            <div className="space-y-2">
+              <Label>{ts('examWeight')}</Label>
+              <Input type="number" {...register('exam_weight', { valueAsNumber: true })} />
+            </div>
+            <Button type="submit" disabled={createWeight.isPending}>
+              {createWeight.isPending ? tc('loading') : ts('addConfig')}
+            </Button>
+          </form>
+
+          <div className="rounded-md border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="p-3 text-left font-medium">{ts('minGrade')}</th>
+                  <th className="p-3 text-left font-medium">{ts('maxGrade')}</th>
+                  <th className="p-3 text-left font-medium">{ts('caWeight')}</th>
+                  <th className="p-3 text-left font-medium">{ts('examWeight')}</th>
+                  <th className="p-3 text-left font-medium">{tc('status')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {weights?.map((w: any) => (
+                  <tr key={w.id} className="border-b">
+                    <td className="p-3">{w.grade_level_min}</td>
+                    <td className="p-3">{w.grade_level_max}</td>
+                    <td className="p-3">{w.ca_weight}%</td>
+                    <td className="p-3">{w.exam_weight}%</td>
+                    <td className="p-3">{w.is_active ? tc('active') : tc('inactive')}</td>
+                  </tr>
+                ))}
+                {(!weights || weights.length === 0) && (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-muted-foreground">{tc('noData')}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </TabsContent>
+  );
+}
+
+function GradingScalesTab({ academicYearId }: { academicYearId: string }) {
+  const ts = useTranslations('settingsPage.gradingScales');
+  const tc = useTranslations('common');
+  const { data: scales, isLoading } = useGradingScales(academicYearId);
+  const createScale = useCreateGradingScale();
+
+  const { register, handleSubmit, reset } = useForm({
+    defaultValues: {
+      letter: 'A',
+      min_percentage: 90,
+      max_percentage: 100,
+      gpa_value: 4.0,
+      grade_level_min: 1,
+      grade_level_max: 12,
+      academic_year_id: academicYearId
+    }
+  });
+
+  const onSubmit = (data: any) => {
+    createScale.mutate({ ...data, academic_year_id: academicYearId }, {
+      onSuccess: () => reset()
+    });
+  };
+
+  if (isLoading) return <LoadingSpinner fullPage text={tc('loading')} />;
+
+  return (
+    <TabsContent value="gradingScales">
+      <Card>
+        <CardHeader>
+          <CardTitle>{ts('title')}</CardTitle>
+          <CardDescription>{ts('description')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end border-b pb-6">
+            <div className="space-y-2">
+              <Label>{ts('letter')}</Label>
+              <Input {...register('letter')} placeholder="A+" />
+            </div>
+            <div className="space-y-2">
+              <Label>{ts('minPercent')}</Label>
+              <Input type="number" step="0.01" {...register('min_percentage', { valueAsNumber: true })} />
+            </div>
+            <div className="space-y-2">
+              <Label>{ts('maxPercent')}</Label>
+              <Input type="number" step="0.01" {...register('max_percentage', { valueAsNumber: true })} />
+            </div>
+            <div className="space-y-2">
+              <Label>{ts('gpa')}</Label>
+              <Input type="number" step="0.01" {...register('gpa_value', { valueAsNumber: true })} />
+            </div>
+            <Button type="submit" disabled={createScale.isPending}>
+              {createScale.isPending ? tc('loading') : ts('addScale')}
+            </Button>
+          </form>
+
+          <div className="rounded-md border max-h-[500px] overflow-auto">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-background">
+                <tr className="border-b bg-muted/50">
+                  <th className="p-3 text-left font-medium">{ts('letter')}</th>
+                  <th className="p-3 text-left font-medium">{ts('minPercent')}</th>
+                  <th className="p-3 text-left font-medium">{ts('maxPercent')}</th>
+                  <th className="p-3 text-left font-medium">{ts('gpa')}</th>
+                  <th className="p-3 text-left font-medium">{tc('grade')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {scales?.sort((a: any, b: any) => b.min_percentage - a.min_percentage).map((s: any) => (
+                  <tr key={s.id} className="border-b">
+                    <td className="p-3 font-bold">{s.letter}</td>
+                    <td className="p-3">{s.min_percentage}%</td>
+                    <td className="p-3">{s.max_percentage}%</td>
+                    <td className="p-3">{s.gpa_value.toFixed(2)}</td>
+                    <td className="p-3">{s.grade_level_min}-{s.grade_level_max}</td>
+                  </tr>
+                ))}
+                {(!scales || scales.length === 0) && (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-muted-foreground">{tc('noData')}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </TabsContent>
+  );
+}
+
+function SmsTab() {
+  const ts = useTranslations('settingsPage.sms');
+  const tc = useTranslations('common');
+  const { data: providers, isLoading: providersLoading } = useSmsProviders();
+  const { data: logs, isLoading: logsLoading } = useSmsLogs();
+  const activateProvider = useActivateSmsProvider();
+  const testSms = useTestSms();
+  const [testPhone, setTestPhone] = useState('');
+  const [testMessage, setTestMessage] = useState('This is a test SMS from School Management System');
+
+  if (providersLoading || logsLoading) return <LoadingSpinner fullPage text={tc('loading')} />;
+
+  return (
+    <TabsContent value="sms">
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>{ts('providers.title')}</CardTitle>
+            <CardDescription>{ts('providers.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              {providers?.map((provider: any) => (
+                <div key={provider.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-1">
+                    <div className="font-medium flex items-center gap-2">
+                      {provider.provider_name}
+                      {provider.is_active && <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Active</span>}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Sender ID: {provider.sender_id || 'Not set'}</div>
+                  </div>
+                  <Button 
+                    variant={provider.is_active ? "outline" : "default"}
+                    disabled={provider.is_active || activateProvider.isPending}
+                    onClick={() => activateProvider.mutate(provider.id)}
+                  >
+                    {provider.is_active ? ts('active') : ts('activate')}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{ts('test.title')}</CardTitle>
+            <CardDescription>{ts('test.description')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-2">
+              <Label>{ts('test.phone')}</Label>
+              <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="+2519..." />
+            </div>
+            <div className="grid gap-2">
+              <Label>{ts('test.message')}</Label>
+              <Textarea value={testMessage} onChange={(e) => setTestMessage(e.target.value)} />
+            </div>
+            <Button onClick={() => testSms.mutate({ phone: testPhone, message: testMessage })} disabled={!testPhone || testSms.isPending}>
+              {testSms.isPending ? tc('loading') : ts('test.send')}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{ts('logs.title')}</CardTitle>
+            <CardDescription>{ts('logs.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border max-h-[400px] overflow-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-muted/50 sticky top-0">
+                  <tr>
+                    <th className="p-3 font-medium">Recipient</th>
+                    <th className="p-3 font-medium">Message</th>
+                    <th className="p-3 font-medium">Status</th>
+                    <th className="p-3 font-medium">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs?.map((log: any) => (
+                    <tr key={log.id} className="border-t">
+                      <td className="p-3">{log.recipient_phone}</td>
+                      <td className="p-3 truncate max-w-[200px]">{log.message}</td>
+                      <td className="p-3">
+                        <span className={log.status === 'sent' ? 'text-green-600' : 'text-red-600'}>
+                          {log.status}
+                        </span>
+                      </td>
+                      <td className="p-3 text-muted-foreground">{new Date(log.sent_at).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                  {(!logs || logs.length === 0) && (
+                    <tr>
+                      <td colSpan={4} className="p-8 text-center text-muted-foreground">{tc('noData')}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </TabsContent>
+  );
+}
+
 
 export default function SettingsPageWrapper() {
   return <ProtectedRoute><SettingsPage /></ProtectedRoute>;

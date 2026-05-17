@@ -25,7 +25,7 @@ export const authService = {
     const { data } = await axiosInstance.post('/auth/change-password', {
       current_password: currentPassword,
       new_password: newPassword,
-      new_password_confirm: newPasswordConfirm,
+      confirm_password: newPasswordConfirm,
     });
     return data;
   },
@@ -45,7 +45,7 @@ export const authService = {
     const { data } = await axiosInstance.post('/auth/reset-password', {
       token,
       new_password: newPassword,
-      new_password_confirm: newPasswordConfirm,
+      confirm_password: newPasswordConfirm,
     });
     return data;
   },

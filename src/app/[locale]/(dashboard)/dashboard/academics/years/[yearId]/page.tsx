@@ -1,39 +1,82 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { useParams, useRouter } from 'next/navigation';
-import { useAcademicYear, useDeleteAcademicYear } from '@/features/academics/api/useAcademicYears';
-import { AcademicYearStatus } from '@/features/academics/types';
-import { PageHeader } from '@/components/shared/page-header';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarDays, BookOpen, GraduationCap, ArrowLeft, Loader2, Plus, Edit, Archive, CheckCircle, MoreHorizontal, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Link } from '@/i18n/navigation';
-import { useTerms, useCreateTerm, useUpdateTerm, useDeleteTerm } from '@/features/academics/api/useTerms';
-import { TermModal } from '@/features/academics/components/TermModal';
-import { type TermForm, type ClassForm } from '@/features/academics/types/schemas';
-import { type Term, type Class } from '@/features/academics/types';
-import { useClasses, useCreateClass, useUpdateClass, useDeleteClass } from '@/features/academics/api/useClasses';
-import { ClassModal } from '@/features/academics/components/ClassModal';
+import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { useParams, useRouter } from "next/navigation";
+import {
+  useAcademicYear,
+  useDeleteAcademicYear,
+} from "@/features/academics/api/useAcademicYears";
+import { AcademicYearStatus } from "@/features/academics/types";
+import { PageHeader } from "@/components/shared/page-header";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  CalendarDays,
+  BookOpen,
+  GraduationCap,
+  ArrowLeft,
+  Loader2,
+  Plus,
+  Edit,
+  Archive,
+  CheckCircle,
+  MoreHorizontal,
+  Trash2,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { Link } from "@/i18n/navigation";
+import {
+  useTerms,
+  useCreateTerm,
+  useUpdateTerm,
+  useDeleteTerm,
+} from "@/features/academics/api/useTerms";
+import { TermModal } from "@/features/academics/components/TermModal";
+import {
+  type TermForm,
+  type ClassForm,
+} from "@/features/academics/types/schemas";
+import { type Term, type Class } from "@/features/academics/types";
+import {
+  useClasses,
+  useCreateClass,
+  useUpdateClass,
+  useDeleteClass,
+} from "@/features/academics/api/useClasses";
+import { ClassModal } from "@/features/academics/components/ClassModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { EmptyState } from '@/components/shared/empty-state';
-import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+} from "@/components/ui/dropdown-menu";
+import { EmptyState } from "@/components/shared/empty-state";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 
 export default function AcademicYearDetailPage() {
-  const t = useTranslations('common');
-  const ta = useTranslations('academics');
+  const t = useTranslations("common");
+  const ta = useTranslations("academics");
   const params = useParams();
   const router = useRouter();
   const yearId = params.yearId as string;
@@ -45,7 +88,7 @@ export default function AcademicYearDetailPage() {
   const createTerm = useCreateTerm(yearId);
   const updateTerm = useUpdateTerm(yearId);
   const deleteTerm = useDeleteTerm(yearId);
-  
+
   const createClass = useCreateClass(yearId);
   const updateClass = useUpdateClass(yearId);
   const deleteClass = useDeleteClass(yearId);
@@ -59,9 +102,9 @@ export default function AcademicYearDetailPage() {
   const [editingClass, setEditingClass] = useState<Class | null>(null);
   const [deleteClassId, setDeleteClassId] = useState<string | null>(null);
   const [deleteYearDialogOpen, setDeleteYearDialogOpen] = useState(false);
-  
-  const [classSearch, setClassSearch] = useState('');
-  const [classGradeFilter, setClassGradeFilter] = useState('all');
+
+  const [classSearch, setClassSearch] = useState("");
+  const [classGradeFilter, setClassGradeFilter] = useState("all");
   const [classPage, setClassPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
@@ -84,7 +127,7 @@ export default function AcademicYearDetailPage() {
       }
       setIsTermModalOpen(false);
     } catch (error: any) {
-      toast.error(error?.response?.data?.detail || t('error'));
+      toast.error(error?.response?.data?.detail || t("error"));
     }
   };
 
@@ -107,42 +150,89 @@ export default function AcademicYearDetailPage() {
       }
       setIsClassModalOpen(false);
     } catch (error: any) {
-      toast.error(error?.response?.data?.detail || t('error'));
+      toast.error(error?.response?.data?.detail || t("error"));
     }
   };
 
   const handleActivateTerm = async (id: string) => {
     await updateTerm.mutateAsync({
       id,
-      data: { status: 'active' } as any
+      data: { status: "active" } as any,
     });
   };
 
-  const filteredClasses = classesData?.items?.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(classSearch.toLowerCase());
-    const matchesGrade = classGradeFilter === 'all' || c.grade_level === classGradeFilter;
-    return matchesSearch && matchesGrade;
-  }) || [];
+  const filteredClasses =
+    classesData?.items?.filter((c) => {
+      const matchesSearch = c.name
+        .toLowerCase()
+        .includes(classSearch.toLowerCase());
+      const matchesGrade =
+        classGradeFilter === "all" ||
+        c.grade_level === parseInt(classGradeFilter);
+      return matchesSearch && matchesGrade;
+    }) || [];
 
   const totalPages = Math.ceil(filteredClasses.length / ITEMS_PER_PAGE);
   const startIndex = (classPage - 1) * ITEMS_PER_PAGE;
-  const paginatedClasses = filteredClasses.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedClasses = filteredClasses.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE,
+  );
 
-  const getStatusBadge = (status?: AcademicYearStatus, isCurrent?: boolean, t?: any) => {
+  const getStatusBadge = (
+    status?: AcademicYearStatus,
+    isCurrent?: boolean,
+    t?: any,
+  ) => {
     const translate = t || ((key: string) => key);
     if (isCurrent) {
-      return <Badge variant="default" className="bg-primary/20 text-primary hover:bg-primary/30 border-primary/30">{translate('currentActiveYear')}</Badge>;
+      return (
+        <Badge
+          variant="default"
+          className="bg-primary/20 text-primary hover:bg-primary/30 border-primary/30"
+        >
+          {translate("currentActiveYear")}
+        </Badge>
+      );
     }
 
     switch (status) {
       case AcademicYearStatus.PLANNING:
-        return <Badge variant="outline" className="bg-muted text-muted-foreground border-muted-foreground/30">{translate('planning')}</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="bg-muted text-muted-foreground border-muted-foreground/30"
+          >
+            {translate("planning")}
+          </Badge>
+        );
       case AcademicYearStatus.ACTIVE:
-        return <Badge variant="outline" className="bg-success/10 text-success border-success/30">{translate('active')}</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="bg-success/10 text-success border-success/30"
+          >
+            {translate("active")}
+          </Badge>
+        );
       case AcademicYearStatus.COMPLETED:
-        return <Badge variant="outline" className="bg-info/10 text-info border-info/30">{translate('completed')}</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="bg-info/10 text-info border-info/30"
+          >
+            {translate("completed")}
+          </Badge>
+        );
       case AcademicYearStatus.ARCHIVED:
-        return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">{translate('archived')}</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="bg-destructive/10 text-destructive border-destructive/30"
+          >
+            {translate("archived")}
+          </Badge>
+        );
       default:
         return null;
     }
@@ -159,10 +249,14 @@ export default function AcademicYearDetailPage() {
   if (!year) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
-        <h2 className="text-2xl font-bold tracking-tight">{ta('academicYearNotFound')}</h2>
-        <p className="text-muted-foreground">{ta('academicYearNotFoundDesc')}</p>
+        <h2 className="text-2xl font-bold tracking-tight">
+          {ta("academicYearNotFound")}
+        </h2>
+        <p className="text-muted-foreground">
+          {ta("academicYearNotFoundDesc")}
+        </p>
         <Button asChild>
-          <Link href="/dashboard/academics/years">{ta('backToList')}</Link>
+          <Link href="/dashboard/academics/years">{ta("backToList")}</Link>
         </Button>
       </div>
     );
@@ -171,9 +265,12 @@ export default function AcademicYearDetailPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-        <Link href="/dashboard/academics/years" className="hover:text-foreground flex items-center gap-1 transition-colors">
+        <Link
+          href="/dashboard/academics/years"
+          className="hover:text-foreground flex items-center gap-1 transition-colors"
+        >
           <ArrowLeft className="h-4 w-4" />
-          {ta('backToList')}
+          {ta("backToList")}
         </Link>
       </div>
 
@@ -192,96 +289,124 @@ export default function AcademicYearDetailPage() {
         <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="terms" className="gap-2">
             <CalendarDays className="h-4 w-4" />
-            <span className="hidden sm:inline">{ta('terms')}</span>
+            <span className="hidden sm:inline">{ta("terms")}</span>
           </TabsTrigger>
           <TabsTrigger value="classes" className="gap-2">
             <BookOpen className="h-4 w-4" />
-            <span className="hidden sm:inline">{ta('classes')}</span>
+            <span className="hidden sm:inline">{ta("classes")}</span>
           </TabsTrigger>
           <TabsTrigger value="stats" className="gap-2">
             <GraduationCap className="h-4 w-4" />
-            <span className="hidden sm:inline">{ta('statistics')}</span>
+            <span className="hidden sm:inline">{ta("statistics")}</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="terms" className="space-y-4 outline-none">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-medium">{ta('terms')}</h3>
-              <p className="text-sm text-muted-foreground">{ta('manageTerms')}</p>
+              <h3 className="text-lg font-medium">{ta("terms")}</h3>
+              <p className="text-sm text-muted-foreground">
+                {ta("manageTerms")}
+              </p>
             </div>
             <Button size="sm" onClick={openCreateTermModal} className="gap-2">
               <Plus className="h-4 w-4" />
-              {ta('addTerm')}
+              {ta("addTerm")}
             </Button>
           </div>
           <Card>
             <CardContent className="p-0">
               <div className="relative overflow-x-auto min-h-[200px]">
-                 {isTermsLoading ? (
+                {isTermsLoading ? (
                   <div className="flex h-48 items-center justify-center">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
                 ) : !termsData?.items?.length ? (
                   <EmptyState
                     icon={CalendarDays}
-                    title={ta('noTermsConfigured')}
-                    description={ta('createTermPrompt')}
+                    title={ta("noTermsConfigured")}
+                    description={ta("createTermPrompt")}
                     action={
-                      <Button onClick={openCreateTermModal}>{ta('addTerm')}</Button>
+                      <Button onClick={openCreateTermModal}>
+                        {ta("addTerm")}
+                      </Button>
                     }
                   />
                 ) : (
                   <div className="divide-y">
-                     {termsData.items.map((term) => (
-                       <div key={term.id} className="flex items-center justify-between p-4 hover:bg-muted/30">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-base">{term.name}</span>
-                              {term.status === 'active' && (
-                                <Badge variant="outline" className="bg-success/10 text-success border-success/30 font-normal shadow-none">{ta('activeTerm')}</Badge>
-                              )}
-                            </div>
-                            <div className="text-sm text-muted-foreground flex items-center gap-2">
-                               <CalendarDays className="h-3 w-3" />
-                               {new Date(term.start_date).toLocaleDateString()} — {new Date(term.end_date).toLocaleDateString()}
-                            </div>
-                          </div>
-                          
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[160px]">
-                              <DropdownMenuItem onClick={() => openEditTermModal(term)}>
-                                <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
-                                {ta('editDetails')}
-                              </DropdownMenuItem>
-                              
-                              {term.status !== 'active' && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => handleActivateTerm(term.id)}>
-                                    <CheckCircle className="mr-2 h-4 w-4 text-success" />
-                                    {ta('setAsActive')}
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => setDeleteTermId(term.id)}
-                                className="text-destructive focus:text-destructive"
+                    {termsData.items.map((term) => (
+                      <div
+                        key={term.id}
+                        className="flex items-center justify-between p-4 hover:bg-muted/30"
+                      >
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-base">
+                              {term.name}
+                            </span>
+                            {term.status === "active" && (
+                              <Badge
+                                variant="outline"
+                                className="bg-success/10 text-success border-success/30 font-normal shadow-none"
                               >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                {ta('delete')}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                       </div>
-                     ))}
+                                {ta("activeTerm")}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground flex items-center gap-2">
+                            <CalendarDays className="h-3 w-3" />
+                            {new Date(
+                              term.start_date,
+                            ).toLocaleDateString()} —{" "}
+                            {new Date(term.end_date).toLocaleDateString()}
+                          </div>
+                        </div>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                            >
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-[160px]"
+                          >
+                            <DropdownMenuItem
+                              onClick={() => openEditTermModal(term)}
+                            >
+                              <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
+                              {ta("editDetails")}
+                            </DropdownMenuItem>
+
+                            {term.status !== "active" && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleActivateTerm(term.id)}
+                                >
+                                  <CheckCircle className="mr-2 h-4 w-4 text-success" />
+                                  {ta("setAsActive")}
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => setDeleteTermId(term.id)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {ta("delete")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -292,31 +417,42 @@ export default function AcademicYearDetailPage() {
         <TabsContent value="classes" className="space-y-4 outline-none">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-lg font-medium">{ta('classes')}</h3>
-              <p className="text-sm text-muted-foreground">{ta('manageClasses')}</p>
+              <h3 className="text-lg font-medium">{ta("classes")}</h3>
+              <p className="text-sm text-muted-foreground">
+                {ta("manageClasses")}
+              </p>
             </div>
             <Button size="sm" onClick={openCreateClassModal} className="gap-2">
               <Plus className="h-4 w-4" />
-              {ta('addClass')}
+              {ta("addClass")}
             </Button>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder={ta('searchClasses')}
+                placeholder={ta("searchClasses")}
                 value={classSearch}
-                onChange={(e) => { setClassSearch(e.target.value); setClassPage(1); }}
+                onChange={(e) => {
+                  setClassSearch(e.target.value);
+                  setClassPage(1);
+                }}
                 className="pl-9"
               />
             </div>
-            <Select value={classGradeFilter} onValueChange={(value) => { setClassGradeFilter(value); setClassPage(1); }}>
+            <Select
+              value={classGradeFilter}
+              onValueChange={(value) => {
+                setClassGradeFilter(value);
+                setClassPage(1);
+              }}
+            >
               <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder={ta('allGrades')} />
+                <SelectValue placeholder={ta("allGrades")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{ta('allGrades')}</SelectItem>
+                <SelectItem value="all">{ta("allGrades")}</SelectItem>
                 <SelectItem value="1">Grade 1</SelectItem>
                 <SelectItem value="2">Grade 2</SelectItem>
                 <SelectItem value="3">Grade 3</SelectItem>
@@ -332,94 +468,127 @@ export default function AcademicYearDetailPage() {
               </SelectContent>
             </Select>
           </div>
-          
+
           <Card>
             <CardContent className="p-0">
-               <div className="relative overflow-x-auto min-h-[200px]">
-                 {isClassesLoading ? (
+              <div className="relative overflow-x-auto min-h-[200px]">
+                {isClassesLoading ? (
                   <div className="flex h-48 items-center justify-center">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
                 ) : !filteredClasses.length ? (
                   <EmptyState
                     icon={BookOpen}
-                    title={ta('noClassesConfigured')}
-                    description={ta('createClassPrompt')}
+                    title={ta("noClassesConfigured")}
+                    description={ta("createClassPrompt")}
                     action={
-                      <Button onClick={openCreateClassModal}>{ta('addClass')}</Button>
+                      <Button onClick={openCreateClassModal}>
+                        {ta("addClass")}
+                      </Button>
                     }
                   />
                 ) : (
                   <div className="divide-y">
-                     {paginatedClasses.map((classItem) => (
-                       <div key={classItem.id} className="flex items-center justify-between p-4 hover:bg-muted/30">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <Link 
-                                href={`/dashboard/academics/classes/${classItem.id}`}
-                                className="font-medium text-base hover:underline"
-                              >
-                                {classItem.name}
-                              </Link>
-                              <Badge variant="outline" className="font-normal text-xs bg-muted/50">
-                                {ta('gradeLevel')} {classItem.grade_level}
-                              </Badge>
-                            </div>
-                            <div className="text-sm text-muted-foreground flex items-center gap-4">
-                               <span className="flex items-center gap-1">
-                                 <BookOpen className="h-3 w-3" />
-                                 {classItem.section_count || 0} {ta('sections')}
-                               </span>
-                               <span>
-                                 {ta('capacity')}: {classItem.capacity ? classItem.capacity : ta('unlimited')}
-                               </span>
-                               <span>
-                                 {ta('enrolled')}: {classItem.total_students || 0}
-                               </span>
-                            </div>
+                    {paginatedClasses.map((classItem) => (
+                      <div
+                        key={classItem.id}
+                        className="flex items-center justify-between p-4 hover:bg-muted/30"
+                      >
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Link
+                              href={`/dashboard/academics/classes/${classItem.id}`}
+                              className="font-medium text-base hover:underline"
+                            >
+                              {classItem.name}
+                            </Link>
+                            <Badge
+                              variant="outline"
+                              className="font-normal text-xs bg-muted/50"
+                            >
+                              {ta("gradeLevel")} {classItem.grade_level}
+                            </Badge>
                           </div>
-                          
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[160px]">
-                              <DropdownMenuItem onClick={() => router.push(`/dashboard/academics/classes/${classItem.id}` as any)}>
-                                <BookOpen className="mr-2 h-4 w-4 text-muted-foreground" />
-                                {ta('manageSections')}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => openEditClassModal(classItem)}>
-                                <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
-                                {ta('editDetails')}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => setDeleteClassId(classItem.id)}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                {ta('delete')}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                       </div>
-                     ))}
+                          <div className="text-sm text-muted-foreground flex items-center gap-4">
+                            <span className="flex items-center gap-1">
+                              <BookOpen className="h-3 w-3" />
+                              {classItem.section_count || 0} {ta("sections")}
+                            </span>
+                            <span>
+                              {ta("capacity")}:{" "}
+                              {classItem.capacity
+                                ? classItem.capacity
+                                : ta("unlimited")}
+                            </span>
+                            <span>
+                              {ta("enrolled")}: {classItem.total_students || 0}
+                            </span>
+                          </div>
+                        </div>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                            >
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-[160px]"
+                          >
+                            <DropdownMenuItem
+                              onClick={() =>
+                                router.push(
+                                  `/dashboard/academics/classes/${classItem.id}` as any,
+                                )
+                              }
+                            >
+                              <BookOpen className="mr-2 h-4 w-4 text-muted-foreground" />
+                              {ta("manageSections")}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => openEditClassModal(classItem)}
+                            >
+                              <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
+                              {ta("editDetails")}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => setDeleteClassId(classItem.id)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {ta("delete")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    ))}
                   </div>
                 )}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between px-4 py-3 border-t">
                     <div className="text-sm text-muted-foreground">
-                      {ta('showing', { start: startIndex + 1, end: Math.min(startIndex + ITEMS_PER_PAGE, filteredClasses.length), total: filteredClasses.length })}
+                      {ta("showing", {
+                        start: startIndex + 1,
+                        end: Math.min(
+                          startIndex + ITEMS_PER_PAGE,
+                          filteredClasses.length,
+                        ),
+                        total: filteredClasses.length,
+                      })}
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setClassPage(p => Math.max(1, p - 1))}
+                        onClick={() => setClassPage((p) => Math.max(1, p - 1))}
                         disabled={classPage === 1}
                       >
                         <ChevronLeft className="h-4 w-4" />
@@ -430,7 +599,9 @@ export default function AcademicYearDetailPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setClassPage(p => Math.min(totalPages, p + 1))}
+                        onClick={() =>
+                          setClassPage((p) => Math.min(totalPages, p + 1))
+                        }
                         disabled={classPage === totalPages}
                       >
                         <ChevronRight className="h-4 w-4" />
@@ -438,7 +609,7 @@ export default function AcademicYearDetailPage() {
                     </div>
                   </div>
                 )}
-               </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -446,28 +617,33 @@ export default function AcademicYearDetailPage() {
         <TabsContent value="stats" className="space-y-4 outline-none">
           <Card>
             <CardHeader>
-              <CardTitle>{ta('yearOverview')}</CardTitle>
-              <CardDescription>{ta('enrollmentStats')}</CardDescription>
+              <CardTitle>{ta("yearOverview")}</CardTitle>
+              <CardDescription>{ta("enrollmentStats")}</CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
-               <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-6 text-center text-muted-foreground text-sm">
-                 <div>
-                   <div className="text-2xl font-bold text-foreground mb-1">{year.term_count || 0}</div>
-                   <div>{ta('totalTerms')}</div>
-                 </div>
-                 <div>
-                   <div className="text-2xl font-bold text-foreground mb-1">{year.class_count || 0}</div>
-                   <div>{ta('totalClasses')}</div>
-                 </div>
-                 <div>
-                   <div className="text-2xl font-bold text-foreground mb-1">—</div>
-                   <div>{ta('totalEnrolledStudents')}</div>
-                 </div>
-               </div>
+              <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-6 text-center text-muted-foreground text-sm">
+                <div>
+                  <div className="text-2xl font-bold text-foreground mb-1">
+                    {year.term_count || 0}
+                  </div>
+                  <div>{ta("totalTerms")}</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-foreground mb-1">
+                    {year.class_count || 0}
+                  </div>
+                  <div>{ta("totalClasses")}</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-foreground mb-1">
+                    —
+                  </div>
+                  <div>{ta("totalEnrolledStudents")}</div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
-        
       </Tabs>
 
       <TermModal
@@ -488,29 +664,33 @@ export default function AcademicYearDetailPage() {
 
       <ConfirmDialog
         open={!!deleteTermId}
-        onOpenChange={(open) => { if (!open) setDeleteTermId(null); }}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTermId(null);
+        }}
         onConfirm={async () => {
           if (deleteTermId) {
             await deleteTerm.mutateAsync(deleteTermId);
             setDeleteTermId(null);
           }
         }}
-        title={ta('deleteTermTitle')}
-        description={ta('deleteTermDescription')}
+        title={ta("deleteTermTitle")}
+        description={ta("deleteTermDescription")}
         isLoading={deleteTerm.isPending}
       />
 
       <ConfirmDialog
         open={!!deleteClassId}
-        onOpenChange={(open) => { if (!open) setDeleteClassId(null); }}
+        onOpenChange={(open) => {
+          if (!open) setDeleteClassId(null);
+        }}
         onConfirm={async () => {
           if (deleteClassId) {
             await deleteClass.mutateAsync(deleteClassId);
             setDeleteClassId(null);
           }
         }}
-        title={ta('deleteClassTitle')}
-        description={ta('deleteClassDescription')}
+        title={ta("deleteClassTitle")}
+        description={ta("deleteClassDescription")}
         isLoading={deleteClass.isPending}
       />
 
@@ -519,10 +699,10 @@ export default function AcademicYearDetailPage() {
         onOpenChange={setDeleteYearDialogOpen}
         onConfirm={async () => {
           await deleteYear.mutateAsync(yearId);
-          router.push('/dashboard/academics/years');
+          router.push("/dashboard/academics/years");
         }}
-        title={ta('deleteYearTitle')}
-        description={ta('deleteYearDescription')}
+        title={ta("deleteYearTitle")}
+        description={ta("deleteYearDescription")}
         isLoading={deleteYear.isPending}
       />
     </div>

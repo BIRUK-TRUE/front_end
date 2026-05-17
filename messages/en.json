@@ -121,7 +121,9 @@
     "guardianDeleted": "Guardian deleted successfully",
     "guardianDeleteFailed": "Failed to delete guardian",
     "optional": "Optional",
-    "none": "None"
+    "none": "None",
+    "downloadComplete": "Download completed successfully",
+    "downloadFailed": "Failed to download file"
   },
   "auth": {
     "login": "Login",
@@ -206,7 +208,24 @@
     "faceEnrollment": "Face Enrollment",
     "alertRules": "Alert Rules",
     "sendNotification": "Send Notification",
-    "notificationHistory": "Notification History"
+    "notificationHistory": "Notification History",
+    "inventory": "Inventory"
+  },
+  "faceScan": {
+    "title": "Face Recognition",
+    "faceEnrollment": "Face Enrollment",
+    "enrollmentDesc": "Enroll student's face for automated attendance recognition.",
+    "alreadyEnrolled": "Already Enrolled",
+    "enrolledOn": "Enrolled on",
+    "capturePhoto": "Capture Photo",
+    "retake": "Retake",
+    "saveEnrollment": "Save Enrollment",
+    "back": "Back",
+    "tip1": "Ensure the student is looking directly at the camera",
+    "tip2": "Use a well-lit environment with a plain background if possible",
+    "tip3": "The student should not be wearing a mask or heavy glasses",
+    "recognize": "Recognize Faces",
+    "uploadPhoto": "Upload classroom photo to mark attendance"
   },
   "roles": {
     "admin": "Administrator",
@@ -315,6 +334,7 @@
     "excused": "Excused",
     "attendanceHistory": "Attendance History",
     "reportCard": "Report Card",
+    "downloadReportCard": "Download Report Card",
     "selectTerm": "Select Term (Latest)",
     "noGradesAvailable": "No Grades Available",
     "subject": "Subject",
@@ -456,6 +476,8 @@
     "manualEntryDesc": "Mark each student manually",
     "faceScan": "Face Scan",
     "faceScanDesc": "Automatic face recognition",
+    "classroomPhoto": "Classroom Photo",
+    "classroomPhotoDesc": "Upload a group photo to mark section attendance",
     "barcodeId": "Barcode/ID",
     "barcodeIdDesc": "Scan student ID cards",
     "academicYear": "Academic Year",
@@ -1492,6 +1514,30 @@
       }
     }
   },
+  "classes": {
+    "detail": "Class Details",
+    "detailNotFound": "View detailed information about this class",
+    "notFound": "Class not found or unable to load details",
+    "noDescription": "No description available",
+    "totalStudents": "Total Students",
+    "studentsInClass": "Students enrolled in this class",
+    "totalSections": "Total Sections",
+    "sections": "Sections",
+    "gradeLevel": "Grade Level",
+    "grade": "Grade",
+    "sectionsDescription": "All sections within this class",
+    "sectionName": "Section Name",
+    "room": "Room",
+    "capacity": "Capacity",
+    "enrolled": "Enrolled",
+    "available": "Available Slots",
+    "status": "Status",
+    "full": "Full",
+    "open": "Open",
+    "additionalInfo": "Additional Information",
+    "className": "Class Name",
+    "description": "Description"
+  },
   "notifications": {
     "center": {
       "title": "Notifications",
@@ -1699,7 +1745,9 @@
       "notifications": "Notifications",
       "appearance": "Appearance",
       "security": "Security",
-      "attendance": "Attendance"
+      "attendance": "Attendance",
+      "gradeWeights": "Grade Weights",
+      "gradingScales": "Grading Scales"
     },
     "general": {
       "title": "School Information",
@@ -1829,6 +1877,29 @@
       "logOnly": "Log only",
       "triggerAlert": "Trigger alert to admin",
       "saveSettings": "Save Attendance Settings"
+    },
+    "gradeWeights": {
+      "title": "Continuous Assessment & Exam Weights",
+      "description": "Set the percentage contribution of CA and Exams to the final score for each grade level.",
+      "minGrade": "Min Grade",
+      "maxGrade": "Max Grade",
+      "caWeight": "CA Weight (%)",
+      "examWeight": "Exam Weight (%)",
+      "addConfig": "Add Weight Configuration",
+      "totalMustBe100": "Total weight must equal 100%",
+      "weightCreated": "Weight configuration created",
+      "weightUpdated": "Weight configuration updated"
+    },
+    "gradingScales": {
+      "title": "Letter Grading Scales",
+      "description": "Configure the MOE standard letter grades (A+, A, B...) and their corresponding GPA values.",
+      "letter": "Letter",
+      "minPercent": "Min %",
+      "maxPercent": "Max %",
+      "gpa": "GPA Value",
+      "addScale": "Add Grading Scale",
+      "scaleCreated": "Grading scale created",
+      "scaleUpdated": "Grading scale updated"
     }
   },
   "academicsPages": {
@@ -2101,6 +2172,7 @@
     "title": "Analytics Dashboard",
     "subtitle": "School-wide performance overview and at-risk student monitoring",
     "refresh": "Refresh",
+    "export": "Export",
     "teacher": {
       "title": "My Class Analytics",
       "subtitle": "Performance and at-risk overview for your assigned classes",
@@ -2147,7 +2219,8 @@
     "riskFactors": {
       "attendance": "Attendance {value}% (threshold: {threshold}%)",
       "grade": "Grade avg {value}% (threshold: {threshold}%)",
-      "consecutive_absence": "{value} consecutive absences (threshold: {threshold})"
+      "consecutive_absence": "{value} consecutive absences (threshold: {threshold})",
+      "financial": "Outstanding fees of {value} ETB"
     },
     "atRiskTable": {
       "title": "At-Risk Students",
@@ -2222,5 +2295,48 @@
       "send": "Send Notification",
       "defaultMessage": "Dear Guardian, we are reaching out regarding {studentName}'s recent academic performance and attendance. Please contact the school at your earliest convenience to discuss support strategies."
     }
+  },
+  "inventory": {
+    "title": "Inventory Management",
+    "description": "Track school assets, supplies, and stock levels.",
+    "addItem": "Add Item",
+    "totalItems": "Total Items",
+    "lowStock": "Low Stock",
+    "categories": "Categories",
+    "searchPlaceholder": "Search by name, SKU, or category...",
+    "showLowStockOnly": "Low Stock Only",
+    "category": "Category",
+    "quantity": "Quantity",
+    "location": "Location",
+    "adjust": "Adjust",
+    "itemDetails": "Item Details",
+    "sku": "SKU",
+    "unit": "Unit",
+    "minThreshold": "Alert Threshold"
+  },
+  "classes": {
+    "detail": "Class Details",
+    "detailNotFound": "View detailed information about this class",
+    "notFound": "Class not found or unable to load details",
+    "noDescription": "No description available",
+    "totalStudents": "Total Students",
+    "studentsInClass": "Students enrolled in this class",
+    "totalSections": "Total Sections",
+    "sections": "Sections",
+    "gradeLevel": "Grade Level",
+    "grade": "Grade",
+    "academicYear": "Academic Year",
+    "sectionsDescription": "All sections within this class",
+    "sectionName": "Section Name",
+    "room": "Room",
+    "capacity": "Capacity",
+    "enrolled": "Enrolled",
+    "available": "Available Slots",
+    "status": "Status",
+    "full": "Full",
+    "open": "Open",
+    "additionalInfo": "Additional Information",
+    "className": "Class Name",
+    "description": "Description"
   }
 }

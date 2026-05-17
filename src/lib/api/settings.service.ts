@@ -54,4 +54,21 @@ export const settingsService = {
     const response = await axiosInstance.patch('/settings/notifications', data);
     return response.data;
   },
+
+  getSmsProviders: async () => {
+    const { data } = await axiosInstance.get('/settings/sms/providers');
+    return data;
+  },
+  activateSmsProvider: async (providerId: string) => {
+    const { data } = await axiosInstance.put(`/settings/sms/providers/${providerId}/activate`);
+    return data;
+  },
+  getSmsLogs: async (limit = 50, offset = 0) => {
+    const { data } = await axiosInstance.get(`/settings/sms/logs?limit=${limit}&offset=${offset}`);
+    return data;
+  },
+  testSms: async (payload: { phone: string, message: string }) => {
+    const { data } = await axiosInstance.post('/settings/sms/test', payload);
+    return data;
+  },
 };

@@ -1,14 +1,15 @@
-'use client';
+"use client";
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   guardiansService,
   type GuardianFilters,
   type StudentLinkPayload,
-} from '@/lib/api/guardians.service';
-import { queryKeys } from '@/lib/api/query-keys';
-import { toast } from 'sonner';
-import { useTranslations } from 'next-intl';
+} from "@/lib/api/guardians.service";
+import { queryKeys } from "@/lib/api/query-keys";
+import { toast } from "sonner";
+import { formatApiError } from "@/lib/utils/formatApiError";
+import { useTranslations } from "next-intl";
 
 export function useGuardians(filters: GuardianFilters = {}) {
   return useQuery({
@@ -42,56 +43,61 @@ export function useGuardiansForStudent(studentId: string) {
 
 export function useCreateGuardian() {
   const queryClient = useQueryClient();
-  const t = useTranslations('common');
+  const t = useTranslations("common");
   return useMutation({
     mutationFn: guardiansService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.guardians.all });
-      toast.success(t('guardianCreated'));
+      toast.success(t("guardianCreated"));
     },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || t('guardianCreateFailed'));
+    onError: (error: any) => {
+      toast.error(formatApiError(error, t("guardianCreateFailed")));
     },
   });
 }
 
 export function useUpdateGuardian() {
   const queryClient = useQueryClient();
-  const t = useTranslations('common');
+  const t = useTranslations("common");
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof guardiansService.update>[1] }) =>
-      guardiansService.update(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Parameters<typeof guardiansService.update>[1];
+    }) => guardiansService.update(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.guardians.all });
       queryClient.invalidateQueries({
         queryKey: queryKeys.guardians.detail(variables.id),
       });
-      toast.success(t('guardianUpdated'));
+      toast.success(t("guardianUpdated"));
     },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || t('guardianUpdateFailed'));
+    onError: (error: any) => {
+      toast.error(formatApiError(error, t("guardianUpdateFailed")));
     },
   });
 }
 
 export function useDeleteGuardian() {
   const queryClient = useQueryClient();
-  const t = useTranslations('common');
+  const t = useTranslations("common");
   return useMutation({
     mutationFn: guardiansService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.guardians.all });
-      toast.success(t('guardianDeleted'));
+      toast.success(t("guardianDeleted"));
     },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || t('guardianDeleteFailed'));
+    onError: (error: any) => {
+      toast.error(formatApiError(error, t("guardianDeleteFailed")));
     },
   });
 }
 
 export function useLinkStudent() {
   const queryClient = useQueryClient();
-  const t = useTranslations('common');
+  const t = useTranslations("common");
   return useMutation({
     mutationFn: ({
       guardianId,
@@ -104,17 +110,17 @@ export function useLinkStudent() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.guardians.detail(variables.guardianId),
       });
-      toast.success(t('studentLinked'));
+      toast.success(t("studentLinked"));
     },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || t('studentLinkFailed'));
+    onError: (error: any) => {
+      toast.error(formatApiError(error, t("studentLinkFailed")));
     },
   });
 }
 
 export function useUnlinkStudent() {
   const queryClient = useQueryClient();
-  const t = useTranslations('common');
+  const t = useTranslations("common");
   return useMutation({
     mutationFn: ({
       guardianId,
@@ -127,10 +133,10 @@ export function useUnlinkStudent() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.guardians.detail(variables.guardianId),
       });
-      toast.success(t('studentUnlinked'));
+      toast.success(t("studentUnlinked"));
     },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || t('studentUnlinkFailed'));
+    onError: (error: any) => {
+      toast.error(formatApiError(error, t("studentUnlinkFailed")));
     },
   });
 }

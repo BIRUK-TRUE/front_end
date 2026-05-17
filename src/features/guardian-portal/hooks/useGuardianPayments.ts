@@ -1,9 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { axiosInstance as api } from '@/lib/api/axios';
-import { queryKeys } from '@/lib/api/query-keys';
-import { useAuthStore } from '@/lib/store/auth-store';
-import { toast } from 'sonner';
-import type { ChildFeeBalance, PaymentRecord } from '../types';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { axiosInstance as api } from "@/lib/api/axios";
+import { queryKeys } from "@/lib/api/query-keys";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { toast } from "sonner";
+import { formatApiError } from "@/lib/utils/formatApiError";
+import type { ChildFeeBalance, PaymentRecord } from "../types";
 
 export function useFeeBalance(studentId: string) {
   const { isHydrated } = useAuthStore();
@@ -12,7 +13,7 @@ export function useFeeBalance(studentId: string) {
     queryKey: queryKeys.guardianPortal.fees(studentId),
     queryFn: async () => {
       const { data } = await api.get<ChildFeeBalance>(
-        `/students/${studentId}/fees/balance`
+        `/students/${studentId}/fees/balance`,
       );
       return data;
     },
@@ -27,7 +28,7 @@ export function usePaymentHistory(studentId: string) {
     queryKey: queryKeys.guardianPortal.payments(studentId),
     queryFn: async () => {
       const { data } = await api.get<PaymentRecord[]>(
-        `/students/${studentId}/payments`
+        `/students/${studentId}/payments`,
       );
       return data;
     },
@@ -39,8 +40,12 @@ export function useInitiatePayment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: { studentId: string; amount: number; method: string }) => {
-      const { data } = await api.post('/payments/initiate', {
+    mutationFn: async (payload: {
+      studentId: string;
+      amount: number;
+      method: string;
+    }) => {
+      const { data } = await api.post("/payments/initiate", {
         student_id: payload.studentId,
         amount: payload.amount,
         payment_method: payload.method,
@@ -54,10 +59,10 @@ export function useInitiatePayment() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.guardianPortal.payments(variables.studentId),
       });
-      toast.success('Payment initiated successfully');
+      toast.success("Payment initiated successfully");
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || 'Failed to initiate payment');
+      toast.error(formatApiError(error, "Failed to initiate payment"));
     },
   });
 }

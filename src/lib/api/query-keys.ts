@@ -114,5 +114,12 @@ export const queryKeys = {
     schoolInfo: ['settings', 'school-info'] as const,
     academic: ['settings', 'academic'] as const,
     notifications: ['settings', 'notifications'] as const,
+    weightConfigs: (yearId: string) => ['settings', 'grade-weights', yearId] as const,
+    gradingScales: (yearId: string) => ['settings', 'grading-scales', yearId] as const,
+  },
+  inventory: {
+    all: ['inventory'] as const,
+    items: (filters?: object) => ['inventory', 'items', filters] as const,
+    logs: (itemId: string) => ['inventory', 'logs', itemId] as const,
   },
 };

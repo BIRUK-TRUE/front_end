@@ -21,8 +21,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Link } from '@/i18n/navigation';
-import { Plus, Search, MoreHorizontal, Eye, Pencil, Trash2, RotateCcw, GraduationCap } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Eye, Pencil, Trash2, RotateCcw, GraduationCap, FileDown, Camera } from 'lucide-react';
 import { format } from 'date-fns';
+import { useDownloadReportCard } from '@/hooks/use-grades';
+import { useCurrentTerm } from '@/hooks/use-academic-years';
 
 export default function StudentsPage() {
   const t = useTranslations('students');
@@ -45,6 +47,8 @@ export default function StudentsPage() {
   const { data, isLoading } = useStudents(filters);
   const deleteStudent = useDeleteStudent();
   const restoreStudent = useRestoreStudent();
+  const downloadReportCard = useDownloadReportCard();
+  const { data: currentTerm } = useCurrentTerm();
 
   const handleDelete = () => {
     if (deleteId) {
@@ -106,8 +110,26 @@ export default function StudentsPage() {
                 </Link>
               </DropdownMenuItem>
               {student.status === 'inactive' && (
-                <DropdownMenuItem onClick={() => restoreStudent.mutate(student.id)} className="flex items-center gap-2">
-                  <RotateCcw className="h-4 w-4" aria-hidden="true" />{tc('restore')}
+                <>
+                  <DropdownMenuItem asChild className="flex items-center gap-2">
+                    <Link href={`/dashboard/students/${student.id}/face-enrollment`} className="flex items-center gap-2">
+                      <Camera className="h-4 w-4" aria-hidden="true" />
+                      {t('faceEnrollment')}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => restoreStudent.mutate(student.id)} className="flex items-center gap-2">
+                    <RotateCcw className="h-4 w-4" aria-hidden="true" />{tc('restore')}
+                  </DropdownMenuItem>
+                </>
+              )}
+              {currentTerm && (
+                <DropdownMenuItem 
+                  onClick={() => downloadReportCard.mutate({ studentId: student.id, termId: currentTerm.id })}
+                  className="flex items-center gap-2"
+                  disabled={downloadReportCard.isPending}
+                >
+                  <FileDown className="h-4 w-4" aria-hidden="true" />
+                  {t('downloadReportCard')}
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={() => setDeleteId(student.id)} className="text-destructive focus:text-destructive flex items-center gap-2">

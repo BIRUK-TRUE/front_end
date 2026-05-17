@@ -16,11 +16,73 @@ export function useAtRiskStudents(filters?: {
   return useQuery({
     queryKey: analyticsKeys.atRisk(filters),
     queryFn: async (): Promise<{ students: StudentRisk[]; total: number }> => {
-      const { data } = await axiosInstance.get<{ students: StudentRisk[]; total: number }>('/analytics/at-risk-students', {
+      const { data: response } = await axiosInstance.get<{
+        data: Array<{
+          student_id: string;
+          student_name: string;
+          registration_number: string;
+          class_name: string;
+          section_name: string;
+          risk_factors: string[];
+          attendance_percentage: number;
+          average_grade: number;
+          payment_balance: number;
+        }>;
+        total_count: number;
+      }>('/analytics/at-risk-students', {
         params: filters,
       });
       
-      return data;
+      return {
+        students: response.data.map(item => {
+          const factors: any[] = [];
+          (item.risk_factors || []).forEach(f => {
+            if (f === 'low_attendance') {
+              factors.push({
+                type: 'attendance',
+                value: item.attendance_percentage,
+                threshold: 75,
+                message: 'analytics.riskFactors.attendance',
+              });
+            } else if (f === 'poor_grades') {
+              factors.push({
+                type: 'grade',
+                value: item.average_grade,
+                threshold: 60,
+                message: 'analytics.riskFactors.grade',
+              });
+            } else if (f === 'outstanding_fees') {
+              factors.push({
+                type: 'financial',
+                value: item.payment_balance,
+                threshold: 0,
+                message: 'analytics.riskFactors.financial',
+              });
+            }
+          });
+
+          const factorCount = factors.length;
+          const level: 'critical' | 'high' | 'medium' | 'low' = 
+            factorCount >= 3 ? 'critical' : 
+            factorCount === 2 ? 'high' : 
+            factorCount === 1 ? 'medium' : 'low';
+
+          return {
+            studentId: item.student_id,
+            studentName: item.student_name,
+            registrationNumber: item.registration_number,
+            className: item.class_name,
+            sectionName: item.section_name,
+            level,
+            factors,
+            score: factorCount * 30,
+            attendanceRate: item.attendance_percentage,
+            gradeAverage: item.average_grade,
+            consecutiveAbsences: 0,
+          };
+        }),
+        total: response.total_count,
+      };
     },
     enabled: true,
   });

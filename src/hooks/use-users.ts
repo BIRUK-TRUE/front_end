@@ -1,10 +1,11 @@
-'use client';
+"use client";
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { usersService, type UserFilters } from '@/lib/api/users.service';
-import { queryKeys } from '@/lib/api/query-keys';
-import { toast } from 'sonner';
-import { useTranslations } from 'next-intl';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { usersService, type UserFilters } from "@/lib/api/users.service";
+import { queryKeys } from "@/lib/api/query-keys";
+import { toast } from "sonner";
+import { formatApiError } from "@/lib/utils/formatApiError";
+import { useTranslations } from "next-intl";
 
 export function useUsers(filters: UserFilters = {}) {
   return useQuery({
@@ -37,71 +38,76 @@ export function useUserStats() {
 
 export function useCreateUser() {
   const queryClient = useQueryClient();
-  const t = useTranslations('common');
+  const t = useTranslations("common");
   return useMutation({
     mutationFn: usersService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success(t('userCreated'));
+      toast.success(t("userCreated"));
     },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || t('userCreateFailed'));
+    onError: (error: any) => {
+      toast.error(formatApiError(error, t("userCreateFailed")));
     },
   });
 }
 
 export function useUpdateUser() {
   const queryClient = useQueryClient();
-  const t = useTranslations('common');
+  const t = useTranslations("common");
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof usersService.update>[1] }) =>
-      usersService.update(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Parameters<typeof usersService.update>[1];
+    }) => usersService.update(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.detail(variables.id),
       });
-      toast.success(t('userUpdated'));
+      toast.success(t("userUpdated"));
     },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || t('userUpdateFailed'));
+    onError: (error: any) => {
+      toast.error(formatApiError(error, t("userUpdateFailed")));
     },
   });
 }
 
 export function useDeleteUser() {
   const queryClient = useQueryClient();
-  const t = useTranslations('common');
+  const t = useTranslations("common");
   return useMutation({
     mutationFn: usersService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success(t('userDeleted'));
+      toast.success(t("userDeleted"));
     },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || t('userDeleteFailed'));
+    onError: (error: any) => {
+      toast.error(formatApiError(error, t("userDeleteFailed")));
     },
   });
 }
 
 export function useRestoreUser() {
   const queryClient = useQueryClient();
-  const t = useTranslations('common');
+  const t = useTranslations("common");
   return useMutation({
     mutationFn: usersService.restore,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success(t('userRestored'));
+      toast.success(t("userRestored"));
     },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || t('userRestoreFailed'));
+    onError: (error: any) => {
+      toast.error(formatApiError(error, t("userRestoreFailed")));
     },
   });
 }
 
 export function useUpdateRoles() {
   const queryClient = useQueryClient();
-  const t = useTranslations('common');
+  const t = useTranslations("common");
   return useMutation({
     mutationFn: ({ id, roleNames }: { id: string; roleNames: string[] }) =>
       usersService.updateRoles(id, roleNames),
@@ -110,10 +116,10 @@ export function useUpdateRoles() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.detail(variables.id),
       });
-      toast.success(t('rolesUpdated'));
+      toast.success(t("rolesUpdated"));
     },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || t('rolesUpdateFailed'));
+    onError: (error: any) => {
+      toast.error(formatApiError(error, t("rolesUpdateFailed")));
     },
   });
 }

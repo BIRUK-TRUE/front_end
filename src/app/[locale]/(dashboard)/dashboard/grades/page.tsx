@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useAcademicYears } from '@/features/academics/api/useAcademicYears';
 import { useClasses, useClass } from '@/features/academics/api/useClasses';
@@ -59,6 +59,14 @@ export default function GradesPage() {
 
   const submitGrades = useSubmitGrades();
   const createAssessment = useCreateAssessment();
+
+  // Auto-select current academic year
+  useEffect(() => {
+    if (yearsData?.items?.length && !selectedYearId) {
+      const current = yearsData.items.find((y: any) => y.is_current);
+      if (current) setSelectedYearId(current.id);
+    }
+  }, [yearsData, selectedYearId]);
 
   // We will just use all subjects available
   const subjects = subjectsData?.items || [];
@@ -279,8 +287,18 @@ export default function GradesPage() {
       {!selectedAssessmentId ? (
         <EmptyState
           icon={Award}
-          title={t('selectAssessmentTitle')}
-          description={t('selectAssessmentDescription')}
+          title={selectedSubjectId ? 'No assessment selected' : 'Select a class and subject to begin'}
+          description={
+            !selectedYearId
+              ? 'Start by selecting an academic year above.'
+              : !selectedClassId
+              ? 'Now select a class.'
+              : !selectedSubjectId
+              ? 'Now select a subject.'
+              : assessments && assessments.length === 0
+              ? 'No assessments yet for this subject. Create one using the button above.'
+              : 'Select an assessment from the list above to enter grades.'
+          }
         />
       ) : isLoadingGrades ? (
         <div className="flex items-center justify-center h-64">

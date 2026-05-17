@@ -58,13 +58,21 @@ const typeIcons: Record<NotificationType, LucideIcon> = {
   [NotificationType.FEE_OVERDUE]: AlertTriangle,
 };
 
-const priorityStyles: Record<NotificationPriority, string> = {
+const priorityStyles: Record<string, string> = {
   [NotificationPriority.LOW]: "bg-info/10 text-info border-info/20",
   [NotificationPriority.MEDIUM]: "bg-warning/10 text-warning border-warning/20",
+  // Backend may send 'normal' instead of 'medium'
+  normal: "bg-warning/10 text-warning border-warning/20",
   [NotificationPriority.HIGH]: "bg-primary/10 text-primary border-primary/20",
   [NotificationPriority.URGENT]:
     "bg-destructive/10 text-destructive border-destructive/20",
 };
+
+// Safe lookup — falls back to 'low' styles if priority is unknown/undefined
+const FALLBACK_PRIORITY_STYLE = "bg-muted/50 text-muted-foreground border-muted";
+function getPriorityStyle(priority: string | undefined): string {
+  return priorityStyles[priority ?? ""] ?? FALLBACK_PRIORITY_STYLE;
+}
 
 export function NotificationCenter({
   notifications,
@@ -206,20 +214,14 @@ export function NotificationCenter({
                           <div
                             className={cn(
                               "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border",
-                              priorityStyles[notification.priority].split(
-                                " ",
-                              )[0],
-                              priorityStyles[notification.priority].split(
-                                " ",
-                              )[2],
+                              getPriorityStyle(notification.priority).split(" ")[0],
+                              getPriorityStyle(notification.priority).split(" ")[2],
                             )}
                           >
                             <Icon
                               className={cn(
                                 "h-5 w-5",
-                                priorityStyles[notification.priority].split(
-                                  " ",
-                                )[1],
+                                getPriorityStyle(notification.priority).split(" ")[1],
                               )}
                             />
                           </div>

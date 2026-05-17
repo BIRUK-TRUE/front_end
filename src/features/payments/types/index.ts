@@ -15,20 +15,20 @@ export interface StudentFee {
 }
 
 export enum FeeType {
-  TUITION = 'tuition',
-  REGISTRATION = 'registration',
-  EXAM = 'exam',
-  LIBRARY = 'library',
-  LAB = 'lab',
-  TRANSPORT = 'transport',
-  OTHER = 'other',
+  TUITION = "tuition",
+  REGISTRATION = "registration",
+  EXAM = "exam",
+  LIBRARY = "library",
+  LAB = "lab",
+  TRANSPORT = "transport",
+  OTHER = "other",
 }
 
 export enum FeeStatus {
-  PAID = 'paid',
-  PARTIAL = 'partial',
-  UNPAID = 'unpaid',
-  OVERDUE = 'overdue',
+  PAID = "paid",
+  PARTIAL = "partial",
+  UNPAID = "unpaid",
+  OVERDUE = "overdue",
 }
 
 export interface PaymentTransaction {
@@ -48,19 +48,19 @@ export interface PaymentTransaction {
 }
 
 export enum PaymentMethod {
-  CHAPA = 'chapa',
-  CASH = 'cash',
-  BANK_TRANSFER = 'bank_transfer',
-  CHECK = 'check',
-  MOBILE_MONEY = 'mobile_money',
+  CHAPA = "chapa",
+  CASH = "cash",
+  BANK_TRANSFER = "bank_transfer",
+  CHECK = "check",
+  MOBILE_MONEY = "mobile_money",
 }
 
 export enum PaymentStatus {
-  PENDING = 'pending',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  REFUNDED = 'refunded',
+  PENDING = "pending",
+  PROCESSING = "processing",
+  COMPLETED = "completed",
+  FAILED = "failed",
+  REFUNDED = "refunded",
 }
 
 export interface ChapaPaymentPayload {
@@ -127,8 +127,7 @@ export interface CreateFeeConfig {
   grade_level?: string;
   due_date?: string;
   description?: string;
+  is_active?: boolean;
 }
 
-export interface UpdateFeeConfig extends Partial<CreateFeeConfig> {
-  id: string;
-}
+export interface UpdateFeeConfig extends Partial<CreateFeeConfig> {}

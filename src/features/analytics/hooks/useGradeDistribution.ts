@@ -12,11 +12,22 @@ export function useGradeDistribution(filters?: {
   return useQuery({
     queryKey: analyticsKeys.distribution(filters),
     queryFn: async (): Promise<GradeDistributionEntry[]> => {
-      const { data } = await axiosInstance.get<GradeDistributionEntry[]>('/analytics/grade-distribution', {
+      const { data: response } = await axiosInstance.get<{
+        data: Array<{
+          grade: string;
+          count: number;
+          percentage: number;
+        }>;
+        total_assessments: number;
+      }>('/analytics/grade-distribution', {
         params: filters,
       });
-      return data;
+      return response.data.map(item => ({
+        grade_letter: item.grade,
+        count: item.count,
+        percentage: item.percentage,
+      }));
     },
-    enabled: !!filters?.termId,
+    enabled: true,
   });
 }

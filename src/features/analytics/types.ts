@@ -1,7 +1,7 @@
 export type RiskLevel = 'critical' | 'high' | 'medium' | 'low';
 
 export interface RiskFactor {
-  type: 'attendance' | 'grade' | 'consecutive_absence';
+  type: 'attendance' | 'grade' | 'consecutive_absence' | 'financial';
   value: number;
   threshold: number;
   message: string;

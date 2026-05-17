@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { queryKeys } from "@/lib/api/query-keys";
 import { toast } from "sonner";
+import { formatApiError } from "@/lib/utils/formatApiError";
 import type {
   TeacherAttendanceFilter,
   TeacherAttendanceRecord,
@@ -28,11 +29,19 @@ type ClassApiResponse = {
 };
 
 function getDatesInRange(fromDate?: string, toDate?: string) {
-  const start = new Date(fromDate || toDate || new Date().toISOString().slice(0, 10));
-  const end = new Date(toDate || fromDate || new Date().toISOString().slice(0, 10));
+  const start = new Date(
+    fromDate || toDate || new Date().toISOString().slice(0, 10),
+  );
+  const end = new Date(
+    toDate || fromDate || new Date().toISOString().slice(0, 10),
+  );
   const dates: string[] = [];
 
-  for (const date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+  for (
+    const date = new Date(start);
+    date <= end;
+    date.setDate(date.getDate() + 1)
+  ) {
     dates.push(date.toISOString().slice(0, 10));
   }
 
@@ -45,17 +54,22 @@ export function useTeacherAttendanceRecords(
 ) {
   return useQuery({
     queryKey: queryKeys.teacher.attendanceRecords(teacherId, filters),
-    queryFn: async (): Promise<{ items: TeacherAttendanceRecord[]; total: number }> => {
+    queryFn: async (): Promise<{
+      items: TeacherAttendanceRecord[];
+      total: number;
+    }> => {
       const { data } = await axiosInstance.get<TeacherAttendanceRecord[]>(
         `/teachers/${teacherId}/attendance-records`,
-        { params: filters }
+        { params: filters },
       );
-      
+
       let filteredItems = data;
       if (filters.sectionId) {
-        filteredItems = data.filter(item => item.id.startsWith(filters.sectionId!));
+        filteredItems = data.filter((item) =>
+          item.id.startsWith(filters.sectionId!),
+        );
       }
-      
+
       const page = filters.page ?? 1;
       const size = filters.size ?? 10;
       const start = (page - 1) * size;
@@ -89,8 +103,11 @@ export function useSubmitTeacherAttendance() {
       queryClient.invalidateQueries({ queryKey: ["teacher"] });
       toast.success("Attendance submitted successfully");
     },
-    onError: (error: { message?: string; response?: { data?: { detail?: string } } }) => {
-      toast.error(error.response?.data?.detail || "Failed to submit attendance");
+    onError: (error: {
+      message?: string;
+      response?: { data?: { detail?: string } };
+    }) => {
+      toast.error(formatApiError(error, "Failed to submit attendance"));
     },
   });
 }

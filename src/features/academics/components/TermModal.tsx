@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useTranslations } from 'next-intl';
-import { termSchema, type TermForm } from '@/features/academics/types/schemas';
-import { type Term } from '@/features/academics/types';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
+import { termSchema, type TermForm } from "@/features/academics/types/schemas";
+import { type Term } from "@/features/academics/types";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -20,11 +20,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
-import { useEffect } from 'react';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 interface TermModalProps {
   open: boolean;
@@ -41,16 +41,16 @@ export function TermModal({
   onSubmit,
   isLoading,
 }: TermModalProps) {
-  const t = useTranslations('common');
-  const ta = useTranslations('academics');
+  const t = useTranslations("common");
+  const ta = useTranslations("academics");
 
   const form = useForm<TermForm>({
     resolver: zodResolver(termSchema) as any,
     defaultValues: {
-      name: '',
+      name: "",
       term_number: 1,
-      start_date: '',
-      end_date: '',
+      start_date: "",
+      end_date: "",
     },
   });
 
@@ -61,15 +61,15 @@ export function TermModal({
         form.reset({
           name: term.name,
           term_number: term.term_number,
-          start_date: term.start_date.split('T')[0],
-          end_date: term.end_date.split('T')[0],
+          start_date: term.start_date.split("T")[0],
+          end_date: term.end_date.split("T")[0],
         });
       } else {
         form.reset({
-          name: '',
+          name: "",
           term_number: 1,
-          start_date: '',
-          end_date: '',
+          start_date: "",
+          end_date: "",
         });
       }
     }
@@ -83,26 +83,27 @@ export function TermModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>
-            {term ? ta('editTerm') : ta('addNewTerm')}
-          </DialogTitle>
+          <DialogTitle>{term ? ta("editTerm") : ta("addNewTerm")}</DialogTitle>
           <DialogDescription>
-            {term
-              ? ta('termModalEditDesc')
-              : ta('termModalDesc')}
+            {term ? ta("termModalEditDesc") : ta("termModalDesc")}
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit as any)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit as any)}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="name"
               render={({ field }: { field: any }) => (
                 <FormItem>
-                  <FormLabel>{ta('termName')} <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>
+                    {ta("termName")} <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder={ta('termNamePlaceholder')} {...field} />
+                    <Input placeholder={ta("termNamePlaceholder")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -114,14 +115,19 @@ export function TermModal({
               name="term_number"
               render={({ field }: { field: any }) => (
                 <FormItem>
-                  <FormLabel>{ta('termNumber', 'Term Number')} <span className="text-destructive">*</span></FormLabel>
+                  <FormLabel>
+                    {ta("termNumber") || "Term Number"}{" "}
+                    <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
-                      min={1} 
-                      max={4} 
-                      {...field} 
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)} 
+                    <Input
+                      type="number"
+                      min={1}
+                      max={4}
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(parseInt(e.target.value) || 1)
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -135,7 +141,10 @@ export function TermModal({
                 name="start_date"
                 render={({ field }: { field: any }) => (
                   <FormItem>
-                    <FormLabel>{ta('startDate')} <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel>
+                      {ta("startDate")}{" "}
+                      <span className="text-destructive">*</span>
+                    </FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -149,7 +158,10 @@ export function TermModal({
                 name="end_date"
                 render={({ field }: { field: any }) => (
                   <FormItem>
-                    <FormLabel>{ta('endDate')} <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel>
+                      {ta("endDate")}{" "}
+                      <span className="text-destructive">*</span>
+                    </FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -166,11 +178,11 @@ export function TermModal({
                 onClick={() => onOpenChange(false)}
                 disabled={isLoading}
               >
-                {t('cancel')}
+                {t("cancel")}
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {term ? t('save') : t('create')}
+                {term ? t("save") : t("create")}
               </Button>
             </DialogFooter>
           </form>
