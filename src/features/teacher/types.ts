@@ -107,6 +107,8 @@ export interface TeacherAssessmentFilter {
   sectionId?: string;
   subjectName?: string;
   termName?: string;
+  termId?: string;
+  status?: string;
   page?: number;
   size?: number;
 }

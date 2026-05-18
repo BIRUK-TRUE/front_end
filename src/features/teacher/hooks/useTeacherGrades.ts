@@ -33,6 +33,24 @@ function normalizeAssessmentType(type: string): TeacherAssessment["type"] {
   return "exam";
 }
 
+type AssessmentApiItem = {
+  id: string;
+  teacher_subject_id: string;
+  title: string;
+  assessment_type: string;
+  max_score: number;
+  weight: number;
+  assessment_date: string;
+  status: string;
+  term_id: string | null;
+  teacher_subject?: {
+    section_id: string;
+    section_name: string;
+    class_name: string;
+    subject_name: string;
+  };
+};
+
 export function useTeacherAssessments(
   teacherId: string,
   filters: TeacherAssessmentFilter,
@@ -43,46 +61,78 @@ export function useTeacherAssessments(
       items: TeacherAssessment[];
       total: number;
     }> => {
-      const { data } = await axiosInstance.get(
-        `/teachers/${teacherId}/assessments`,
-        { params: filters },
-      );
-      // The backend returns { teacher_id, assessments: [...] }
-      // The hook expects { items, total }
+      const { data } = await axiosInstance.get<{
+        items: AssessmentApiItem[];
+        total: number;
+        page: number;
+        size: number;
+        pages: number;
+      }>(`/teachers/${teacherId}/assessments`, {
+        params: {
+          page: filters.page ?? 1,
+          size: filters.size ?? 20,
+          section_id: filters.sectionId,
+          term_id: filters.termId,
+          status: filters.status,
+        },
+      });
+
+      const apiItems = Array.isArray(data) ? data : (data?.items ?? []);
+
       return {
-        items: (data.assessments || []).map((a: any) => ({
+        items: apiItems.map((a: AssessmentApiItem) => ({
           id: a.id,
-          sectionId: a.section_id,
-          className: a.class_name,
-          sectionName: a.section_name,
-          subjectName: a.subject_name,
-          termName: a.term_name,
-          assessmentName: a.assessment_name,
-          type: a.type,
-          date: a.date,
-          totalMarks: a.total_marks,
-          gradesEntered: a.grades_entered,
+          sectionId: a.teacher_subject?.section_id ?? '',
+          className: a.teacher_subject?.class_name ?? '',
+          sectionName: a.teacher_subject?.section_name ?? '',
+          subjectName: a.teacher_subject?.subject_name ?? '',
+          termName: a.term_id ?? '',
+          assessmentName: a.title,
+          type: normalizeAssessmentType(a.assessment_type),
+          date: a.assessment_date,
+          totalMarks: a.max_score,
+          gradesEntered: a.status === 'graded',
+          status: a.status,
+          teacherSubjectId: a.teacher_subject_id,
         })),
-        total: data.assessments?.length || 0,
+        total: Array.isArray(data) ? apiItems.length : (data?.total ?? 0),
       };
     },
     enabled: !!teacherId,
   });
 }
 
+type AssessmentGradesApiResponse = {
+  assessment: AssessmentApiItem;
+  scores: Array<{
+    id: string;
+    enrollment_id: string;
+    student_id: string;
+    student_name: string;
+    registration_number: string;
+    score: number | null;
+    is_absent: boolean;
+    remark: string | null;
+    graded_at: string | null;
+  }>;
+};
+
 export function useAssessmentGrades(assessmentId: string) {
   return useQuery({
     queryKey: queryKeys.teacher.assessmentGrades(assessmentId),
     queryFn: async (): Promise<TeacherAssessmentGrade[]> => {
-      const { data } = await axiosInstance.get<Grade[]>(
+      const { data } = await axiosInstance.get<AssessmentGradesApiResponse>(
         `/assessments/${assessmentId}/grades`,
       );
-      return data.map((grade) => ({
+      const scores = Array.isArray(data) ? data : (data?.scores ?? []);
+      return scores.map((grade) => ({
         studentId: grade.student_id,
         studentName: grade.student_name,
         studentCode: grade.registration_number,
-        score: grade.score,
-        remarks: grade.comment,
+        enrollmentId: grade.enrollment_id,
+        score: grade.score ?? 0,
+        remarks: grade.remark ?? '',
+        isAbsent: grade.is_absent,
       }));
     },
     enabled: !!assessmentId,
@@ -110,6 +160,7 @@ export function useSubmitTeacherGrades() {
         {
           entries: args.grades.map((grade) => ({
             student_id: grade.studentId,
+            enrollment_id: (grade as { enrollmentId?: string }).enrollmentId,
             score: grade.score,
             comment: grade.remarks,
           })),

@@ -164,7 +164,7 @@ function StatusBadge({ status, isCurrent }: { status: AcademicYearStatus; isCurr
 export default function AcademicYearsPage() {
   const router = useRouter();
 
-  const [page, setPage] = useState(1);
+  const [page] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingYear, setEditingYear] = useState<AcademicYear | null>(null);
   const [deleteYearId, setDeleteYearId] = useState<string | null>(null);

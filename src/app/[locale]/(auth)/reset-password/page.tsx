@@ -18,7 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { KeyRound, Loader2, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { KeyRound, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { PasswordStrength } from '@/components/auth/password-strength';
 import { Link } from '@/i18n/navigation';
 import { toast } from 'sonner';

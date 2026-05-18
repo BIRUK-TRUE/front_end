@@ -1,9 +1,20 @@
 import { axiosInstance } from './axios';
-import { useAuthStore } from '@/lib/store/auth-store';
+import { useAuthStore, type User } from '@/lib/store/auth-store';
+
+export interface LoginResponse {
+  user: User;
+  tokens: {
+    access_token: string;
+    refresh_token: string;
+    token_type: string;
+    expires_in: number;
+  };
+  message?: string;
+}
 
 export const authService = {
-  async login(email: string, password: string) {
-    const { data } = await axiosInstance.post('/auth/login', {
+  async login(email: string, password: string): Promise<LoginResponse> {
+    const { data } = await axiosInstance.post<LoginResponse>('/auth/login', {
       email,
       password,
     });

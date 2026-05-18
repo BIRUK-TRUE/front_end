@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,7 +12,6 @@ import { authService } from '@/lib/api/auth.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Card,
   CardContent,
@@ -38,7 +37,7 @@ export default function LoginPage() {
   const loginSchema = useMemo(() => z.object({
     email: z.string().min(1, t('emailRequired')).email(t('invalidEmail')),
     password: z.string().min(1, t('passwordRequired')),
-  }), [t, locale]);
+  }), [t]);
 
   type LoginForm = z.infer<typeof loginSchema>;
 
@@ -46,7 +45,7 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  const { register, handleSubmit, formState: { errors }, reset } = form;
+  const { register, handleSubmit, formState: { errors } } = form;
 
   // Update resolver when locale changes
   useEffect(() => {
@@ -60,7 +59,11 @@ export default function LoginPage() {
 
     try {
       const response = await authService.login(data.email, data.password);
-      setAuth(response.user, response.access_token, response.refresh_token);
+      setAuth(
+        response.user,
+        response.tokens.access_token,
+        response.tokens.refresh_token,
+      );
 
       if (response.user.must_change_password) {
         router.push('/change-password');

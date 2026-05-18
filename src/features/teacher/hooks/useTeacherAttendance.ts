@@ -48,6 +48,21 @@ function getDatesInRange(fromDate?: string, toDate?: string) {
   return dates;
 }
 
+type AttendanceRecordsApiResponse = {
+  items: Array<{
+    session_id: string;
+    section_id: string;
+    attendance_date: string;
+    total_records: number;
+    present_count: number;
+    created_at: string;
+  }>;
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+};
+
 export function useTeacherAttendanceRecords(
   teacherId: string,
   filters: TeacherAttendanceFilter,
@@ -58,25 +73,38 @@ export function useTeacherAttendanceRecords(
       items: TeacherAttendanceRecord[];
       total: number;
     }> => {
-      const { data } = await axiosInstance.get<TeacherAttendanceRecord[]>(
+      const { data } = await axiosInstance.get<AttendanceRecordsApiResponse>(
         `/teachers/${teacherId}/attendance-records`,
-        { params: filters },
+        {
+          params: {
+            page: filters.page ?? 1,
+            size: filters.size ?? 10,
+            section_id: filters.sectionId,
+            from_date: filters.fromDate,
+            to_date: filters.toDate,
+          },
+        },
       );
 
-      let filteredItems = data;
-      if (filters.sectionId) {
-        filteredItems = data.filter((item) =>
-          item.id.startsWith(filters.sectionId!),
-        );
-      }
-
-      const page = filters.page ?? 1;
-      const size = filters.size ?? 10;
-      const start = (page - 1) * size;
+      const apiItems = Array.isArray(data) ? data : (data?.items ?? []);
 
       return {
-        items: filteredItems.slice(start, start + size),
-        total: filteredItems.length,
+        items: apiItems.map((item) => {
+          const absentCount = Math.max((item.total_records ?? 0) - (item.present_count ?? 0), 0);
+          return {
+            id: item.session_id,
+            date: item.attendance_date,
+            className: '',
+            sectionName: '',
+            statusCounts: {
+              present: item.present_count ?? 0,
+              absent: absentCount,
+              late: 0,
+              excused: 0,
+            },
+          };
+        }),
+        total: Array.isArray(data) ? apiItems.length : (data?.total ?? 0),
       };
     },
     enabled: !!teacherId,
@@ -90,7 +118,7 @@ export function useSubmitTeacherAttendance() {
     mutationFn: async (payload: TeacherAttendanceSubmitPayload) => {
       const { data } = await axiosInstance.post("/attendance/bulk", {
         section_id: payload.sectionId,
-        date: payload.date,
+        attendance_date: payload.date,
         entries: payload.records.map((record) => ({
           student_id: record.studentId,
           status: record.status,

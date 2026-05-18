@@ -43,7 +43,17 @@ export default function SectionRosterPage() {
   const { data: section, isLoading: isSectionLoading } = useSection(sectionId);
   const { data: classData, isLoading: isClassLoading } = useClass(classId);
   const { data: studentsResponse, isLoading: isStudentsLoading } = useSectionStudents(sectionId);
-  const students = studentsResponse?.items ?? [];
+  // Backend returns EnrollmentBrief objects (not Student objects directly)
+  interface EnrollmentBrief {
+    id: string;
+    student_id: string;
+    student_name: string;
+    student_registration_number: string;
+    section_name: string;
+    status: string;
+    enrollment_type: string;
+  }
+  const students: EnrollmentBrief[] = ((studentsResponse?.items as unknown) as EnrollmentBrief[]) ?? [];
 
   const totalPages = Math.ceil(students.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -161,19 +171,23 @@ export default function SectionRosterPage() {
                     <TableRow>
                       <TableHead>{t('studentName')}</TableHead>
                       <TableHead>{t('idNumber')}</TableHead>
-                      <TableHead>{t('gender')}</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead className="text-right">{tc('actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedStudents.map((student) => (
                       <TableRow key={student.id}>
-                        <TableCell className="font-medium">{student.full_name}</TableCell>
-                        <TableCell>{student.registration_number}</TableCell>
-                        <TableCell>{student.gender || t('notAvailable')}</TableCell>
+                        <TableCell className="font-medium">{student.student_name}</TableCell>
+                        <TableCell>{student.student_registration_number}</TableCell>
+                        <TableCell>
+                          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary">
+                            {student.status}
+                          </span>
+                        </TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/dashboard/students/${student.id}`}>
+                            <Link href={`/dashboard/students/${student.student_id}`}>
                               {tc('view')}
                             </Link>
                           </Button>

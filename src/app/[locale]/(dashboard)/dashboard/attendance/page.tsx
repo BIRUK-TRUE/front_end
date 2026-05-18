@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
 import { format } from 'date-fns';
 import { useAcademicYears } from '@/features/academics/api/useAcademicYears';
 import { useClasses, useClass } from '@/features/academics/api/useClasses';
@@ -24,7 +23,6 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { Link } from '@/i18n/navigation';
 import {
-  CalendarDays,
   Check,
   CheckCircle2,
   Loader2,
@@ -63,27 +61,30 @@ export default function AttendancePage() {
   // Auto-select the current academic year on load
   useEffect(() => {
     if (yearsData?.items?.length && !selectedYearId) {
-      const current = yearsData.items.find((y: any) => y.is_current);
-      if (current) setSelectedYearId(current.id);
+      const current = yearsData.items.find((y: { is_current?: boolean }) => y.is_current);
+      if (current) setSelectedYearId((current as { id: string }).id);
     }
   }, [yearsData, selectedYearId]);
 
-  // Auto-select section if only one exists
+  // Auto-select section if only one exists (and no section is already selected)
   useEffect(() => {
     if (classDetail?.sections?.length === 1 && !selectedSectionId) {
-      setSelectedSectionId(classDetail.sections[0].id);
+      setSelectedSectionId((classDetail.sections[0] as { id: string }).id);
     }
   }, [classDetail, selectedSectionId]);
 
-  // Reset downstream when year changes
-  useEffect(() => {
+  // Handle year change — reset downstream selections in event handler instead of effect
+  const handleYearChange = (yearId: string) => {
+    setSelectedYearId(yearId);
     setSelectedClassId('');
     setSelectedSectionId('');
-  }, [selectedYearId]);
+  };
 
-  useEffect(() => {
+  // Handle class change — reset section selection in event handler
+  const handleClassChange = (classId: string) => {
+    setSelectedClassId(classId);
     setSelectedSectionId('');
-  }, [selectedClassId]);
+  };
 
   // Populate entries from existing records — default everyone to PRESENT for new sessions
   useEffect(() => {
@@ -191,12 +192,12 @@ export default function AttendancePage() {
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Academic Year
               </Label>
-              <Select value={selectedYearId} onValueChange={setSelectedYearId}>
+              <Select value={selectedYearId} onValueChange={handleYearChange}>
                 <SelectTrigger className="h-11">
                   <SelectValue placeholder="Select year…" />
                 </SelectTrigger>
                 <SelectContent>
-                  {yearsData?.items?.map((year: any) => (
+                  {yearsData?.items?.map((year: { id: string; name: string; is_current?: boolean }) => (
                     <SelectItem key={year.id} value={year.id}>
                       {year.name}
                       {year.is_current && (
@@ -215,7 +216,7 @@ export default function AttendancePage() {
               </Label>
               <Select
                 value={selectedClassId}
-                onValueChange={setSelectedClassId}
+                onValueChange={handleClassChange}
                 disabled={!selectedYearId}
               >
                 <SelectTrigger className="h-11">
@@ -224,7 +225,7 @@ export default function AttendancePage() {
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {classesData?.items?.map((cls: any) => (
+                  {classesData?.items?.map((cls: { id: string; name: string; grade_level: number }) => (
                     <SelectItem key={cls.id} value={cls.id}>
                       {cls.name} — Grade {cls.grade_level}
                     </SelectItem>
@@ -249,7 +250,7 @@ export default function AttendancePage() {
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {classDetail?.sections?.map((section: any) => (
+                  {classDetail?.sections?.map((section: { id: string; name: string }) => (
                     <SelectItem key={section.id} value={section.id}>
                       {section.name}
                     </SelectItem>

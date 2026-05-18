@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Plus, BookOpen, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, BookOpen, Edit, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/shared/empty-state';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';

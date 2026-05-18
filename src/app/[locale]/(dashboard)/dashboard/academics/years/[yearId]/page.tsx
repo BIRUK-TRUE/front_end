@@ -36,7 +36,6 @@ import {
   Loader2,
   Plus,
   Edit,
-  Archive,
   CheckCircle,
   MoreHorizontal,
   Trash2,
@@ -157,7 +156,7 @@ export default function AcademicYearDetailPage() {
   const handleActivateTerm = async (id: string) => {
     await updateTerm.mutateAsync({
       id,
-      data: { status: "active" } as any,
+      data: { is_active: true },
     });
   };
 
@@ -544,7 +543,7 @@ export default function AcademicYearDetailPage() {
                             <DropdownMenuItem
                               onClick={() =>
                                 router.push(
-                                  `/dashboard/academics/classes/${classItem.id}` as any,
+                                  `/dashboard/academics/classes/${classItem.id}`,
                                 )
                               }
                             >

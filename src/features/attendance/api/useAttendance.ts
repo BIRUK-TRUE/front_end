@@ -30,10 +30,31 @@ export function useAttendanceBySection(sectionId: string, date: string) {
       const { data } = await axiosInstance.get(
         `/attendance/sections/${sectionId}/students`,
         {
-          params: { date },
+          params: { attendance_date: date },
         },
       );
-      return data;
+      // Backend returns SectionAttendanceSheetResponse with a `students` array
+      const students: Array<{
+        student_id: string;
+        enrollment_id: string;
+        full_name: string;
+        registration_number: string;
+        is_present: boolean;
+      }> = Array.isArray(data) ? data : (data?.students ?? []);
+
+      return students.map((s) => ({
+        id: s.enrollment_id,
+        student_id: s.student_id,
+        student_name: s.full_name,
+        registration_number: s.registration_number,
+        section_id: sectionId,
+        date,
+        status: s.is_present ? 'present' : 'absent',
+        note: undefined,
+        marked_by: '',
+        created_at: '',
+        updated_at: '',
+      })) as AttendanceRecord[];
     },
     enabled: !!sectionId && !!date,
   });
