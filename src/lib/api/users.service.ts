@@ -5,6 +5,8 @@ export interface UserFilters {
   size?: number;
   search?: string;
   is_active?: boolean;
+  role_name?: string;
+  /** @deprecated Use role_name instead */
   role?: string;
   sort_by?: 'created_at' | 'full_name' | 'email';
   sort_order?: 'asc' | 'desc';
@@ -12,7 +14,13 @@ export interface UserFilters {
 
 export const usersService = {
   async getAll(filters: UserFilters = {}) {
-    const { data } = await axiosInstance.get('/users', { params: filters });
+    // Normalise legacy `role` param → `role_name` that the backend expects
+    const params = { ...filters };
+    if (params.role && !params.role_name) {
+      params.role_name = params.role;
+    }
+    delete params.role;
+    const { data } = await axiosInstance.get('/users', { params });
     return data;
   },
 

@@ -27,48 +27,88 @@ export interface NotificationSettings {
   consecutive_absence_threshold: number;
 }
 
+/**
+ * Settings service.
+ *
+ * NOTE: The backend does not have a dedicated /settings module yet.
+ * Most methods return sensible defaults. They will be connected to
+ * real backend endpoints once the settings module is implemented.
+ */
 export const settingsService = {
-  getSchoolInfo: async () => {
-    const { data } = await axiosInstance.get<SchoolInfo>('/settings/school-info');
-    return data;
-  },
-  updateSchoolInfo: async (data: Partial<SchoolInfo>) => {
-    const response = await axiosInstance.patch('/settings/school-info', data);
-    return response.data;
-  },
-
-  getAcademicSettings: async () => {
-    const { data } = await axiosInstance.get<AcademicSettings>('/settings/academic');
-    return data;
-  },
-  updateAcademicSettings: async (data: Partial<AcademicSettings>) => {
-    const response = await axiosInstance.patch('/settings/academic', data);
-    return response.data;
-  },
-
-  getNotificationSettings: async () => {
-    const { data } = await axiosInstance.get<NotificationSettings>('/settings/notifications');
-    return data;
-  },
-  updateNotificationSettings: async (data: Partial<NotificationSettings>) => {
-    const response = await axiosInstance.patch('/settings/notifications', data);
-    return response.data;
+  /**
+   * Get school info.
+   * TODO: Backend endpoint /settings/school-info not yet implemented.
+   */
+  getSchoolInfo: async (): Promise<SchoolInfo> => {
+    // Return defaults until settings module exists in backend
+    return {
+      school_name: "School Management System",
+      address: "",
+      phone: "",
+      email: "",
+      logo_url: null,
+      school_code: null,
+      website: null,
+      region: null,
+      zone: null,
+      woreda: null,
+    };
   },
 
+  updateSchoolInfo: async (_data: Partial<SchoolInfo>) => {
+    // TODO: PATCH /settings/school-info
+    return _data;
+  },
+
+  /**
+   * Get academic settings.
+   * TODO: Backend endpoint /settings/academic not yet implemented.
+   */
+  getAcademicSettings: async (): Promise<AcademicSettings> => {
+    return {
+      grading_scale: { A: 90, B: 80, C: 70, D: 60, F: 0 },
+      passing_mark: 50,
+      attendance_warning_threshold: 80,
+      confidence_threshold: 75,
+    };
+  },
+
+  updateAcademicSettings: async (_data: Partial<AcademicSettings>) => {
+    // TODO: PATCH /settings/academic
+    return _data;
+  },
+
+  /**
+   * Get notification settings.
+   * TODO: Backend endpoint /settings/notifications not yet implemented.
+   */
+  getNotificationSettings: async (): Promise<NotificationSettings> => {
+    return {
+      absence_alert: true,
+      low_grade_alert: true,
+      fee_reminder: true,
+      consecutive_absence_threshold: 3,
+    };
+  },
+
+  updateNotificationSettings: async (_data: Partial<NotificationSettings>) => {
+    // TODO: PATCH /settings/notifications
+    return _data;
+  },
+
+  /**
+   * SMS providers — stubbed.
+   */
   getSmsProviders: async () => {
-    const { data } = await axiosInstance.get('/settings/sms/providers');
-    return data;
+    return [];
   },
-  activateSmsProvider: async (providerId: string) => {
-    const { data } = await axiosInstance.put(`/settings/sms/providers/${providerId}/activate`);
-    return data;
+  activateSmsProvider: async (_providerId: string) => {
+    return { message: "SMS providers not yet configured" };
   },
-  getSmsLogs: async (limit = 50, offset = 0) => {
-    const { data } = await axiosInstance.get(`/settings/sms/logs?limit=${limit}&offset=${offset}`);
-    return data;
+  getSmsLogs: async (_limit = 50, _offset = 0) => {
+    return [];
   },
-  testSms: async (payload: { phone: string, message: string }) => {
-    const { data } = await axiosInstance.post('/settings/sms/test', payload);
-    return data;
+  testSms: async (_payload: { phone: string; message: string }) => {
+    return { message: "SMS test not yet available" };
   },
 };

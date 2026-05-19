@@ -1,10 +1,8 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
-import { toast } from "sonner";
-import { formatApiError } from "@/lib/utils/formatApiError";
-import type { ScheduleEntry, CreateScheduleEntryPayload } from "../types";
+import type { ScheduleEntry } from "../types";
 
 export const scheduleKeys = {
   all: ["schedule"] as const,
@@ -14,6 +12,10 @@ export const scheduleKeys = {
     [...scheduleKeys.all, "teacher", teacherId, termId] as const,
 };
 
+/**
+ * Get schedule for a section (teacher-subject assignments).
+ * Backend: GET /schedule/section/{section_id}
+ */
 export function useSectionSchedule(sectionId: string, termId: string) {
   return useQuery({
     queryKey: scheduleKeys.bySection(sectionId, termId),
@@ -30,6 +32,10 @@ export function useSectionSchedule(sectionId: string, termId: string) {
   });
 }
 
+/**
+ * Get schedule for a teacher (which sections/subjects they teach).
+ * Backend: GET /schedule/teacher/{teacher_id}
+ */
 export function useTeacherSchedule(teacherId: string, termId: string) {
   return useQuery({
     queryKey: scheduleKeys.byTeacher(teacherId, termId),
@@ -46,81 +52,7 @@ export function useTeacherSchedule(teacherId: string, termId: string) {
   });
 }
 
-export function useCreateScheduleEntry() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (payload: CreateScheduleEntryPayload) => {
-      const { data } = await axiosInstance.post("/schedule", payload);
-      return data;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: scheduleKeys.bySection(
-          variables.section_id,
-          variables.term_id,
-        ),
-      });
-      toast.success("Schedule entry created");
-    },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(formatApiError(error, "Failed to create schedule entry"));
-    },
-  });
-}
-
-export function useDeleteScheduleEntry() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({
-      id,
-      sectionId,
-      termId,
-    }: {
-      id: string;
-      sectionId: string;
-      termId: string;
-    }) => {
-      await axiosInstance.delete(`/schedule/${id}`);
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: scheduleKeys.bySection(variables.sectionId, variables.termId),
-      });
-      toast.success("Schedule entry deleted");
-    },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(formatApiError(error, "Failed to delete entry"));
-    },
-  });
-}
-
-export function useUpdateScheduleEntry() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({
-      id,
-      payload,
-    }: {
-      id: string;
-      payload: Partial<CreateScheduleEntryPayload>;
-    }) => {
-      const { data } = await axiosInstance.patch(`/schedule/${id}`, payload);
-      return data;
-    },
-    onSuccess: (_, variables) => {
-      if (variables.payload.section_id && variables.payload.term_id) {
-        queryClient.invalidateQueries({
-          queryKey: scheduleKeys.bySection(
-            variables.payload.section_id,
-            variables.payload.term_id,
-          ),
-        });
-      }
-      queryClient.invalidateQueries({ queryKey: scheduleKeys.all });
-      toast.success("Schedule entry updated");
-    },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(formatApiError(error, "Failed to update entry"));
-    },
-  });
-}
+// NOTE: The backend schedule module is read-only — it derives data from
+// TeacherSubject assignments. There are no POST/PATCH/DELETE endpoints.
+// To manage schedule, use the academics module to manage teacher-subject
+// assignments (TeacherSubject CRUD via the teachers router).

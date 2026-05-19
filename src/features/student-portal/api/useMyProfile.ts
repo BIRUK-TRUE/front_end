@@ -13,6 +13,7 @@ export function useMyProfile() {
   return useQuery({
     queryKey: queryKeys.studentPortal.profile(studentId),
     queryFn: async () => {
+      // GET /students/{id}/profile returns StudentProfile-shaped data
       const { data } = await api.get<StudentProfile>(
         `/students/${studentId}/profile`,
       );
@@ -29,8 +30,10 @@ export function useUpdateProfilePhoto() {
 
   return useMutation({
     mutationFn: async (formData: FormData) => {
+      // Upload via PATCH /users/{user_id} with profile_image_url
+      // or via a multipart endpoint on students if available
       const { data } = await api.patch(
-        `/students/${studentId}/photo`,
+        `/users/${user?.id}`,
         formData,
         {
           headers: {
@@ -60,10 +63,11 @@ export function useUpdateProfile() {
   const studentId = user?.student_id || user?.id || "";
 
   return useMutation({
-    mutationFn: async (data: Partial<StudentProfile>) => {
+    mutationFn: async (payload: Partial<StudentProfile>) => {
+      // PATCH /students/{student_id} to update student profile data
       const { data: response } = await api.patch(
-        `/students/${studentId}/profile`,
-        data,
+        `/students/${studentId}`,
+        payload,
       );
       return response;
     },

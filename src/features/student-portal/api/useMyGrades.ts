@@ -18,7 +18,7 @@ export function useMySubjectSummary(termId?: string) {
     queryFn: async () => {
       const { data } = await api.get<GradesSummaryResponse>(
         `/students/${studentId}/grades/summary`,
-        { params: { termId } }
+        { params: termId ? { term_id: termId } : {} }
       );
       return data;
     },
@@ -40,7 +40,14 @@ export function useMyAssessmentGrades(filters: {
     queryFn: async () => {
       const { data } = await api.get<PaginatedResponse<AssessmentGradeRecord>>(
         `/students/${studentId}/grades/assessments`,
-        { params: filters }
+        {
+          params: {
+            term_id: filters.termId,
+            subject_id: filters.subjectId,
+            page: filters.page,
+            size: filters.size,
+          },
+        }
       );
       return data;
     },
@@ -55,11 +62,42 @@ export function useMyReportCard(termId: string) {
   return useQuery({
     queryKey: queryKeys.studentPortal.reportCard(studentId, termId),
     queryFn: async () => {
-      const { data } = await api.get<ReportCardData>(
-        `/students/${studentId}/grades/report-card`,
-        { params: { termId } }
+      // Use the gradebook endpoint and transform to ReportCardData shape
+      const { data } = await api.get<GradesSummaryResponse>(
+        `/students/${studentId}/grades/summary`,
+        { params: { term_id: termId } }
       );
-      return data;
+      const reportCard: ReportCardData = {
+        student: {
+          fullName: user?.full_name || '',
+          studentIdNumber: '',
+          className: '',
+          sectionName: '',
+        },
+        term: { name: '', academicYear: '' },
+        schoolInfo: { name: 'School Management System', logoUrl: null },
+        subjects: (data?.subjects || []).map((s) => ({
+          subjectName: s.subjectName,
+          scoreEarned: s.totalScoreEarned,
+          totalMarks: s.totalPossibleMarks,
+          percentage: s.percentage,
+          passed: s.passed,
+          teacherRemarks: null,
+        })),
+        summary: {
+          totalScoreEarned: (data?.subjects || []).reduce((acc, s) => acc + s.totalScoreEarned, 0),
+          totalPossibleMarks: (data?.subjects || []).reduce((acc, s) => acc + s.totalPossibleMarks, 0),
+          overallPercentage: data?.subjects?.length
+            ? Math.round(
+                (data.subjects.reduce((acc, s) => acc + s.percentage, 0) / data.subjects.length) * 10
+              ) / 10
+            : 0,
+          classRank: null,
+          totalStudentsInClass: null,
+        },
+        generalRemarks: null,
+      };
+      return reportCard;
     },
     enabled: isHydrated && !!studentId && !!termId,
   });

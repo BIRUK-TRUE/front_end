@@ -8,8 +8,8 @@ import type { Assessment, Grade, BulkGradePayload, ReportCard } from "../types";
 
 const gradesKeys = {
   all: ["grades"] as const,
-  assessments: (classId: string, subjectId: string) =>
-    [...gradesKeys.all, "assessments", classId, subjectId] as const,
+  assessments: (filters?: Record<string, unknown>) =>
+    [...gradesKeys.all, "assessments", filters] as const,
   gradesByAssessment: (assessmentId: string) =>
     [...gradesKeys.all, "by-assessment", assessmentId] as const,
   studentGrades: (studentId: string, yearId: string) =>
@@ -18,26 +18,75 @@ const gradesKeys = {
     [...gradesKeys.all, "report-card", studentId, termId] as const,
 };
 
-export function useAssessments(classId: string, subjectId: string) {
+/**
+ * List assessments with optional filters.
+ * Backend: GET /assessments
+ *
+ * Backend supports: teacher_subject_id, term_id, status (query params)
+ * We also accept classId/subjectId for convenience and pass through
+ * any backend-compatible params.
+ */
+export function useAssessments(
+  classId: string,
+  subjectId: string,
+  extraFilters?: { teacher_subject_id?: string; term_id?: string; status?: string },
+) {
   return useQuery({
-    queryKey: gradesKeys.assessments(classId, subjectId),
+    queryKey: gradesKeys.assessments({ classId, subjectId, ...extraFilters }),
     queryFn: async (): Promise<Assessment[]> => {
-      const { data } = await axiosInstance.get("/assessments", {
-        params: { class_id: classId, subject_id: subjectId },
-      });
-      return data;
+      const params: Record<string, string> = {};
+      if (extraFilters?.teacher_subject_id) {
+        params.teacher_subject_id = extraFilters.teacher_subject_id;
+      }
+      if (extraFilters?.term_id) {
+        params.term_id = extraFilters.term_id;
+      }
+      if (extraFilters?.status) {
+        params.status = extraFilters.status;
+      }
+
+      const { data } = await axiosInstance.get("/assessments", { params });
+      // Backend returns PaginatedAssessmentsResponse: { items, total, page, size, pages }
+      const items = data?.items ?? (Array.isArray(data) ? data : []);
+      return items.map(
+        (a: Record<string, unknown>): Assessment => ({
+          id: a.id as string,
+          title: (a.title ?? a.name ?? "") as string,
+          type: (a.assessment_type ?? a.type ?? "exam") as string,
+          max_score: (a.max_score ?? 100) as number,
+          weight: (a.weight ?? 0) as number,
+          date: (a.assessment_date ?? a.date ?? "") as string,
+          status: (a.status ?? "draft") as string,
+          teacher_subject_id: (a.teacher_subject_id ?? "") as string,
+          term_id: (a.term_id ?? "") as string,
+          subject_name: (a.subject_name ?? "") as string,
+          class_name: (a.class_name ?? "") as string,
+          section_name: (a.section_name ?? "") as string,
+          term_name: (a.term_name ?? "") as string,
+          created_at: (a.created_at ?? "") as string,
+        }),
+      );
     },
-    enabled: !!classId && !!subjectId,
+    enabled: !!(classId || subjectId || extraFilters?.teacher_subject_id),
   });
 }
 
+/**
+ * Create a new assessment.
+ * Backend: POST /assessments
+ */
 export function useCreateAssessment() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (
       payload: Omit<
         Assessment,
-        "id" | "created_at" | "subject_name" | "class_name" | "term_name"
+        | "id"
+        | "created_at"
+        | "subject_name"
+        | "class_name"
+        | "section_name"
+        | "term_name"
       >,
     ) => {
       const { data } = await axiosInstance.post("/assessments", payload);
@@ -53,6 +102,12 @@ export function useCreateAssessment() {
   });
 }
 
+/**
+ * Get grades/scores for a specific assessment.
+ * Backend: GET /assessments/{id}/grades
+ *
+ * Returns AssessmentDetailResponse: { assessment, scores }
+ */
 export function useGradesByAssessment(assessmentId: string) {
   return useQuery({
     queryKey: gradesKeys.gradesByAssessment(assessmentId),
@@ -60,12 +115,31 @@ export function useGradesByAssessment(assessmentId: string) {
       const { data } = await axiosInstance.get(
         `/assessments/${assessmentId}/grades`,
       );
-      return data;
+      // Backend returns { assessment: {...}, scores: [...] }
+      const scores = data?.scores ?? (Array.isArray(data) ? data : []);
+      return scores.map(
+        (s: Record<string, unknown>): Grade => ({
+          id: s.id as string,
+          student_id: (s.student_id ?? "") as string,
+          student_name: (s.student_name ?? "") as string,
+          enrollment_id: (s.enrollment_id ?? "") as string,
+          score: (s.score ?? null) as number | null,
+          is_absent: (s.is_absent ?? false) as boolean,
+          remark: (s.remark ?? "") as string,
+          graded_at: (s.graded_at ?? s.created_at ?? "") as string,
+        }),
+      );
     },
     enabled: !!assessmentId,
   });
 }
 
+/**
+ * Submit grades in bulk.
+ * Backend: POST /assessments/{id}/grades/bulk
+ *
+ * Accepts frontend format: { entries: [{ student_id, score, comment }] }
+ */
 export function useSubmitGrades() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -88,18 +162,68 @@ export function useSubmitGrades() {
   });
 }
 
+/**
+ * Get student term gradebook.
+ * Backend: GET /assessments/students/me/gradebook/{term_id}
+ *
+ * Note: Only available for students viewing their own grades.
+ */
 export function useReportCard(studentId: string, termId: string) {
   return useQuery({
     queryKey: gradesKeys.reportCard(studentId, termId),
     queryFn: async (): Promise<ReportCard> => {
       const { data } = await axiosInstance.get(
-        `/assessments/grades/report-card/${studentId}`,
-        {
-          params: { termId },
-        },
+        `/assessments/students/me/gradebook/${termId}`,
       );
       return data;
     },
     enabled: !!studentId && !!termId,
+  });
+}
+
+/**
+ * Delete an assessment.
+ * Backend: DELETE /assessments/{id}
+ */
+export function useDeleteAssessment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (assessmentId: string) => {
+      await axiosInstance.delete(`/assessments/${assessmentId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: gradesKeys.all });
+      toast.success("Assessment deleted");
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(formatApiError(error, "Failed to delete assessment"));
+    },
+  });
+}
+
+/**
+ * Update an assessment.
+ * Backend: PATCH /assessments/{id}
+ */
+export function useUpdateAssessment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: Partial<Assessment>;
+    }) => {
+      const { data } = await axiosInstance.patch(`/assessments/${id}`, payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: gradesKeys.all });
+      toast.success("Assessment updated");
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(formatApiError(error, "Failed to update assessment"));
+    },
   });
 }

@@ -11,9 +11,9 @@ export function useMySchedule(weekOffset: number = 0) {
   return useQuery({
     queryKey: queryKeys.studentPortal.schedule(studentId, weekOffset),
     queryFn: async () => {
+      // GET /students/{student_id}/schedule returns schedule derived from enrollment
       const { data } = await api.get<ScheduleResponse>(
-        `/students/${studentId}/schedule`,
-        { params: { week_offset: weekOffset } }
+        `/students/${studentId}/schedule`
       );
       return data;
     },

@@ -14,13 +14,15 @@ import type {
 } from "../types";
 import { NotificationPriority } from "../types";
 
-/** Map backend NotificationResponse → frontend Notification shape.
- *  The backend sends `notification_type` instead of `type`, omits `priority`,
- *  and omits `is_automated` — this normalizer bridges that gap safely.
+/**
+ * Map backend NotificationResponse → frontend Notification shape.
+ * The backend sends `notification_type` instead of `type`, omits `priority`,
+ * and omits `is_automated` — this normalizer bridges that gap safely.
  */
 function normalizeNotification(raw: Record<string, unknown>): Notification {
   const type = (raw.notification_type ?? raw.type ?? "system") as string;
-  const priority = ((raw.priority as string) ?? NotificationPriority.LOW) as Notification["priority"];
+  const priority = ((raw.priority as string) ??
+    NotificationPriority.LOW) as Notification["priority"];
   return {
     id: raw.id as string,
     type: type as Notification["type"],
@@ -37,57 +39,68 @@ function normalizeNotification(raw: Record<string, unknown>): Notification {
   };
 }
 
-interface NotificationHistoryFilters {
-  type?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  channel?: string;
-  target?: string;
-}
-
 const notificationsKeys = {
   all: ["notifications"] as const,
-  list: (userId: string) => [...notificationsKeys.all, "list", userId] as const,
+  list: (userId: string) =>
+    [...notificationsKeys.all, "list", userId] as const,
   unread: (userId: string) =>
     [...notificationsKeys.all, "unread", userId] as const,
   preferences: (userId: string) =>
     [...notificationsKeys.all, "preferences", userId] as const,
-  history: (filters?: NotificationHistoryFilters) =>
+  history: (filters?: Record<string, unknown>) =>
     [...notificationsKeys.all, "history", filters] as const,
   detail: (id: string) => [...notificationsKeys.all, "detail", id] as const,
+  announcements: () => [...notificationsKeys.all, "announcements"] as const,
+  announcement: (id: string) =>
+    [...notificationsKeys.all, "announcement", id] as const,
   alertRules: () => [...notificationsKeys.all, "alertRules"] as const,
   alertRule: (id: string) =>
     [...notificationsKeys.all, "alertRule", id] as const,
 };
 
-// Get all notifications for user
+// ==========================================
+// NOTIFICATIONS (User Inbox)
+// ==========================================
+
+/**
+ * Get current user's notifications (paginated).
+ * Backend: GET /notifications/me
+ */
 export function useNotifications(userId: string) {
   return useQuery({
     queryKey: notificationsKeys.list(userId),
     queryFn: async (): Promise<Notification[]> => {
-      const { data } = await axiosInstance.get(`/notifications`);
+      const { data } = await axiosInstance.get(`/notifications/me`, {
+        params: { page: 1, size: 50 },
+      });
       const arr = Array.isArray(data) ? data : (data?.items ?? []);
       return arr.map(normalizeNotification);
     },
     enabled: !!userId,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
   });
 }
 
-// Get unread count
+/**
+ * Get unread notification count.
+ * Backend: GET /notifications/me/unread-count
+ */
 export function useUnreadNotifications(userId: string) {
   return useQuery({
     queryKey: notificationsKeys.unread(userId),
     queryFn: async (): Promise<number> => {
-      const { data } = await axiosInstance.get(`/notifications/unread/count`);
-      return data.count;
+      const { data } = await axiosInstance.get(`/notifications/me/unread-count`);
+      return data.unread_count ?? data.count ?? 0;
     },
     enabled: !!userId,
-    refetchInterval: 10000, // Refetch every 10 seconds for real-time feel
+    refetchInterval: 10000,
   });
 }
 
-// Get notification history with filters
+/**
+ * Get notification history — returns announcements list as history.
+ * Backend: GET /announcements
+ */
 export function useNotificationHistory(filters?: {
   type?: string;
   dateFrom?: string;
@@ -98,27 +111,65 @@ export function useNotificationHistory(filters?: {
   return useQuery({
     queryKey: notificationsKeys.history(filters),
     queryFn: async (): Promise<NotificationHistory[]> => {
-      const { data } = await axiosInstance.get("/notifications/history", {
-        params: filters,
+      const { data } = await axiosInstance.get("/announcements", {
+        params: {
+          page: 1,
+          size: 50,
+          include_unpublished: false,
+        },
       });
-      return data;
+      const items = data?.items ?? [];
+      return items.map(
+        (a: Record<string, unknown>): NotificationHistory => ({
+          id: a.id as string,
+          type: (a.announcement_type ?? "general") as string,
+          title: (a.title ?? "") as string,
+          message: (a.content ?? a.message ?? "") as string,
+          target_roles: (a.target_roles ?? []) as string[],
+          sent_at: (a.published_at ?? a.created_at ?? "") as string,
+          channel: "in_app",
+          status: a.is_published ? "sent" : "draft",
+          recipients_count: (a.recipients_count ?? 0) as number,
+        }),
+      );
     },
   });
 }
 
-// Get notification detail
+/**
+ * Get a single announcement detail.
+ * Backend: GET /announcements/{id}
+ */
 export function useNotificationDetail(id: string) {
   return useQuery({
     queryKey: notificationsKeys.detail(id),
     queryFn: async (): Promise<NotificationDetail> => {
-      const { data } = await axiosInstance.get(`/notifications/history/${id}`);
-      return data;
+      const { data } = await axiosInstance.get(`/announcements/${id}`);
+      return {
+        id: data.id,
+        type: data.announcement_type ?? "general",
+        title: data.title ?? "",
+        message: data.content ?? data.message ?? "",
+        target_roles: data.target_roles ?? [],
+        sent_at: data.published_at ?? data.created_at ?? "",
+        channel: "in_app",
+        status: data.is_published ? "sent" : "draft",
+        recipients_count: data.recipients_count ?? 0,
+        recipients: [],
+      };
     },
     enabled: !!id,
   });
 }
 
-// Mark notification as read
+// ==========================================
+// MARK AS READ
+// ==========================================
+
+/**
+ * Mark a single notification as read.
+ * Backend: PATCH /notifications/{id}/read
+ */
 export function useMarkAsRead() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -138,7 +189,10 @@ export function useMarkAsRead() {
   });
 }
 
-// Mark all as read
+/**
+ * Mark all notifications as read.
+ * Backend: PATCH /notifications/me/read-all
+ */
 export function useMarkAllAsRead() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -153,42 +207,53 @@ export function useMarkAllAsRead() {
   });
 }
 
-// Get notification preferences
+// ==========================================
+// NOTIFICATION PREFERENCES (stubbed — no backend endpoint yet)
+// ==========================================
+
 export function useNotificationPreferences(userId: string) {
   return useQuery({
     queryKey: notificationsKeys.preferences(userId),
     queryFn: async (): Promise<NotificationPreferences> => {
-      const { data } = await axiosInstance.get(`/notifications/preferences`);
-      return data;
+      // Backend does not have a preferences endpoint yet.
+      // Return sensible defaults.
+      return {
+        email_enabled: true,
+        sms_enabled: false,
+        push_enabled: true,
+        quiet_hours_start: "22:00",
+        quiet_hours_end: "07:00",
+        categories: {},
+      };
     },
     enabled: !!userId,
   });
 }
 
-// Update notification preferences
 export function useUpdateNotificationPreferences() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (preferences: Partial<NotificationPreferences>) => {
-      const { data } = await axiosInstance.patch(
-        `/notifications/preferences`,
-        preferences,
-      );
-      return data;
+    mutationFn: async (_preferences: Partial<NotificationPreferences>) => {
+      // Backend does not support this yet — no-op.
+      toast.info("Notification preferences will be available soon");
+      return _preferences;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: notificationsKeys.preferences(""),
       });
-      toast.success("Preferences updated");
-    },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(formatApiError(error, "Failed to update preferences"));
     },
   });
 }
 
-// Create notification (admin only)
+// ==========================================
+// CREATE / SEND NOTIFICATION
+// ==========================================
+
+/**
+ * Send an in-app notification.
+ * Backend: POST /notifications
+ */
 export function useCreateNotification() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -207,35 +272,108 @@ export function useCreateNotification() {
   });
 }
 
-// Send notification (alias for create)
+/** Alias for create. */
 export function useSendNotification() {
   return useCreateNotification();
 }
 
-// Delete notification
+/**
+ * Archive a notification (soft delete).
+ * Backend: PATCH /notifications/{id}/archive
+ */
 export function useDeleteNotification() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      await axiosInstance.delete(`/notifications/${notificationId}`);
+      await axiosInstance.patch(`/notifications/${notificationId}/archive`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationsKeys.all });
-      toast.success("Notification deleted");
+      toast.success("Notification archived");
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(formatApiError(error, "Failed to delete notification"));
+      toast.error(formatApiError(error, "Failed to archive notification"));
     },
   });
 }
 
-// Alert Rules
+// ==========================================
+// ANNOUNCEMENTS (Admin-facing)
+// ==========================================
+
+export function useAnnouncements(page = 1, size = 20, includeUnpublished = false) {
+  return useQuery({
+    queryKey: [...notificationsKeys.announcements(), { page, size, includeUnpublished }],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get("/announcements", {
+        params: { page, size, include_unpublished: includeUnpublished },
+      });
+      return data;
+    },
+  });
+}
+
+export function useCreateAnnouncement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      title: string;
+      content: string;
+      target_roles?: string[];
+      is_published?: boolean;
+    }) => {
+      const { data } = await axiosInstance.post("/announcements", payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationsKeys.announcements() });
+      queryClient.invalidateQueries({ queryKey: notificationsKeys.history() });
+      toast.success("Announcement created");
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(formatApiError(error, "Failed to create announcement"));
+    },
+  });
+}
+
+export function useUpdateAnnouncement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: {
+        title?: string;
+        content?: string;
+        target_roles?: string[];
+        is_published?: boolean;
+      };
+    }) => {
+      const { data } = await axiosInstance.patch(`/announcements/${id}`, payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationsKeys.announcements() });
+      toast.success("Announcement updated");
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(formatApiError(error, "Failed to update announcement"));
+    },
+  });
+}
+
+// ==========================================
+// ALERT RULES (stubbed — no backend endpoint yet)
+// ==========================================
+
 export function useAlertRules() {
   return useQuery({
     queryKey: notificationsKeys.alertRules(),
     queryFn: async (): Promise<AlertRule[]> => {
-      const { data } = await axiosInstance.get("/notifications/alert-rules");
-      return data;
+      // Backend does not have alert rules endpoints yet.
+      return [];
     },
   });
 }
@@ -243,21 +381,14 @@ export function useAlertRules() {
 export function useCreateAlertRule() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: Omit<AlertRule, "id" | "created_at">) => {
-      const { data } = await axiosInstance.post(
-        "/notifications/alert-rules",
-        payload,
-      );
-      return data;
+    mutationFn: async (_payload: Omit<AlertRule, "id" | "created_at">) => {
+      toast.info("Alert rules will be available soon");
+      return _payload;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: notificationsKeys.alertRules(),
       });
-      toast.success("Alert rule created");
-    },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(formatApiError(error, "Failed to create alert rule"));
     },
   });
 }
@@ -266,26 +397,19 @@ export function useUpdateAlertRule() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
-      id,
-      payload,
+      id: _id,
+      payload: _payload,
     }: {
       id: string;
       payload: Partial<AlertRule>;
     }) => {
-      const { data } = await axiosInstance.patch(
-        `/notifications/alert-rules/${id}`,
-        payload,
-      );
-      return data;
+      toast.info("Alert rules will be available soon");
+      return _payload;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: notificationsKeys.alertRules(),
       });
-      toast.success("Alert rule updated");
-    },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(formatApiError(error, "Failed to update alert rule"));
     },
   });
 }
@@ -293,17 +417,13 @@ export function useUpdateAlertRule() {
 export function useDeleteAlertRule() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      await axiosInstance.delete(`/notifications/alert-rules/${id}`);
+    mutationFn: async (_id: string) => {
+      toast.info("Alert rules will be available soon");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: notificationsKeys.alertRules(),
       });
-      toast.success("Alert rule deleted");
-    },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(formatApiError(error, "Failed to delete alert rule"));
     },
   });
 }

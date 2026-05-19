@@ -14,6 +14,14 @@ interface NotificationFilters {
   type?: string;
 }
 
+/**
+ * Get guardian's notifications.
+ * Backend: GET /notifications/me (returns current user's notifications)
+ *
+ * NOTE: The backend doesn't have a guardian-specific notification endpoint.
+ * We use the generic /notifications/me which returns notifications for the
+ * authenticated user (including guardians).
+ */
 export function useGuardianNotifications(filters: NotificationFilters) {
   const { user, isHydrated } = useAuthStore();
   const guardianId = user?.guardian_id ?? "";
@@ -21,9 +29,17 @@ export function useGuardianNotifications(filters: NotificationFilters) {
   return useQuery({
     queryKey: queryKeys.guardianPortal.notifications(guardianId, filters),
     queryFn: async () => {
+      const params: Record<string, unknown> = {
+        page: filters.page ?? 1,
+        size: filters.size ?? 20,
+      };
+      if (filters.type) {
+        params.status = filters.type;
+      }
+
       const { data } = await api.get<PaginatedResponse<GuardianNotification>>(
-        `/guardians/${guardianId}/notifications`,
-        { params: filters },
+        `/notifications/me`,
+        { params },
       );
       return data;
     },
@@ -31,6 +47,10 @@ export function useGuardianNotifications(filters: NotificationFilters) {
   });
 }
 
+/**
+ * Mark a single notification as read.
+ * Backend: PATCH /notifications/{id}/read
+ */
 export function useMarkNotificationRead() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
@@ -52,6 +72,10 @@ export function useMarkNotificationRead() {
   });
 }
 
+/**
+ * Mark all notifications as read.
+ * Backend: PATCH /notifications/me/read-all
+ */
 export function useMarkAllNotificationsRead() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
@@ -75,6 +99,12 @@ export function useMarkAllNotificationsRead() {
   });
 }
 
+/**
+ * Archive a notification (soft delete).
+ * Backend: PATCH /notifications/{id}/archive
+ *
+ * NOTE: Backend doesn't support DELETE — uses archive instead.
+ */
 export function useDeleteNotification() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
@@ -82,16 +112,16 @@ export function useDeleteNotification() {
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      await api.delete(`/notifications/${notificationId}`);
+      await api.patch(`/notifications/${notificationId}/archive`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.guardianPortal.notifications(guardianId, {}),
       });
-      toast.success("Notification deleted");
+      toast.success("Notification archived");
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(formatApiError(error, "Failed to delete notification"));
+      toast.error(formatApiError(error, "Failed to archive notification"));
     },
   });
 }

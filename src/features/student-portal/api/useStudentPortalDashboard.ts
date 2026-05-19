@@ -11,6 +11,7 @@ export function useStudentDashboard() {
   return useQuery({
     queryKey: queryKeys.studentPortal.dashboard(studentId),
     queryFn: async () => {
+      // GET /students/{student_id}/dashboard aggregates from multiple backend modules
       const { data } = await api.get<StudentDashboardData>(
         `/students/${studentId}/dashboard`
       );

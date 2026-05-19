@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
-import { type Enrollment, type EnrollmentHistory } from "../types";
+import { type Enrollment } from "../types";
 import {
   type EnrollmentForm,
   type TransferForm,
@@ -29,22 +29,80 @@ export const enrollmentKeys = {
   detail: (id: string) => [...enrollmentKeys.details(), id] as const,
   byStudent: (studentId: string) =>
     [...enrollmentKeys.all, "student", studentId] as const,
+  bySection: (sectionId: string) =>
+    [...enrollmentKeys.all, "section", sectionId] as const,
+  byYear: (yearId: string) =>
+    [...enrollmentKeys.all, "year", yearId] as const,
 };
 
+/**
+ * List enrollments with smart routing based on available filters.
+ *
+ * Backend endpoints:
+ * - GET /enrollments/section/{section_id}  — by section
+ * - GET /enrollments/student/{student_id}  — by student
+ * - GET /enrollments/year/{year_id}        — by academic year
+ *
+ * There is no generic `GET /enrollments` endpoint, so we route
+ * based on which filter is provided.
+ */
 export const useEnrollments = (filters: EnrollmentFilters = {}) => {
   return useQuery({
     queryKey: enrollmentKeys.list(filters),
     queryFn: async () => {
-      const { data } = await axiosInstance.get<PaginatedResponse<Enrollment>>(
-        "/enrollments",
-        { params: filters },
-      );
-      return data;
+      const { page = 1, size = 50, status } = filters;
+
+      // Route to the appropriate backend endpoint
+      if (filters.sectionId) {
+        const { data } = await axiosInstance.get<PaginatedResponse<Enrollment>>(
+          `/enrollments/section/${filters.sectionId}`,
+          { params: { page, size, status } },
+        );
+        return data;
+      }
+
+      if (filters.studentId) {
+        const { data } = await axiosInstance.get<PaginatedResponse<Enrollment>>(
+          `/enrollments/student/${filters.studentId}`,
+          { params: { page, size } },
+        );
+        return data;
+      }
+
+      if (filters.yearId) {
+        const { data } = await axiosInstance.get<PaginatedResponse<Enrollment>>(
+          `/enrollments/year/${filters.yearId}`,
+          { params: { page, size, status, search: undefined } },
+        );
+        return data;
+      }
+
+      // Fallback: empty result if no filter specified
+      return { items: [], total: 0, page: 1, size, pages: 0 };
     },
-    enabled: true,
+    enabled: !!(filters.sectionId || filters.studentId || filters.yearId),
   });
 };
 
+/**
+ * Get a single enrollment by ID.
+ * Backend: GET /enrollments/{id}
+ */
+export const useEnrollment = (enrollmentId: string) => {
+  return useQuery({
+    queryKey: enrollmentKeys.detail(enrollmentId),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/enrollments/${enrollmentId}`);
+      return data;
+    },
+    enabled: !!enrollmentId,
+  });
+};
+
+/**
+ * List enrollment history for a student.
+ * Backend: GET /enrollments/student/{student_id}
+ */
 export const useStudentEnrollmentHistory = (studentId: string) => {
   return useQuery({
     queryKey: enrollmentKeys.byStudent(studentId),
@@ -58,6 +116,45 @@ export const useStudentEnrollmentHistory = (studentId: string) => {
   });
 };
 
+/**
+ * List enrollments by section.
+ * Backend: GET /enrollments/section/{section_id}
+ */
+export const useSectionEnrollments = (sectionId: string, status?: string) => {
+  return useQuery({
+    queryKey: enrollmentKeys.bySection(sectionId),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<PaginatedResponse<Enrollment>>(
+        `/enrollments/section/${sectionId}`,
+        { params: { size: 100, status } },
+      );
+      return data;
+    },
+    enabled: !!sectionId,
+  });
+};
+
+/**
+ * Get enrollment statistics for an academic year.
+ * Backend: GET /enrollments/year/{year_id}/stats
+ */
+export const useEnrollmentStats = (yearId: string) => {
+  return useQuery({
+    queryKey: [...enrollmentKeys.byYear(yearId), "stats"],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(
+        `/enrollments/year/${yearId}/stats`,
+      );
+      return data;
+    },
+    enabled: !!yearId,
+  });
+};
+
+/**
+ * Enroll a student.
+ * Backend: POST /enrollments
+ */
 export const useEnrollStudent = () => {
   const queryClient = useQueryClient();
 
@@ -70,12 +167,16 @@ export const useEnrollStudent = () => {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.all });
       toast.success("Student enrolled successfully");
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to enroll student"));
     },
   });
 };
 
+/**
+ * Transfer a student to another section.
+ * Backend: POST /enrollments/{id}/transfer
+ */
 export const useTransferStudent = (enrollmentId: string) => {
   const queryClient = useQueryClient();
 
@@ -91,12 +192,16 @@ export const useTransferStudent = (enrollmentId: string) => {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.all });
       toast.success("Student transferred successfully");
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to transfer student"));
     },
   });
 };
 
+/**
+ * Withdraw a student.
+ * Backend: POST /enrollments/{id}/withdraw
+ */
 export const useWithdrawStudent = (enrollmentId: string) => {
   const queryClient = useQueryClient();
 
@@ -112,12 +217,16 @@ export const useWithdrawStudent = (enrollmentId: string) => {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.all });
       toast.success("Student withdrawn successfully");
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to withdraw student"));
     },
   });
 };
 
+/**
+ * Update enrollment remarks.
+ * Backend: PATCH /enrollments/{id}
+ */
 export const useUpdateEnrollment = () => {
   const queryClient = useQueryClient();
 
@@ -142,25 +251,34 @@ export const useUpdateEnrollment = () => {
       });
       toast.success("Enrollment updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to update enrollment"));
     },
   });
 };
 
+/**
+ * Delete / withdraw an enrollment.
+ * Backend does not have DELETE /enrollments/{id}.
+ * Uses POST /enrollments/{id}/withdraw as a proxy.
+ */
 export const useDeleteEnrollment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await axiosInstance.delete(`/enrollments/${id}`);
+      const { data } = await axiosInstance.post(
+        `/enrollments/${id}/withdraw`,
+        { reason: "Removed by administrator" },
+      );
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.all });
-      toast.success("Enrollment deleted successfully");
+      toast.success("Enrollment removed successfully");
     },
-    onError: (error: any) => {
-      toast.error(formatApiError(error, "Failed to delete enrollment"));
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(formatApiError(error, "Failed to remove enrollment"));
     },
   });
 };
