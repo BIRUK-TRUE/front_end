@@ -41,7 +41,13 @@ export const usersService = {
 
   async getStats() {
     const { data } = await axiosInstance.get('/users/stats/summary');
-    return data;
+    // Normalize backend field names to what the dashboard expects
+    return {
+      total: data.total_users ?? data.total ?? 0,
+      active: data.active_users ?? data.active ?? 0,
+      inactive: data.inactive_users ?? data.inactive ?? 0,
+      growth: data.growth ?? 0,
+    };
   },
 
   async create(payload: {

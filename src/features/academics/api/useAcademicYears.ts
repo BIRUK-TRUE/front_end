@@ -103,3 +103,21 @@ export const useDeleteAcademicYear = () => {
     },
   });
 };
+
+export const useSetCurrentAcademicYear = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await axiosInstance.post(`/academics/years/${id}/set-current`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: academicsKeys.years.all() });
+      toast.success("Academic year set as current");
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(formatApiError(error, "Failed to set current academic year"));
+    },
+  });
+};

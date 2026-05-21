@@ -122,14 +122,18 @@ export function useNotificationHistory(filters?: {
       return items.map(
         (a: Record<string, unknown>): NotificationHistory => ({
           id: a.id as string,
-          type: (a.announcement_type ?? "general") as string,
+          type: "manual",
           title: (a.title ?? "") as string,
-          message: (a.content ?? a.message ?? "") as string,
-          target_roles: (a.target_roles ?? []) as string[],
+          message_preview: ((a.content ?? a.message ?? "") as string).slice(0, 140),
           sent_at: (a.published_at ?? a.created_at ?? "") as string,
-          channel: "in_app",
-          status: a.is_published ? "sent" : "draft",
-          recipients_count: (a.recipients_count ?? 0) as number,
+          sent_by_name: (a.created_by_name ?? "School admin") as string,
+          recipient_count: (a.recipients_count ?? 0) as number,
+          priority: NotificationPriority.MEDIUM,
+          status: {
+            delivered: (a.recipients_count ?? 0) as number,
+            pending: 0,
+            failed: 0,
+          },
         }),
       );
     },
@@ -147,14 +151,19 @@ export function useNotificationDetail(id: string) {
       const { data } = await axiosInstance.get(`/announcements/${id}`);
       return {
         id: data.id,
-        type: data.announcement_type ?? "general",
+        type: "manual",
         title: data.title ?? "",
-        message: data.content ?? data.message ?? "",
-        target_roles: data.target_roles ?? [],
+        message_preview: (data.content ?? data.message ?? "").slice(0, 140),
+        full_message: data.content ?? data.message ?? "",
         sent_at: data.published_at ?? data.created_at ?? "",
-        channel: "in_app",
-        status: data.is_published ? "sent" : "draft",
-        recipients_count: data.recipients_count ?? 0,
+        sent_by_name: data.created_by_name ?? "School admin",
+        recipient_count: data.recipients_count ?? 0,
+        priority: NotificationPriority.MEDIUM,
+        status: {
+          delivered: data.recipients_count ?? 0,
+          pending: 0,
+          failed: 0,
+        },
         recipients: [],
       };
     },
@@ -218,12 +227,15 @@ export function useNotificationPreferences(userId: string) {
       // Backend does not have a preferences endpoint yet.
       // Return sensible defaults.
       return {
-        email_enabled: true,
-        sms_enabled: false,
-        push_enabled: true,
-        quiet_hours_start: "22:00",
-        quiet_hours_end: "07:00",
-        categories: {},
+        user_id: userId,
+        email_notifications: true,
+        push_notifications: true,
+        sms_notifications: false,
+        attendance_alerts: true,
+        grade_published: true,
+        fee_reminders: true,
+        schedule_changes: true,
+        announcement_alerts: true,
       };
     },
     enabled: !!userId,
@@ -397,14 +409,13 @@ export function useUpdateAlertRule() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
-      id: _id,
-      payload: _payload,
+      payload,
     }: {
       id: string;
       payload: Partial<AlertRule>;
     }) => {
       toast.info("Alert rules will be available soon");
-      return _payload;
+      return payload;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -417,7 +428,8 @@ export function useUpdateAlertRule() {
 export function useDeleteAlertRule() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (_id: string) => {
+    mutationFn: async (id: string) => {
+      void id;
       toast.info("Alert rules will be available soon");
     },
     onSuccess: () => {

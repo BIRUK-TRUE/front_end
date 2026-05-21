@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { CheckCircle, XCircle, Clock, AlertTriangle, MinusCircle, Shield } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, AlertTriangle, MinusCircle, Shield, CircleDollarSign } from 'lucide-react';
 
 type StatusVariant =
   | 'active'
@@ -14,7 +14,15 @@ type StatusVariant =
   | 'on_leave'
   | 'suspended'
   | 'resigned'
-  | 'retired';
+  | 'retired'
+  | 'present'
+  | 'absent'
+  | 'late'
+  | 'excused'
+  | 'paid'
+  | 'partial'
+  | 'overdue'
+  | 'unpaid';
 
 const statusConfig: Record<
   StatusVariant,
@@ -30,6 +38,14 @@ const statusConfig: Record<
   suspended: { icon: AlertTriangle, className: 'bg-destructive/10 text-destructive border-destructive/20' },
   resigned: { icon: MinusCircle, className: 'bg-muted text-muted-foreground border-muted' },
   retired: { icon: Shield, className: 'bg-info/10 text-info border-info/20' },
+  present: { icon: CheckCircle, className: 'bg-status-present/10 text-status-present border-status-present/20' },
+  absent: { icon: XCircle, className: 'bg-status-absent/10 text-status-absent border-status-absent/20' },
+  late: { icon: Clock, className: 'bg-status-late/10 text-status-late border-status-late/20' },
+  excused: { icon: Shield, className: 'bg-status-excused/10 text-status-excused border-status-excused/20' },
+  paid: { icon: CheckCircle, className: 'bg-status-present/10 text-status-present border-status-present/20' },
+  partial: { icon: CircleDollarSign, className: 'bg-status-late/10 text-status-late border-status-late/20' },
+  overdue: { icon: AlertTriangle, className: 'bg-status-absent/10 text-status-absent border-status-absent/20' },
+  unpaid: { icon: XCircle, className: 'bg-muted text-muted-foreground border-muted' },
 };
 
 interface StatusBadgeProps {
@@ -45,7 +61,7 @@ export function StatusBadge({ status, label }: StatusBadgeProps) {
   return (
     <Badge
       variant="outline"
-      className={cn('gap-1.5 capitalize font-medium', config.className)}
+      className={cn('gap-1.5 rounded-full capitalize font-medium', config.className)}
     >
       <Icon className="h-3.5 w-3.5" aria-hidden="true" />
       {displayLabel}

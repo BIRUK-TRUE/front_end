@@ -32,7 +32,6 @@ import {
   MessageSquare,
   Users,
   Loader2,
-  FileText
 } from 'lucide-react';
 import { AudienceSelector } from './AudienceSelector';
 import { useNotificationComposer } from '../api/useNotificationComposer';
@@ -107,22 +106,19 @@ export function NotificationComposer() {
   const isSmsSelected = formData.channels.includes('sms');
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
-        <Card className="border-none shadow-xl rounded-3xl overflow-hidden">
-          <CardHeader className="bg-primary/5 pt-8 pb-6 border-b">
-            <CardTitle className="text-2xl font-bold">{t('title')}</CardTitle>
-            <CardDescription>{t('subtitle')}</CardDescription>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('composeMessage')}</CardTitle>
+            <CardDescription>{t('composeDescription')}</CardDescription>
           </CardHeader>
-          <CardContent className="pt-8 space-y-8">
+          <CardContent className="space-y-6">
             {/* Template Selector */}
             <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                {t('template')}
-              </Label>
+              <Label htmlFor="template">{t('template')}</Label>
               <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
-                <SelectTrigger className="h-11 rounded-xl">
+                <SelectTrigger id="template">
                   <SelectValue placeholder={t('selectTemplate')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -136,32 +132,31 @@ export function NotificationComposer() {
               </Select>
             </div>
 
-            <div className="space-y-6">
-              <div className="grid gap-2">
-                <Label htmlFor="title" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t('messageTitle')}</Label>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">{t('messageTitle')}</Label>
                 <Input 
                   id="title"
                   placeholder={t('messageTitlePlaceholder')}
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="h-12 rounded-xl border-muted-foreground/20 text-base font-semibold focus:ring-primary/20"
                 />
               </div>
 
-              <div className="grid gap-2">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="message" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t('messageBody')}</Label>
-                  <div className="flex items-center gap-2 text-xs">
+                  <Label htmlFor="message">{t('messageBody')}</Label>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     {isSmsSelected && (
                       <>
-                        <span className="text-muted-foreground">{charCount} / 160</span>
+                        <span>{charCount} / 160</span>
                         {smsSegments > 1 && (
-                          <span className="text-orange-500 font-medium">{smsSegments} segments</span>
+                          <span className="text-orange-500">{smsSegments} segments</span>
                         )}
                       </>
                     )}
                     {!isSmsSelected && (
-                      <span className="text-muted-foreground">{charCount} chars</span>
+                      <span>{charCount} chars</span>
                     )}
                   </div>
                 </div>
@@ -170,21 +165,21 @@ export function NotificationComposer() {
                   placeholder={t('messageBodyPlaceholder')}
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="min-h-[200px] rounded-2xl border-muted-foreground/20 p-4 focus:ring-primary/20 resize-none"
+                  className="min-h-[150px] resize-none"
                 />
                 {isSmsSelected && charCount > 160 && (
-                  <p className="text-xs text-orange-500 mt-1">
+                  <p className="text-xs text-orange-500">
                     {t('smsWarning', { segments: smsSegments })}
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="pt-8 border-t space-y-6">
-               <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t('channels')}</Label>
-               <div className="flex flex-wrap gap-6">
+            <div className="space-y-3">
+               <Label>{t('channels')}</Label>
+               <div className="space-y-3">
                  {['in_app', 'sms', 'email'].map((channel) => (
-                    <div key={channel} className="flex items-center space-x-3 bg-muted/30 p-4 rounded-2xl border border-muted-foreground/10 hover:bg-muted/50 transition-colors">
+                    <div key={channel} className="flex items-center space-x-2">
                       <Checkbox 
                         id={`comp-channel-${channel}`} 
                         checked={formData.channels.includes(channel as any)}
@@ -199,39 +194,39 @@ export function NotificationComposer() {
                           });
                         }}
                       />
-                      <label htmlFor={`comp-channel-${channel}`} className="flex items-center gap-2 cursor-pointer select-none">
-                         {channel === 'in_app' && <Bell className="h-4 w-4 text-primary" />}
-                         {channel === 'sms' && <MessageSquare className="h-4 w-4 text-primary" />}
-                         {channel === 'email' && <Mail className="h-4 w-4 text-primary" />}
-                         <span className="font-bold text-sm">{t(`notifications.alertRules.channelTypes.${channel}`)}</span>
+                      <label htmlFor={`comp-channel-${channel}`} className="flex items-center gap-2 cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                         {channel === 'in_app' && <Bell className="h-4 w-4" />}
+                         {channel === 'sms' && <MessageSquare className="h-4 w-4" />}
+                         {channel === 'email' && <Mail className="h-4 w-4" />}
+                         <span>{t(`notifications.alertRules.channelTypes.${channel}`)}</span>
                       </label>
                     </div>
                  ))}
                </div>
                {isSmsSelected && recipientPreview && (
-                 <div className="text-xs text-muted-foreground">
+                 <p className="text-xs text-muted-foreground">
                    {t('estimatedCost', { count: recipientPreview.count, cost: (recipientPreview.count * 0.5).toFixed(2) })}
-                 </div>
+                 </p>
                )}
             </div>
 
-            <div className="pt-8 border-t space-y-6">
-              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t('schedule')}</Label>
+            <div className="space-y-3">
+              <Label>{t('schedule')}</Label>
               <RadioGroup 
                 defaultValue="now" 
                 onValueChange={(val) => setFormData({ ...formData, scheduledAt: val === 'later' ? new Date().toISOString() : null })}
-                className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                className="grid grid-cols-1 sm:grid-cols-2 gap-3"
               >
-                <div className="flex items-center space-x-3 bg-muted/30 p-4 rounded-2xl border border-muted-foreground/10">
+                <div className="flex items-center space-x-2 border rounded-md p-3">
                   <RadioGroupItem value="now" id="schedule-now" />
-                  <label htmlFor="schedule-now" className="flex items-center gap-2 cursor-pointer font-bold text-sm">
+                  <label htmlFor="schedule-now" className="flex items-center gap-2 cursor-pointer text-sm font-medium flex-1">
                     <Send className="h-4 w-4" />
                     {t('sendNow')}
                   </label>
                 </div>
-                <div className="flex items-center space-x-3 bg-muted/30 p-4 rounded-2xl border border-muted-foreground/10">
+                <div className="flex items-center space-x-2 border rounded-md p-3">
                   <RadioGroupItem value="later" id="schedule-later" />
-                  <label htmlFor="schedule-later" className="flex items-center gap-2 cursor-pointer font-bold text-sm">
+                  <label htmlFor="schedule-later" className="flex items-center gap-2 cursor-pointer text-sm font-medium flex-1">
                     <Clock className="h-4 w-4" />
                     {t('scheduleLater')}
                   </label>
@@ -239,21 +234,19 @@ export function NotificationComposer() {
               </RadioGroup>
             </div>
           </CardContent>
-          <CardFooter className="bg-primary/5 px-8 py-6 border-t flex justify-between gap-4">
+          <CardFooter className="flex justify-between gap-2">
              <Button 
                 variant="outline" 
-                className="h-12 rounded-xl px-6 gap-2 font-bold"
                 onClick={() => setIsPreviewOpen(true)}
              >
-               <Eye className="h-4 w-4" />
+               <Eye className="h-4 w-4 mr-2" />
                {t('preview')}
              </Button>
              <Button 
-                className="h-12 rounded-xl px-10 gap-2 font-black shadow-lg shadow-primary/20"
                 disabled={!isFormValid || sendNotification.isPending}
                 onClick={handleSend}
              >
-               {sendNotification.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+               {sendNotification.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
                {sendNotification.isPending ? t('sending') : t('send')}
              </Button>
           </CardFooter>
@@ -261,14 +254,14 @@ export function NotificationComposer() {
       </div>
 
       <div className="space-y-6">
-        <Card className="border-none shadow-lg rounded-3xl overflow-hidden">
-          <CardHeader className="bg-slate-50 border-b">
-             <CardTitle className="text-sm font-bold flex items-center gap-2">
-               <Users className="h-4 w-4 text-primary" />
+        <Card>
+          <CardHeader>
+             <CardTitle className="text-base flex items-center gap-2">
+               <Users className="h-4 w-4" />
                {t('audience')}
              </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent>
              <AudienceSelector 
                 selectedType={formData.targetType}
                 selectedIds={formData.targetIds}
@@ -277,10 +270,10 @@ export function NotificationComposer() {
              />
           </CardContent>
           {recipientPreview && (
-            <CardFooter className="bg-primary/5 p-4 flex flex-col items-start gap-2 border-t">
-               <p className="text-sm font-black text-primary uppercase tracking-widest">{t('recipientCount', { count: recipientPreview.count })}</p>
+            <CardFooter className="flex flex-col items-start gap-1 border-t bg-muted/30">
+               <p className="text-sm font-semibold">{t('recipientCount', { count: recipientPreview.count })}</p>
                {recipientPreview.sampleNames.length > 0 && (
-                 <p className="text-[10px] text-muted-foreground leading-relaxed">
+                 <p className="text-xs text-muted-foreground">
                    {t('sampleRecipients', { names: recipientPreview.sampleNames.join(', ') })}
                  </p>
                )}
@@ -291,36 +284,36 @@ export function NotificationComposer() {
 
       {/* Preview Modal */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="sm:max-w-[450px] rounded-3xl p-0 overflow-hidden border-none shadow-2xl flex flex-col max-h-[85vh]">
-           <DialogHeader className="bg-primary px-6 py-6 text-white text-left shrink-0">
-              <DialogTitle className="text-xl font-bold flex items-center gap-3">
-                 <Bell className="h-6 w-6" />
+        <DialogContent className="sm:max-w-[450px]">
+           <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                 <Bell className="h-5 w-5" />
                  {t('previewTitle')}
               </DialogTitle>
            </DialogHeader>
-           <div className="flex-1 overflow-y-auto bg-slate-50 p-6 min-h-0">
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden border">
-                 <div className="p-4 bg-primary/5 border-b border-primary/10 flex items-center justify-between">
-                    <p className="text-primary font-bold text-sm tracking-tight">{formData.title || t('previewUntitled')}</p>
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">{t('previewJustNow')}</span>
+           <div className="space-y-4">
+              <div className="border rounded-lg overflow-hidden">
+                 <div className="p-4 bg-muted/50 border-b flex items-center justify-between">
+                    <p className="font-semibold text-sm">{formData.title || t('previewUntitled')}</p>
+                    <span className="text-xs text-muted-foreground">{t('previewJustNow')}</span>
                  </div>
-                 <div className="p-5">
-                    <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">{formData.message || t('previewNoMessage')}</p>
+                 <div className="p-4">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{formData.message || t('previewNoMessage')}</p>
                  </div>
                  {recipientPreview && (
-                   <div className="px-5 py-3 bg-slate-50 border-t flex items-center gap-3">
-                      <div className="h-6 w-6 rounded-full bg-slate-200 border border-white -ml-2 first:ml-0" />
-                      <div className="h-6 w-6 rounded-full bg-slate-200 border border-white -ml-2" />
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                   <div className="px-4 py-3 bg-muted/30 border-t flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-full bg-muted border -ml-2 first:ml-0" />
+                      <div className="h-6 w-6 rounded-full bg-muted border -ml-2" />
+                      <p className="text-xs text-muted-foreground">
                         + {recipientPreview.count - 2} more recipients
                       </p>
                    </div>
                  )}
               </div>
            </div>
-           <DialogFooter className="px-6 py-4 bg-muted/20 border-t shrink-0">
-              <Button variant="ghost" onClick={() => setIsPreviewOpen(false)} className="rounded-xl h-11 px-6 font-bold">{tc('close')}</Button>
-              <Button onClick={() => setIsPreviewOpen(false)} className="rounded-xl h-11 px-8 font-black shadow-lg shadow-primary/20">{t('backToEditor')}</Button>
+           <DialogFooter>
+              <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>{tc('close')}</Button>
+              <Button onClick={() => setIsPreviewOpen(false)}>{t('backToEditor')}</Button>
            </DialogFooter>
         </DialogContent>
       </Dialog>

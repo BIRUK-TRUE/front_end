@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { useAcademicYears, useCreateAcademicYear, useUpdateAcademicYear, useDeleteAcademicYear } from '@/features/academics/api/useAcademicYears';
+import { useAcademicYears, useCreateAcademicYear, useUpdateAcademicYear, useDeleteAcademicYear, useSetCurrentAcademicYear } from '@/features/academics/api/useAcademicYears';
 import { type AcademicYearForm } from '@/features/academics/types/schemas';import { type AcademicYear, AcademicYearStatus } from '@/features/academics/types';
 import { AcademicYearModal } from '@/features/academics/components/AcademicYearModal';
 import { PageHeader } from '@/components/shared/page-header';
@@ -174,6 +174,7 @@ export default function AcademicYearsPage() {
   const createYear = useCreateAcademicYear();
   const updateYear = useUpdateAcademicYear();
   const deleteYear = useDeleteAcademicYear();
+  const setCurrentYear = useSetCurrentAcademicYear();
 
   const openCreateModal = () => {
     setEditingYear(null);
@@ -196,10 +197,7 @@ export default function AcademicYearsPage() {
   };
 
   const handleActivate = async (id: string) => {
-    await updateYear.mutateAsync({
-      id,
-      data: { status: AcademicYearStatus.ACTIVE, is_current: true } as any,
-    });
+    await setCurrentYear.mutateAsync(id);
   };
 
   return (

@@ -4,12 +4,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/utils/formatApiError";
-import type {
-  StudentFee,
+import type { 
+  StudentFee, 
   PaymentTransaction,
   CreatePaymentRequest,
   ChapaPaymentPayload,
 } from "../types";
+import { FeeStatus, FeeType, PaymentMethod, PaymentStatus } from "../types";
 
 interface GuardianDashboardData {
   total_fees: number;
@@ -131,18 +132,33 @@ export function useStudentFees(studentId: string) {
         params: { student_id: studentId, size: 100 },
       });
       const items = data?.items ?? (Array.isArray(data) ? data : []);
+      const toFeeType = (value: unknown): FeeType => {
+        const normalized = String(value ?? FeeType.TUITION).toLowerCase();
+        return Object.values(FeeType).includes(normalized as FeeType)
+          ? (normalized as FeeType)
+          : FeeType.TUITION;
+      };
+      const toFeeStatus = (value: unknown): FeeStatus => {
+        const normalized = String(value ?? FeeStatus.UNPAID).toLowerCase();
+        return Object.values(FeeStatus).includes(normalized as FeeStatus)
+          ? (normalized as FeeStatus)
+          : FeeStatus.UNPAID;
+      };
       return items.map(
         (s: Record<string, unknown>): StudentFee => ({
           id: s.id as string,
           student_id: (s.student_id ?? studentId) as string,
-          fee_name: (s.fee_structure_name ?? s.fee_name ?? "") as string,
-          fee_type: (s.fee_type ?? "tuition") as string,
-          total_amount: (s.total_amount ?? 0) as number,
+          student_name: (s.student_name ?? "") as string,
+          registration_number: (s.registration_number ?? "") as string,
+          fee_type: toFeeType(s.fee_type),
+          amount: (s.total_amount ?? s.amount ?? 0) as number,
           paid_amount: (s.paid_amount ?? 0) as number,
           balance: (s.balance ?? 0) as number,
-          status: (s.status ?? "pending") as string,
+          status: toFeeStatus(s.status),
           due_date: (s.due_date ?? "") as string,
           academic_year: (s.academic_year_name ?? "") as string,
+          term: (s.term_name ?? "") as string,
+          description: (s.fee_structure_name ?? s.fee_name ?? "") as string,
         }),
       );
     },
@@ -162,16 +178,33 @@ export function usePaymentTransactions(studentId: string) {
         params: { student_id: studentId, size: 100 },
       });
       const items = data?.items ?? (Array.isArray(data) ? data : []);
+      const toPaymentMethod = (value: unknown): PaymentMethod => {
+        const normalized = String(value ?? PaymentMethod.CASH).toLowerCase();
+        return Object.values(PaymentMethod).includes(normalized as PaymentMethod)
+          ? (normalized as PaymentMethod)
+          : PaymentMethod.CASH;
+      };
+      const toPaymentStatus = (value: unknown): PaymentStatus => {
+        const normalized = String(value ?? PaymentStatus.PENDING).toLowerCase();
+        return Object.values(PaymentStatus).includes(normalized as PaymentStatus)
+          ? (normalized as PaymentStatus)
+          : PaymentStatus.PENDING;
+      };
       return items.map(
         (p: Record<string, unknown>): PaymentTransaction => ({
           id: p.id as string,
           student_id: (p.student_id ?? studentId) as string,
+          student_name: (p.student_name ?? "") as string,
+          fee_id: (p.fee_id ?? p.schedule_id ?? "") as string,
           amount: (p.amount ?? 0) as number,
-          method: (p.payment_method ?? p.method ?? "cash") as string,
-          status: (p.status ?? "pending") as string,
-          reference: (p.tx_ref ?? p.receipt_number ?? "") as string,
+          currency: (p.currency ?? "ETB") as string,
+          payment_method: toPaymentMethod(p.payment_method ?? p.method),
+          status: toPaymentStatus(p.status),
+          reference_number: (p.tx_ref ?? p.receipt_number ?? "") as string,
+          chapa_reference: (p.chapa_reference ?? undefined) as string | undefined,
+          paid_at: (p.paid_at ?? p.created_at ?? "") as string,
           created_at: (p.created_at ?? "") as string,
-          fee_name: (p.fee_structure_name ?? p.fee_name ?? "") as string,
+          verified_at: (p.verified_at ?? undefined) as string | undefined,
         }),
       );
     },

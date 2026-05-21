@@ -39,7 +39,12 @@ export const guardiansService = {
 
   async getStats() {
     const { data } = await axiosInstance.get('/guardians/stats/summary');
-    return data;
+    // Normalize backend field names to what the dashboard expects
+    return {
+      total: data.total_guardians ?? data.total ?? 0,
+      active: data.active_guardians ?? data.active ?? 0,
+      growth: data.growth ?? 0,
+    };
   },
 
   async getForStudent(studentId: string) {
@@ -97,5 +102,21 @@ export const guardiansService = {
       `/guardians/${guardianId}/students/${studentId}`
     );
     return data;
+  },
+
+  async exportCsv() {
+    const response = await axiosInstance.get('/guardians/export/csv', {
+      responseType: 'blob',
+    });
+    
+    // Create a download link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `guardians_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   },
 };

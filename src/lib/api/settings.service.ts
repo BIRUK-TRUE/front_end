@@ -1,11 +1,12 @@
-import { axiosInstance } from "./axios";
-
 export interface SchoolInfo {
   school_name: string;
   address: string;
   phone: string;
   email: string;
   logo_url: string | null;
+  school_logo?: string | null;
+  school_tagline?: string | null;
+  primary_color?: string | null;
   school_code?: string | null;
   website?: string | null;
   region?: string | null;
@@ -27,37 +28,57 @@ export interface NotificationSettings {
   consecutive_absence_threshold: number;
 }
 
-/**
- * Settings service.
- *
- * NOTE: The backend does not have a dedicated /settings module yet.
- * Most methods return sensible defaults. They will be connected to
- * real backend endpoints once the settings module is implemented.
- */
+const SCHOOL_INFO_STORAGE_KEY = "sms.schoolInfo";
+
+const defaultSchoolInfo: SchoolInfo = {
+  school_name: "School Management System",
+  address: "",
+  phone: "",
+  email: "",
+  logo_url: null,
+  school_logo: null,
+  school_tagline: "",
+  primary_color: "#2563EB",
+  school_code: null,
+  website: null,
+  region: null,
+  zone: null,
+  woreda: null,
+};
+
+function readLocalSchoolInfo(): Partial<SchoolInfo> {
+  if (typeof window === "undefined") return {};
+
+  try {
+    return JSON.parse(window.localStorage.getItem(SCHOOL_INFO_STORAGE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function writeLocalSchoolInfo(data: SchoolInfo) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(SCHOOL_INFO_STORAGE_KEY, JSON.stringify(data));
+}
+
 export const settingsService = {
-  /**
-   * Get school info.
-   * TODO: Backend endpoint /settings/school-info not yet implemented.
-   */
   getSchoolInfo: async (): Promise<SchoolInfo> => {
-    // Return defaults until settings module exists in backend
     return {
-      school_name: "School Management System",
-      address: "",
-      phone: "",
-      email: "",
-      logo_url: null,
-      school_code: null,
-      website: null,
-      region: null,
-      zone: null,
-      woreda: null,
+      ...defaultSchoolInfo,
+      ...readLocalSchoolInfo(),
     };
   },
 
-  updateSchoolInfo: async (_data: Partial<SchoolInfo>) => {
-    // TODO: PATCH /settings/school-info
-    return _data;
+  updateSchoolInfo: async (data: Partial<SchoolInfo>) => {
+    const next = {
+      ...defaultSchoolInfo,
+      ...readLocalSchoolInfo(),
+      ...data,
+      logo_url: data.school_logo ?? data.logo_url ?? readLocalSchoolInfo().logo_url ?? null,
+      school_logo: data.school_logo ?? data.logo_url ?? readLocalSchoolInfo().school_logo ?? null,
+    };
+    writeLocalSchoolInfo(next);
+    return next;
   },
 
   /**
@@ -102,13 +123,17 @@ export const settingsService = {
   getSmsProviders: async () => {
     return [];
   },
-  activateSmsProvider: async (_providerId: string) => {
+  activateSmsProvider: async (providerId: string) => {
+    void providerId;
     return { message: "SMS providers not yet configured" };
   },
-  getSmsLogs: async (_limit = 50, _offset = 0) => {
+  getSmsLogs: async (limit = 50, offset = 0) => {
+    void limit;
+    void offset;
     return [];
   },
-  testSms: async (_payload: { phone: string; message: string }) => {
+  testSms: async (payload: { phone: string; message: string }) => {
+    void payload;
     return { message: "SMS test not yet available" };
   },
 };

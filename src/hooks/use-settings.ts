@@ -42,13 +42,26 @@ export function useUpdateSchoolInfo() {
   return useMutation({
     mutationFn: (data: Partial<SchoolInfo>) =>
       settingsService.updateSchoolInfo(data),
-    onSuccess: () => {
+    onMutate: async (data) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.settings.schoolInfo });
+      const previous = queryClient.getQueryData<SchoolInfo>(queryKeys.settings.schoolInfo);
+      queryClient.setQueryData(queryKeys.settings.schoolInfo, {
+        ...previous,
+        ...data,
+      });
+      return { previous };
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(queryKeys.settings.schoolInfo, data);
       queryClient.invalidateQueries({
         queryKey: queryKeys.settings.schoolInfo,
       });
       toast.success(t("settingsSaved"));
     },
-    onError: () => {
+    onError: (_error, _data, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.settings.schoolInfo, context.previous);
+      }
       toast.error(t("settingsSaveFailed"));
     },
   });
@@ -123,7 +136,7 @@ export function useTestSms() {
     onSuccess: () => {
       toast.success("Test SMS sent successfully");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error(formatApiError(error, "Failed to send test SMS"));
     },
   });

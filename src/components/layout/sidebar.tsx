@@ -38,6 +38,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { useSchoolInfo } from '@/hooks/use-settings';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -84,6 +85,7 @@ export function Sidebar({
   
   const { user } = useAuthStore();
   const { data: unreadCount } = useUnreadNotifications(user?.id || '');
+  const { data: schoolInfo } = useSchoolInfo();
 
   // Teacher-specific nav items (shown only to teachers)
   const teacherNavItems: NavItem[] = [
@@ -391,14 +393,14 @@ export function Sidebar({
         aria-label={t('mainNavigation')}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center justify-between border-b px-4">
+        <div className="flex min-h-[64px] items-center justify-between border-b px-4 py-3">
           {!isCollapsed && (
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <div className="flex items-center gap-3 w-full pr-2">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <GraduationCap className="h-4 w-4" aria-hidden="true" />
               </div>
-              <span className="text-base font-bold text-sidebar-foreground">
-                SMS
+              <span className="text-sm font-semibold leading-tight text-sidebar-foreground break-words line-clamp-2">
+                {schoolInfo?.school_name || 'SMS'}
               </span>
             </div>
           )}

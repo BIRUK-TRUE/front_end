@@ -1617,6 +1617,8 @@
     "compose": {
       "title": "ማሳወቂያ ላክ",
       "subtitle": "ለተማሪዎች፣ ወላሎች ወይም መምህራን ማስታወቂያዎች እና መልክቶች ይላኩ",
+      "composeMessage": "መልክት ይጻፉ",
+      "composeDescription": "ለት/ቤት ማህበረሰብዎ ማሳወቂያዎችን ይፍጠሩ እና ይላኩ",
       "messageTitle": "ርዕስ",
       "messageTitlePlaceholder": "የማሳወቂያ ርዕስ ያስገቡ",
       "messageBody": "መልክት",
@@ -2219,8 +2221,20 @@
     "status": "ሁኔታ",
     "full": "ተሞልቷል",
     "open": "ክፍት",
-    "additionalInfo": "ተጨማሪ መረጃ",
     "className": "የክፍል ስም",
     "description": "መግለጫ"
+  },
+  "commandMenu": {
+    "placeholder": "ዳሽቦርድ፣ ገጾች ወይም ድርጊቶች ፈልግ...",
+    "empty": "ምንም ውጤት አልተገኘም.",
+    "pages": "ገጾች",
+    "actions": "ፈጣን ድርጊቶች",
+    "theme": "የገጽታ ቅንብሮች",
+    "languages": "የቋንቋ ምርጫ",
+    "lightMode": "ወደ ብርሃን ሁነታ ቀይር",
+    "darkMode": "ወደ ጨለማ ሁነታ ቀይር",
+    "systemMode": "ወደ ስርዓት ሁነታ ቀይር",
+    "english": "እንግሊዝኛ (English)",
+    "amharic": "አማርኛ"
   }
 }

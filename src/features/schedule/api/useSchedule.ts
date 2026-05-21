@@ -1,8 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
-import type { ScheduleEntry } from "../types";
+import type { CreateScheduleEntryPayload, ScheduleEntry } from "../types";
 
 export const scheduleKeys = {
   all: ["schedule"] as const,
@@ -56,3 +56,63 @@ export function useTeacherSchedule(teacherId: string, termId: string) {
 // TeacherSubject assignments. There are no POST/PATCH/DELETE endpoints.
 // To manage schedule, use the academics module to manage teacher-subject
 // assignments (TeacherSubject CRUD via the teachers router).
+
+export function useCreateScheduleEntry() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: CreateScheduleEntryPayload): Promise<ScheduleEntry> => {
+      const { data } = await axiosInstance.post("/schedule", payload);
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: scheduleKeys.bySection(variables.section_id, variables.term_id),
+      });
+    },
+  });
+}
+
+export function useUpdateScheduleEntry() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: CreateScheduleEntryPayload;
+    }): Promise<ScheduleEntry> => {
+      const { data } = await axiosInstance.patch(`/schedule/${id}`, payload);
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: scheduleKeys.bySection(variables.payload.section_id, variables.payload.term_id),
+      });
+    },
+  });
+}
+
+export function useDeleteScheduleEntry() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+    }: {
+      id: string;
+      sectionId: string;
+      termId: string;
+    }) => {
+      const { data } = await axiosInstance.delete(`/schedule/${id}`);
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: scheduleKeys.bySection(variables.sectionId, variables.termId),
+      });
+    },
+  });
+}

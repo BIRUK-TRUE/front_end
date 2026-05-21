@@ -32,7 +32,15 @@ export const studentsService = {
 
   async getStats() {
     const { data } = await axiosInstance.get('/students/stats/summary');
-    return data;
+    // Normalize backend field names to what the dashboard expects
+    return {
+      total: data.total_students ?? data.total ?? 0,
+      active: data.active_students ?? data.active ?? 0,
+      male: data.male_students ?? 0,
+      female: data.female_students ?? 0,
+      graduated: data.graduated_students ?? 0,
+      growth: data.growth ?? 0,
+    };
   },
 
   async create(payload: {
