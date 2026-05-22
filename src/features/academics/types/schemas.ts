@@ -6,7 +6,14 @@ export const academicYearSchema = z.object({
   start_date: z.string().min(1, "Start date is required"),
   end_date: z.string().min(1, "End date is required"),
   description: z.string().max(500).optional().nullable()
-}).refine((data) => new Date(data.end_date) > new Date(data.start_date), {
+}).refine((data) => {
+  const start = new Date(data.start_date);
+  const end = new Date(data.end_date);
+  if (end <= start) {
+    return false;
+  }
+  return true;
+}, {
   message: "End date must be after start date",
   path: ["end_date"]
 });
@@ -19,7 +26,14 @@ export const termSchema = z.object({
   term_number: z.number().min(1).max(4),
   start_date: z.string().min(1),
   end_date: z.string().min(1)
-}).refine((data) => new Date(data.end_date) > new Date(data.start_date), {
+}).refine((data) => {
+  const start = new Date(data.start_date);
+  const end = new Date(data.end_date);
+  if (end <= start) {
+    return false;
+  }
+  return true;
+}, {
   message: "End date must be after start date",
   path: ["end_date"]
 });

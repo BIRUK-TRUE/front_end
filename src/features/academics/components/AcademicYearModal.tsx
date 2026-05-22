@@ -37,6 +37,7 @@ import { Separator } from '@/components/ui/separator';
 import { Loader2, Copy, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { format, addYears, parseISO } from 'date-fns';
+import { toast } from 'sonner';
 
 interface AcademicYearModalProps {
   open: boolean;
@@ -158,6 +159,23 @@ export function AcademicYearModal({
   }, [cloneEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = (data: AcademicYearForm) => {
+    // Client-side overlap check
+    if (!isEditing) {
+      const newStart = new Date(data.start_date);
+      const newEnd = new Date(data.end_date);
+      
+      const hasOverlap = existingYears.some(y => {
+        const yStart = new Date(y.start_date);
+        const yEnd = new Date(y.end_date);
+        return newStart <= yEnd && newEnd >= yStart;
+      });
+
+      if (hasOverlap) {
+        toast.error("Date range overlaps with an existing academic year.");
+        return;
+      }
+    }
+
     onSubmit({
       ...data,
       ...(cloneEnabled && cloneSourceId ? { clone_from_year_id: cloneSourceId } : {}),
