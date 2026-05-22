@@ -38,6 +38,7 @@ import {
   Plus,
   Send,
   ShieldAlert,
+  Layers,
 } from 'lucide-react';
 
 export function CommandMenu() {
@@ -183,6 +184,22 @@ export function CommandMenu() {
             <CommandItem onSelect={() => navigate('/dashboard/academics/years')}>
               <Building2 className="mr-2 h-4 w-4 text-muted-foreground" />
               <span>{tNav('academics')}</span>
+            </CommandItem>
+          )}
+
+          {/* Subjects */}
+          {permissions.canManageAcademics && (
+            <CommandItem onSelect={() => navigate('/dashboard/academics/subjects')}>
+              <BookOpen className="mr-2 h-4 w-4 text-muted-foreground" />
+              <span>{tNav('subjects')}</span>
+            </CommandItem>
+          )}
+
+          {/* Bulk Assignment */}
+          {permissions.canManageAcademics && (
+            <CommandItem onSelect={() => navigate('/dashboard/academics/bulk-assignment')}>
+              <Layers className="mr-2 h-4 w-4 text-muted-foreground" />
+              <span>{tNav('bulkAssignment')}</span>
             </CommandItem>
           )}
 

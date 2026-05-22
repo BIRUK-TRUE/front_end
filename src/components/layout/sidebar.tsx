@@ -33,6 +33,7 @@ import {
   Package,
   Send,
   ShieldAlert,
+  Layers,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -237,6 +238,18 @@ export function Sidebar({
       href: '/dashboard/academics/years',
       label: t('academics'),
       icon: Building2,
+      show: canManageAcademics,
+    },
+    {
+      href: '/dashboard/academics/subjects',
+      label: t('subjects'),
+      icon: BookOpen,
+      show: canManageAcademics,
+    },
+    {
+      href: '/dashboard/academics/bulk-assignment',
+      label: t('bulkAssignment'),
+      icon: Layers,
       show: canManageAcademics,
     },
     {

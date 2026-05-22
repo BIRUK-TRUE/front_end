@@ -99,7 +99,7 @@ export default function LoginPage() {
       );
 
       if (response.user.must_change_password) {
-        router.push('/change-password');
+        router.push(`/${locale}/change-password`);
         return;
       }
 
@@ -107,16 +107,16 @@ export default function LoginPage() {
       const primaryRole = response.user.roles[0];
       switch (primaryRole) {
         case 'teacher':
-          router.push('/dashboard/teacher');
+          router.push(`/${locale}/dashboard/teacher`);
           break;
         case 'student':
-          router.push('/dashboard/student');
+          router.push(`/${locale}/dashboard/student`);
           break;
         case 'guardian':
-          router.push('/dashboard/guardian');
+          router.push(`/${locale}/dashboard/guardian`);
           break;
         default:
-          router.push('/dashboard');
+          router.push(`/${locale}/dashboard`);
           break;
       }
     } catch (error: unknown) {

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAcademicYears } from '@/features/academics/api/useAcademicYears';
 import { useClasses, useClass } from '@/features/academics/api/useClasses';
 import { useRecognizeFaces } from '@/hooks/use-face-recognition';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { toast } from 'sonner';
 
 export default function ClassroomPhotoPage() {
