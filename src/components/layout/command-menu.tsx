@@ -39,6 +39,7 @@ import {
   Send,
   ShieldAlert,
   Layers,
+  Activity,
 } from 'lucide-react';
 
 export function CommandMenu() {
@@ -203,6 +204,22 @@ export function CommandMenu() {
             </CommandItem>
           )}
 
+          {/* Infrastructure */}
+          {permissions.canManageAcademics && (
+            <CommandItem onSelect={() => navigate('/dashboard/academics/infrastructure')}>
+              <Building2 className="mr-2 h-4 w-4 text-muted-foreground" />
+              <span>Infrastructure</span>
+            </CommandItem>
+          )}
+
+          {/* Subject Assignment */}
+          {permissions.canManageAcademics && (
+            <CommandItem onSelect={() => navigate('/dashboard/academics/subject-assignment')}>
+              <BookOpen className="mr-2 h-4 w-4 text-muted-foreground" />
+              <span>Subject Assignment</span>
+            </CommandItem>
+          )}
+
           {/* Enrollments */}
           {permissions.canManageEnrollments && (
             <CommandItem onSelect={() => navigate('/dashboard/enrollments')}>
@@ -224,6 +241,22 @@ export function CommandMenu() {
             <CommandItem onSelect={() => navigate('/dashboard/teachers')}>
               <BookOpen className="mr-2 h-4 w-4 text-muted-foreground" />
               <span>{tNav('teachers')}</span>
+            </CommandItem>
+          )}
+
+          {/* Workload Dashboard */}
+          {permissions.canManageTeachers && (
+            <CommandItem onSelect={() => navigate('/dashboard/teachers/workload')}>
+              <Activity className="mr-2 h-4 w-4 text-muted-foreground" />
+              <span>Workload Dashboard</span>
+            </CommandItem>
+          )}
+
+          {/* Teacher Assignments */}
+          {permissions.canManageTeachers && (
+            <CommandItem onSelect={() => navigate('/dashboard/teachers/assignments')}>
+              <UserCheck className="mr-2 h-4 w-4 text-muted-foreground" />
+              <span>Teacher Assignments</span>
             </CommandItem>
           )}
 

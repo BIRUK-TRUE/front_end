@@ -34,6 +34,8 @@ import {
   Send,
   ShieldAlert,
   Layers,
+  Activity,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -253,10 +255,28 @@ export function Sidebar({
       show: canManageAcademics,
     },
     {
+      href: '/dashboard/academics/subject-assignment',
+      label: 'Subject Assignment',
+      icon: BookOpen,
+      show: canManageAcademics,
+    },
+    {
+      href: '/dashboard/academics/infrastructure',
+      label: 'Infrastructure',
+      icon: Building2,
+      show: canManageAcademics,
+    },
+    {
       href: '/dashboard/enrollments',
       label: t('enrollments'),
       icon: History,
       show: canManageEnrollments,
+    },
+    {
+      href: '/dashboard/promotions',
+      label: 'Promotions',
+      icon: ArrowRightLeft,
+      show: canManageAcademics,
     },
     {
       href: '/dashboard/schedule',
@@ -268,6 +288,18 @@ export function Sidebar({
       href: '/dashboard/teachers',
       label: t('teachers'),
       icon: BookOpen,
+      show: canManageTeachers,
+    },
+    {
+      href: '/dashboard/teachers/assignments',
+      label: 'Teacher Assignments',
+      icon: UserCheck,
+      show: canManageTeachers,
+    },
+    {
+      href: '/dashboard/teachers/workload',
+      label: 'Workload Dashboard',
+      icon: Activity,
       show: canManageTeachers,
     },
     {

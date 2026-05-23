@@ -12,8 +12,6 @@ const PUBLIC_ROUTE_PATTERNS = [
 ];
 
 const ROLE_ROUTE_RULES = [
-  { pattern: /^\/[a-z]{2}\/teacher(\/|$)/i, roles: ['teacher'] },
-  { pattern: /^\/[a-z]{2}\/guardian(\/|$)/i, roles: ['guardian'] },
   { pattern: /^\/[a-z]{2}\/dashboard\/teacher(\/|$)/i, roles: ['teacher'] },
   { pattern: /^\/[a-z]{2}\/dashboard\/guardian(\/|$)/i, roles: ['guardian'] },
   { pattern: /^\/[a-z]{2}\/dashboard\/student(\/|$)/i, roles: ['student'] },
@@ -46,10 +44,7 @@ export default function middleware(request: NextRequest) {
 
   const locale = getLocaleFromPath(pathname);
   const isProtectedRoute =
-    pathname.startsWith(`/${locale}/dashboard`) ||
-    pathname.startsWith(`/${locale}/teacher`) ||
-    pathname.startsWith(`/${locale}/guardian`) ||
-    pathname.startsWith(`/${locale}/analytics`);
+    pathname.startsWith(`/${locale}/dashboard`);
 
   if (!isProtectedRoute) {
     return response;

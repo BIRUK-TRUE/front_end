@@ -24,6 +24,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
 
@@ -50,6 +57,7 @@ export function ClassModal({
     defaultValues: {
       name: '',
       grade_level: 1,
+      stream: null,
       capacity: undefined,
       description: '',
     },
@@ -62,6 +70,7 @@ export function ClassModal({
         form.reset({
           name: classItem.name,
           grade_level: classItem.grade_level,
+          stream: classItem.stream || null,
           capacity: classItem.capacity || undefined,
           description: classItem.description || '',
         });
@@ -120,7 +129,8 @@ export function ClassModal({
                     <FormControl>
                       <Input 
                         type="number" 
-                        min={1} 
+                        min={0}
+                        max={12}
                         {...field} 
                         onChange={(e) => field.onChange(parseInt(e.target.value, 10))} 
                       />
@@ -132,23 +142,21 @@ export function ClassModal({
 
               <FormField
                 control={form.control}
-                name="capacity"
+                name="stream"
                 render={({ field }: { field: any }) => (
                   <FormItem>
-                    <FormLabel>{ta('totalCapacity')}</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min={1}
-                        placeholder={ta('capacityPlaceholder')}
-                        {...field}
-                        value={field.value || ''}
-                        onChange={(e) => {
-                          const val = e.target.value ? parseInt(e.target.value, 10) : undefined;
-                          field.onChange(val);
-                        }} 
-                      />
-                    </FormControl>
+                    <FormLabel>{ta('stream') || "Stream"}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select stream" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="natural_science">Natural Science</SelectItem>
+                        <SelectItem value="social_science">Social Science</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
