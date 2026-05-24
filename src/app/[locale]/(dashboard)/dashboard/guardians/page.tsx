@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { useGuardians, useDeleteGuardian } from '@/hooks/use-guardians';
+import { useGuardians, useDeleteGuardian, useGuardianStats } from '@/hooks/use-guardians';
 import type { GuardianFilters } from '@/lib/api/guardians.service';
 import { usePermissions } from '@/hooks/use-permissions';
 import { ActionsDropdown } from '@/components/shared/actions-dropdown';
@@ -51,20 +51,24 @@ export default function GuardiansPage() {
     is_active: statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined,
   };
   const { data, isLoading } = useGuardians(filters satisfies GuardianFilters);
+  const { data: guardianStats, isLoading: statsLoading } = useGuardianStats();
   const deleteGuardian = useDeleteGuardian();
   const guardians = useMemo<GuardianRow[]>(() => data?.items || [], [data?.items]);
 
   const stats = useMemo(() => {
-    const active = guardians.filter((guardian) => guardian.is_active).length;
-    const inactive = guardians.filter((guardian) => !guardian.is_active).length;
+    // Use actual stats from API, not filtered page data
+    const totalGuardians = guardianStats?.total || 0;
+    const activeGuardians = guardianStats?.active || 0;
+    const inactiveGuardians = totalGuardians - activeGuardians;
     const linked = guardians.reduce((sum, guardian) => sum + (guardian.student_links?.length || 0), 0);
+    
     return [
-      { title: 'Total', value: data?.total || guardians.length, icon: UserCheck, description: 'Guardians in the current result set' },
-      { title: 'Active', value: active, icon: UserRoundCheck, description: 'Can receive messages and portal updates', trend: { label: 'Reachable contacts', tone: 'positive' as const } },
-      { title: 'Inactive', value: inactive, icon: UserRoundX, description: 'Archived or disabled accounts' },
-      { title: 'Linked Students', value: linked, icon: Activity, description: 'Student relationships in this view' },
+      { title: 'Total', value: totalGuardians, icon: UserCheck, description: 'All guardians in the system' },
+      { title: 'Active', value: activeGuardians, icon: UserRoundCheck, description: 'Can receive messages and portal updates', trend: { label: 'Reachable contacts', tone: 'positive' as const } },
+      { title: 'Inactive', value: inactiveGuardians, icon: UserRoundX, description: 'Archived or disabled accounts' },
+      { title: 'Linked Students', value: linked, icon: Activity, description: 'Student relationships in current view' },
     ];
-  }, [data?.total, guardians]);
+  }, [guardianStats, guardians]);
 
   const columns: ColumnDef<GuardianRow>[] = [
     {
@@ -122,7 +126,7 @@ export default function GuardiansPage() {
         ) : undefined}
       />
 
-      <StatsRow items={stats} isLoading={isLoading} />
+      <StatsRow items={stats} isLoading={statsLoading} />
 
       <DataTableToolbar search={search} onSearchChange={(value) => { setSearch(value); setPage(1); }} searchPlaceholder={t('searchGuardians')}>
         <Select value={statusFilter} onValueChange={(value) => { setStatusFilter(value); setPage(1); }}>

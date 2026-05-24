@@ -58,13 +58,15 @@ export const useCreateClass = (yearId: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [...academicsKeys.years.detail(yearId), "classes"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: academicsKeys.years.detail(yearId),
-      }); // Update class count
-      toast.success("Class created successfully");
+      // Immediately refetch classes and year details
+      return Promise.all([
+        queryClient.refetchQueries({
+          queryKey: [...academicsKeys.years.detail(yearId), "classes"],
+        }),
+        queryClient.refetchQueries({
+          queryKey: academicsKeys.years.detail(yearId),
+        }),
+      ]);
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to create class"));
@@ -90,13 +92,15 @@ export const useUpdateClass = (yearId: string) => {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: [...academicsKeys.years.detail(yearId), "classes"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: academicsKeys.classes.detail(variables.id),
-      });
-      toast.success("Class updated successfully");
+      // Immediately refetch classes list and class details
+      return Promise.all([
+        queryClient.refetchQueries({
+          queryKey: [...academicsKeys.years.detail(yearId), "classes"],
+        }),
+        queryClient.refetchQueries({
+          queryKey: academicsKeys.classes.detail(variables.id),
+        }),
+      ]);
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to update class"));
@@ -112,13 +116,15 @@ export const useDeleteClass = (yearId: string) => {
       await axiosInstance.delete(`/academics/classes/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [...academicsKeys.years.detail(yearId), "classes"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: academicsKeys.years.detail(yearId),
-      });
-      toast.success("Class deleted successfully");
+      // Immediately refetch classes and year details
+      return Promise.all([
+        queryClient.refetchQueries({
+          queryKey: [...academicsKeys.years.detail(yearId), "classes"],
+        }),
+        queryClient.refetchQueries({
+          queryKey: academicsKeys.years.detail(yearId),
+        }),
+      ]);
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(
@@ -145,10 +151,10 @@ export const useCreateSection = (classId: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      // Immediately refetch class details
+      return queryClient.refetchQueries({
         queryKey: academicsKeys.classes.detail(classId),
       });
-      toast.success("Section created successfully");
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to create section"));
@@ -174,10 +180,10 @@ export const useUpdateSection = (classId: string) => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      // Immediately refetch class details
+      return queryClient.refetchQueries({
         queryKey: academicsKeys.classes.detail(classId),
       });
-      toast.success("Section updated successfully");
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to update section"));
@@ -206,10 +212,10 @@ export const useDeleteSection = (classId: string) => {
       await axiosInstance.delete(`/academics/sections/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      // Immediately refetch class details
+      return queryClient.refetchQueries({
         queryKey: academicsKeys.classes.detail(classId),
       });
-      toast.success("Section deleted successfully");
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(
@@ -248,10 +254,10 @@ export const useAssignSubject = (classId: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      // Immediately refetch class subjects
+      return queryClient.refetchQueries({
         queryKey: [...academicsKeys.classes.detail(classId), "subjects"],
       });
-      toast.success("Subject assigned successfully");
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to assign subject"));
@@ -269,10 +275,10 @@ export const useRemoveSubject = (classId: string) => {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      // Immediately refetch class subjects
+      return queryClient.refetchQueries({
         queryKey: [...academicsKeys.classes.detail(classId), "subjects"],
       });
-      toast.success("Subject removed successfully");
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to remove subject"));

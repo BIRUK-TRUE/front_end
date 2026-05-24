@@ -7,6 +7,7 @@ import { useRouter } from "@/i18n/navigation";
 import {
   useAcademicYear,
   useDeleteAcademicYear,
+  useUpdateAcademicYear,
 } from "@/features/academics/api/useAcademicYears";
 import { AcademicYearStatus } from "@/features/academics/types";
 import { PageHeader } from "@/components/shared/page-header";
@@ -45,6 +46,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { AcademicYearModal } from "@/features/academics/components/AcademicYearModal";
 import {
   useTerms,
   useCreateTerm,
@@ -74,7 +76,6 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function AcademicYearDetailPage() {
   const t = useTranslations("common");
@@ -95,6 +96,7 @@ export default function AcademicYearDetailPage() {
   const updateClass = useUpdateClass(yearId);
   const deleteClass = useDeleteClass(yearId);
   const deleteYear = useDeleteAcademicYear();
+  const updateYear = useUpdateAcademicYear();
 
   const [isTermModalOpen, setIsTermModalOpen] = useState(false);
   const [editingTerm, setEditingTerm] = useState<Term | null>(null);
@@ -104,6 +106,7 @@ export default function AcademicYearDetailPage() {
   const [editingClass, setEditingClass] = useState<Class | null>(null);
   const [deleteClassId, setDeleteClassId] = useState<string | null>(null);
   const [deleteYearDialogOpen, setDeleteYearDialogOpen] = useState(false);
+  const [isYearModalOpen, setIsYearModalOpen] = useState(false);
 
   const [classSearch, setClassSearch] = useState("");
   const [classGradeFilter, setClassGradeFilter] = useState("all");
@@ -124,8 +127,10 @@ export default function AcademicYearDetailPage() {
     try {
       if (editingTerm) {
         await updateTerm.mutateAsync({ id: editingTerm.id, data: formData });
+        toast.success("Term updated successfully");
       } else {
         await createTerm.mutateAsync(formData);
+        toast.success("Term created successfully");
       }
       setIsTermModalOpen(false);
     } catch (error: any) {
@@ -147,10 +152,26 @@ export default function AcademicYearDetailPage() {
     try {
       if (editingClass) {
         await updateClass.mutateAsync({ id: editingClass.id, data: formData });
+        toast.success("Class updated successfully");
       } else {
         await createClass.mutateAsync(formData);
+        toast.success("Class created successfully");
       }
       setIsClassModalOpen(false);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || t("error"));
+    }
+  };
+
+  const openEditYearModal = () => {
+    setIsYearModalOpen(true);
+  };
+
+  const handleYearSubmit = async (formData: any) => {
+    try {
+      await updateYear.mutateAsync({ id: yearId, data: formData });
+      toast.success("Academic year updated successfully");
+      setIsYearModalOpen(false);
     } catch (error: any) {
       toast.error(error?.response?.data?.detail || t("error"));
     }
@@ -282,7 +303,28 @@ export default function AcademicYearDetailPage() {
         actions={
           <div className="flex items-center gap-4">
             {getStatusBadge(year.status, year.is_current, ta)}
-            {/* We will add global year actions here later if needed */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <MoreHorizontal className="h-4 w-4" />
+                  Actions
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[180px]">
+                <DropdownMenuItem onClick={openEditYearModal}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Year
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setDeleteYearDialogOpen(true)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Year
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         }
       />
@@ -757,6 +799,14 @@ export default function AcademicYearDetailPage() {
         title={ta("deleteYearTitle")}
         description={ta("deleteYearDescription")}
         isLoading={deleteYear.isPending}
+      />
+
+      <AcademicYearModal
+        open={isYearModalOpen}
+        onOpenChange={setIsYearModalOpen}
+        year={year}
+        onSubmit={handleYearSubmit}
+        isLoading={updateYear.isPending}
       />
     </div>
   );

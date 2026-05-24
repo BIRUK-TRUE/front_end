@@ -144,7 +144,7 @@ export function PromotionWizard() {
                     <SelectValue placeholder="Select year" />
                   </SelectTrigger>
                   <SelectContent>
-                    {academicYears?.map((year: any) => (
+                    {academicYears?.items?.map((year: any) => (
                       <SelectItem key={year.id} value={year.id}>
                         {year.name} {year.is_current && '(Current)'}
                       </SelectItem>
@@ -223,7 +223,7 @@ export function PromotionWizard() {
         <div className="space-y-6">
           {/* Warnings */}
           {preview.warnings.length > 0 && (
-            <Alert variant="warning">
+            <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
                 <ul className="list-disc list-inside mt-2 space-y-1">

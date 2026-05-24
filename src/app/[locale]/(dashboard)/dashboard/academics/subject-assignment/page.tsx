@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, AlertTriangle, Loader2, Plus, X } from 'lucide-react';
+import { Subject } from '@/features/academics/types';
 
 interface Class {
   id: string;
@@ -26,12 +27,6 @@ interface Class {
   grade_level: number;
   stream: string | null;
   sections: Array<{ id: string; name: string }>;
-}
-
-interface Subject {
-  id: string;
-  name: string;
-  code: string;
 }
 
 interface AcademicYear {

@@ -69,8 +69,8 @@ export const useCreateSubject = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: academicsKeys.subjects.all() });
-      toast.success("Subject created successfully");
+      // Immediately refetch all subjects
+      return queryClient.refetchQueries({ queryKey: academicsKeys.subjects.all() });
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to create subject"));
@@ -96,8 +96,13 @@ export const useUpdateSubject = () => {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: academicsKeys.subjects.all() });
-      toast.success("Subject updated successfully");
+      // Immediately refetch subjects list and subject details
+      return Promise.all([
+        queryClient.refetchQueries({ queryKey: academicsKeys.subjects.all() }),
+        queryClient.refetchQueries({
+          queryKey: academicsKeys.subjects.detail(variables.id),
+        }),
+      ]);
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to update subject"));
@@ -114,8 +119,8 @@ export const useDeleteSubject = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: academicsKeys.subjects.all() });
-      toast.success("Subject deleted successfully");
+      // Immediately refetch all subjects
+      return queryClient.refetchQueries({ queryKey: academicsKeys.subjects.all() });
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to delete subject"));

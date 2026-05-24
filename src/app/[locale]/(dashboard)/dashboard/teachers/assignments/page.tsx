@@ -35,18 +35,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, AlertTriangle, UserPlus, X, Loader2, Info } from 'lucide-react';
 import { useQualifiedTeachers } from '@/features/teachers/api/useQualifications';
 import { useTeacherWorkload } from '@/features/teachers/api/useWorkload';
+import { Subject } from '@/features/academics/types';
 
 interface Section {
   id: string;
   name: string;
   class_id: string;
   capacity: number;
-}
-
-interface Subject {
-  id: string;
-  name: string;
-  code: string;
 }
 
 interface Teacher {
@@ -321,7 +316,7 @@ export default function TeacherAssignmentPage() {
                       </TableCell>
                       <TableCell>
                         {assignment ? (
-                          <Badge variant="success" className="bg-green-100 text-green-800">
+                          <Badge className="bg-green-100 text-green-800">
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Assigned
                           </Badge>

@@ -25,13 +25,14 @@ import {
 } from '@/components/ui/dialog';
 import { Plus, Search, Users, BookOpen, ChevronRight, Sparkles, Edit, Trash2 } from 'lucide-react';
 import { useAcademicYears } from '@/features/academics/api/useAcademicYears';
-import { useClasses, useDeleteClass } from '@/features/academics/api/useClasses';
+import { useClasses, useDeleteClass, useCreateClass, useCreateSection } from '@/features/academics/api/useClasses';
 import { ClassModal } from '@/features/academics/components/ClassModal';
 import { SectionModal } from '@/features/academics/components/SectionModal';
 import { type ClassForm, type SectionForm } from '@/features/academics/types/schemas';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/lib/api/axios';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@/i18n/navigation';
 
 export default function ClassesPage() {
   const t = useTranslations('common');
@@ -64,6 +65,12 @@ export default function ClassesPage() {
   // Delete class mutation
   const deleteClassMutation = useDeleteClass(selectedYearId || '');
 
+  // Create class mutation
+  const createClassMutation = useCreateClass(selectedYearId || '');
+
+  // Create section mutation
+  const createSectionMutation = useCreateSection(selectedClassForSection || '');
+
   // Generate sections mutation
   const generateSectionsMutation = useMutation({
     mutationFn: async ({ classId, data }: { classId: string; data: any }) => {
@@ -84,15 +91,32 @@ export default function ClassesPage() {
   });
 
   const handleCreateClass = (data: ClassForm) => {
-    // This would use useCreateClass hook - simplified for now
-    toast.success('Class created (implement with useCreateClass)');
-    setClassModalOpen(false);
+    if (!selectedYearId) {
+      toast.error('Please select an academic year first');
+      return;
+    }
+    createClassMutation.mutate(data, {
+      onSuccess: () => {
+        setClassModalOpen(false);
+        setSelectedClass(null);
+        toast.success('Class created successfully');
+      },
+    });
   };
 
   const handleCreateSection = (data: SectionForm) => {
-    // This would use useCreateSection hook - simplified for now
-    toast.success('Section created (implement with useCreateSection)');
-    setSectionModalOpen(false);
+    if (!selectedClassForSection) {
+      toast.error('No class selected for section creation');
+      return;
+    }
+    createSectionMutation.mutate(data, {
+      onSuccess: () => {
+        setSectionModalOpen(false);
+        setSelectedClassForSection('');
+        setSelectedClass(null);
+        toast.success('Section created successfully');
+      },
+    });
   };
 
   const handleGenerateSections = () => {
@@ -222,21 +246,36 @@ export default function ClassesPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          setSelectedClass(cls);
+                          setSelectedClassForSection(cls.id);
                           setSectionModalOpen(true);
                         }}
+                        title="Add Section"
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedClass(cls);
+                          setClassModalOpen(true);
+                        }}
+                        title="Edit Class"
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => deleteClassMutation.mutate(cls.id)}
+                        title="Delete Class"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/dashboard/academics/classes/${cls.id}`}>
+                          <ChevronRight className="h-4 w-4" />
+                        </Link>
                       </Button>
                     </div>
                   </TableCell>
@@ -251,7 +290,9 @@ export default function ClassesPage() {
       <ClassModal
         open={classModalOpen}
         onOpenChange={setClassModalOpen}
+        classItem={selectedClass}
         onSubmit={handleCreateClass}
+        isLoading={createClassMutation.isPending}
       />
 
       {/* Section Modal */}
@@ -259,6 +300,7 @@ export default function ClassesPage() {
         open={sectionModalOpen}
         onOpenChange={setSectionModalOpen}
         onSubmit={handleCreateSection}
+        isLoading={createSectionMutation.isPending}
       />
 
       {/* Generate Sections Dialog */}

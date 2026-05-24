@@ -48,7 +48,7 @@ export default function UsersPage() {
     page,
     size: 20,
     search: search || undefined,
-    role: roleFilter || undefined,
+    role_name: roleFilter || undefined, // Fixed: backend expects role_name, not role
     is_active: activeFilter === '' ? undefined : activeFilter === 'true',
   };
 

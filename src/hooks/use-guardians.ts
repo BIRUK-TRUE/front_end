@@ -47,8 +47,8 @@ export function useCreateGuardian() {
   return useMutation({
     mutationFn: guardiansService.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.guardians.all });
-      toast.success(t("guardianCreated"));
+      // Immediately refetch all guardians data
+      return queryClient.refetchQueries({ queryKey: queryKeys.guardians.all });
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("guardianCreateFailed")));
@@ -68,11 +68,13 @@ export function useUpdateGuardian() {
       data: Parameters<typeof guardiansService.update>[1];
     }) => guardiansService.update(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.guardians.all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.guardians.detail(variables.id),
-      });
-      toast.success(t("guardianUpdated"));
+      // Immediately refetch guardians list and detail
+      return Promise.all([
+        queryClient.refetchQueries({ queryKey: queryKeys.guardians.all }),
+        queryClient.refetchQueries({
+          queryKey: queryKeys.guardians.detail(variables.id),
+        }),
+      ]);
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("guardianUpdateFailed")));
@@ -86,8 +88,8 @@ export function useDeleteGuardian() {
   return useMutation({
     mutationFn: guardiansService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.guardians.all });
-      toast.success(t("guardianDeleted"));
+      // Immediately refetch all guardians data
+      return queryClient.refetchQueries({ queryKey: queryKeys.guardians.all });
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("guardianDeleteFailed")));
@@ -107,10 +109,10 @@ export function useLinkStudent() {
       payload: StudentLinkPayload;
     }) => guardiansService.linkStudent(guardianId, payload),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+      // Immediately refetch guardian details
+      return queryClient.refetchQueries({
         queryKey: queryKeys.guardians.detail(variables.guardianId),
       });
-      toast.success(t("studentLinked"));
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("studentLinkFailed")));
@@ -130,10 +132,10 @@ export function useUnlinkStudent() {
       studentId: string;
     }) => guardiansService.unlinkStudent(guardianId, studentId),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+      // Immediately refetch guardian details
+      return queryClient.refetchQueries({
         queryKey: queryKeys.guardians.detail(variables.guardianId),
       });
-      toast.success(t("studentUnlinked"));
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("studentUnlinkFailed")));

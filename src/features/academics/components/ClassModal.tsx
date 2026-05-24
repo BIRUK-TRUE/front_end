@@ -70,7 +70,7 @@ export function ClassModal({
         form.reset({
           name: classItem.name,
           grade_level: classItem.grade_level,
-          stream: classItem.stream || null,
+          stream: (classItem.stream === 'natural_science' || classItem.stream === 'social_science') ? classItem.stream : null,
           capacity: classItem.capacity || undefined,
           description: classItem.description || '',
         });

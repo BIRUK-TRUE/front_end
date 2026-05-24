@@ -38,8 +38,8 @@ export function useCreateStudent() {
   return useMutation({
     mutationFn: studentsService.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.students.all });
-      toast.success(t("studentCreated"));
+      // Immediately refetch all students data
+      return queryClient.refetchQueries({ queryKey: queryKeys.students.all });
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("studentCreateFailed")));
@@ -59,11 +59,13 @@ export function useUpdateStudent() {
       data: Parameters<typeof studentsService.update>[1];
     }) => studentsService.update(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.students.all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.students.detail(variables.id),
-      });
-      toast.success(t("studentUpdated"));
+      // Immediately refetch students list and detail
+      return Promise.all([
+        queryClient.refetchQueries({ queryKey: queryKeys.students.all }),
+        queryClient.refetchQueries({
+          queryKey: queryKeys.students.detail(variables.id),
+        }),
+      ]);
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("studentUpdateFailed")));
@@ -77,8 +79,8 @@ export function useDeleteStudent() {
   return useMutation({
     mutationFn: studentsService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.students.all });
-      toast.success(t("studentDeleted"));
+      // Immediately refetch all students data
+      return queryClient.refetchQueries({ queryKey: queryKeys.students.all });
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("studentDeleteFailed")));
@@ -92,8 +94,8 @@ export function useRestoreStudent() {
   return useMutation({
     mutationFn: studentsService.restore,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.students.all });
-      toast.success(t("studentRestored"));
+      // Immediately refetch all students data
+      return queryClient.refetchQueries({ queryKey: queryKeys.students.all });
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("studentRestoreFailed")));

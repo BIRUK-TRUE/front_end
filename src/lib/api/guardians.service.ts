@@ -28,7 +28,27 @@ export interface StudentLinkPayload {
 
 export const guardiansService = {
   async getAll(filters: GuardianFilters = {}) {
+    console.log('🔍 guardiansService.getAll called with filters:', filters);
+    
     const { data } = await axiosInstance.get('/guardians', { params: filters });
+    
+    console.log('✅ guardiansService.getAll RAW response:', JSON.stringify(data, null, 2));
+    console.log('✅ Response type:', typeof data);
+    console.log('✅ Has items?:', Array.isArray(data?.items));
+    console.log('✅ Items length:', data?.items?.length);
+    console.log('✅ Total:', data?.total);
+    
+    // Ensure we always return a properly structured response
+    if (!data) {
+      console.error('❌ No data returned from API');
+      return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+    }
+    
+    if (!Array.isArray(data.items)) {
+      console.error('❌ data.items is not an array:', data.items);
+      return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+    }
+    
     return data;
   },
 

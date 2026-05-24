@@ -26,6 +26,7 @@ import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { EmptyState } from '@/components/shared/empty-state';
 import { SubjectMultiSelect } from '@/features/academics/components/SubjectMultiSelect';
 import { GradeAssignmentsView } from '@/features/academics/components/GradeAssignmentsView';
+import { Subject } from '@/features/academics/types';
 import {
   Dialog,
   DialogContent,
@@ -39,13 +40,6 @@ interface AcademicYear {
   id: string;
   name: string;
   is_current: boolean;
-}
-
-interface Subject {
-  id: string;
-  code: string;
-  name: string;
-  category: string;
 }
 
 interface AssignmentResult {

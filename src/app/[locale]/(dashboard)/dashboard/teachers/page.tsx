@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { useTeachers, useDeleteTeacher, useRestoreTeacher } from '@/hooks/use-teachers';
+import { useTeachers, useDeleteTeacher, useRestoreTeacher, useTeacherStats } from '@/hooks/use-teachers';
 import type { TeacherFilters } from '@/lib/api/teachers.service';
 import { usePermissions } from '@/hooks/use-permissions';
 import { ActionsDropdown } from '@/components/shared/actions-dropdown';
@@ -46,20 +46,25 @@ export default function TeachersPage() {
 
   const filters = { page, size: 20, search: search || undefined, status: (statusFilter || undefined) as TeacherFilters['status'] } satisfies TeacherFilters;
   const { data, isLoading } = useTeachers(filters);
+  const { data: teacherStats, isLoading: statsLoading } = useTeacherStats();
   const deleteTeacher = useDeleteTeacher();
   const restoreTeacher = useRestoreTeacher();
   const teachers = useMemo<TeacherRow[]>(() => data?.items || [], [data?.items]);
 
   const stats = useMemo(() => {
-    const active = teachers.filter((teacher) => teacher.status === 'active').length;
-    const inactive = teachers.filter((teacher) => teacher.status && teacher.status !== 'active').length;
+    // Use actual stats from API, not filtered page data
+    const totalTeachers = teacherStats?.total || 0;
+    const activeTeachers = teacherStats?.active || 0;
+    const onLeaveTeachers = teacherStats?.on_leave || 0;
+    const inactiveTeachers = totalTeachers - activeTeachers;
+    
     return [
-      { title: 'Total', value: data?.total || teachers.length, icon: BookOpen, description: 'Teachers in the current result set' },
-      { title: 'Active', value: active, icon: UserRoundCheck, description: 'Available for classes', trend: { label: 'Teaching roster', tone: 'positive' as const } },
-      { title: 'Inactive', value: inactive, icon: UserRoundX, description: 'Leave, resigned, retired, or suspended' },
-      { title: 'New This Month', value: teachers.filter((teacher) => teacher.hire_date && new Date(teacher.hire_date).getMonth() === new Date().getMonth()).length, icon: Activity, description: 'Based on hire date' },
+      { title: 'Total', value: totalTeachers, icon: BookOpen, description: 'All teachers in the system' },
+      { title: 'Active', value: activeTeachers, icon: UserRoundCheck, description: 'Available for classes', trend: { label: 'Teaching roster', tone: 'positive' as const } },
+      { title: 'On Leave', value: onLeaveTeachers, icon: UserRoundX, description: 'Temporarily unavailable' },
+      { title: 'Inactive', value: inactiveTeachers, icon: Activity, description: 'Resigned, retired, or suspended' },
     ];
-  }, [data?.total, teachers]);
+  }, [teacherStats]);
 
   const columns: ColumnDef<TeacherRow>[] = [
     {
@@ -121,7 +126,7 @@ export default function TeachersPage() {
         ) : undefined}
       />
 
-      <StatsRow items={stats} isLoading={isLoading} />
+      <StatsRow items={stats} isLoading={statsLoading} />
 
       <DataTableToolbar search={search} onSearchChange={(value) => { setSearch(value); setPage(1); }} searchPlaceholder={t('searchTeachers')}>
         <Select value={statusFilter || 'all'} onValueChange={(value) => { setStatusFilter(value === 'all' ? '' : value); setPage(1); }}>

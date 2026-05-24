@@ -16,14 +16,15 @@ import {
   GraduationCap,
   FileText
 } from "lucide-react";
-import { useAcademicYears } from "@/hooks/use-academic-years";
+import { useAcademicYears } from "@/features/academics/api/useAcademicYears";
 
 export default function ReportsPage() {
   const t = useTranslations("reports");
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [reportType, setReportType] = useState<string>("overview");
   
-  const { data: academicYears } = useAcademicYears();
+  const { data: academicYearsData } = useAcademicYears(1, 100);
+  const academicYears = academicYearsData?.items || [];
 
   // Mock data - replace with actual API calls
   const stats = {

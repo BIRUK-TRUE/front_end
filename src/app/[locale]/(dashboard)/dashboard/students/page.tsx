@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { useStudents, useDeleteStudent, useRestoreStudent } from '@/hooks/use-students';
+import { useStudents, useDeleteStudent, useRestoreStudent, useStudentStats } from '@/hooks/use-students';
 import type { StudentFilters } from '@/lib/api/students.service';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useDownloadReportCard } from '@/hooks/use-grades';
@@ -74,6 +74,7 @@ export default function StudentsPage() {
   } satisfies StudentFilters;
 
   const { data, isLoading } = useStudents(filters);
+  const { data: studentStats, isLoading: statsLoading } = useStudentStats();
   const deleteStudent = useDeleteStudent();
   const restoreStudent = useRestoreStudent();
   const downloadReportCard = useDownloadReportCard();
@@ -81,15 +82,20 @@ export default function StudentsPage() {
   const students = useMemo<StudentRow[]>(() => data?.items || [], [data?.items]);
 
   const stats = useMemo(() => {
-    const active = students.filter((student) => student.status === 'active').length;
-    const inactive = students.filter((student) => student.status && student.status !== 'active').length;
+    // Use actual stats from API, not filtered page data
+    const totalStudents = studentStats?.total || 0;
+    const activeStudents = studentStats?.active || 0;
+    const maleStudents = studentStats?.male || 0;
+    const femaleStudents = studentStats?.female || 0;
+    const inactiveStudents = totalStudents - activeStudents;
+    
     return [
-      { title: 'Total', value: data?.total || students.length, icon: GraduationCap, description: 'Students in the current result set' },
-      { title: 'Active', value: active, icon: UserRoundCheck, description: 'Ready for attendance and grading', trend: { label: 'Available today', tone: 'positive' as const } },
-      { title: 'Inactive', value: inactive, icon: UserRoundX, description: 'Transferred, withdrawn, or archived' },
-      { title: 'New This Month', value: students.filter((student) => student.admission_date && new Date(student.admission_date).getMonth() === new Date().getMonth()).length, icon: Activity, description: 'Based on admission date' },
+      { title: 'Total', value: totalStudents, icon: GraduationCap, description: 'All students in the system' },
+      { title: 'Active', value: activeStudents, icon: UserRoundCheck, description: 'Ready for attendance and grading', trend: { label: 'Available today', tone: 'positive' as const } },
+      { title: 'Male', value: maleStudents, icon: Activity, description: 'Male students' },
+      { title: 'Female', value: femaleStudents, icon: UserRoundX, description: 'Female students' },
     ];
-  }, [data?.total, students]);
+  }, [studentStats]);
 
   const columns: ColumnDef<StudentRow>[] = [
     {
@@ -208,7 +214,7 @@ export default function StudentsPage() {
         ) : undefined}
       />
 
-      <StatsRow items={stats} isLoading={isLoading} />
+      <StatsRow items={stats} isLoading={statsLoading} />
 
       <DataTableToolbar
         search={search}

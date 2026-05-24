@@ -38,8 +38,8 @@ export function useCreateTeacher() {
   return useMutation({
     mutationFn: teachersService.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.teachers.all });
-      toast.success(t("teacherCreated"));
+      // Immediately refetch all teachers data
+      return queryClient.refetchQueries({ queryKey: queryKeys.teachers.all });
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("teacherCreateFailed")));
@@ -59,11 +59,13 @@ export function useUpdateTeacher() {
       data: Parameters<typeof teachersService.update>[1];
     }) => teachersService.update(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.teachers.all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.teachers.detail(variables.id),
-      });
-      toast.success(t("teacherUpdated"));
+      // Immediately refetch teachers list and detail
+      return Promise.all([
+        queryClient.refetchQueries({ queryKey: queryKeys.teachers.all }),
+        queryClient.refetchQueries({
+          queryKey: queryKeys.teachers.detail(variables.id),
+        }),
+      ]);
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("teacherUpdateFailed")));
@@ -77,8 +79,8 @@ export function useDeleteTeacher() {
   return useMutation({
     mutationFn: teachersService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.teachers.all });
-      toast.success(t("teacherDeleted"));
+      // Immediately refetch all teachers data
+      return queryClient.refetchQueries({ queryKey: queryKeys.teachers.all });
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("teacherDeleteFailed")));
@@ -92,8 +94,8 @@ export function useRestoreTeacher() {
   return useMutation({
     mutationFn: teachersService.restore,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.teachers.all });
-      toast.success(t("teacherRestored"));
+      // Immediately refetch all teachers data
+      return queryClient.refetchQueries({ queryKey: queryKeys.teachers.all });
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("teacherRestoreFailed")));

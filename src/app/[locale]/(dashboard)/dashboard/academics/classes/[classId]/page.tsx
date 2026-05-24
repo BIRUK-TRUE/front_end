@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useClass } from "@/features/academics/api/useClasses";
@@ -30,14 +31,51 @@ import {
   LayoutGrid,
   Calendar,
   Hash,
+  Plus,
 } from "lucide-react";
+import { SectionModal } from "@/features/academics/components/SectionModal";
+import { type SectionForm } from "@/features/academics/types/schemas";
+import { toast } from "sonner";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { axiosInstance } from "@/lib/api/axios";
 
 export default function ClassDetailPage() {
   const t = useTranslations("classes");
   const tc = useTranslations("common");
+  const ta = useTranslations("academics");
   const { classId } = useParams<{ classId: string }>();
+  const [sectionModalOpen, setSectionModalOpen] = useState(false);
 
+  const queryClient = useQueryClient();
   const { data: classData, isLoading, error } = useClass(classId);
+
+  // Create section mutation
+  const createSectionMutation = useMutation({
+    mutationFn: async (data: SectionForm) => {
+      const { data: response } = await axiosInstance.post(
+        `/academics/classes/${classId}/sections`,
+        data
+      );
+      return response;
+    },
+    onSuccess: () => {
+      toast.success("Section created successfully");
+      queryClient.invalidateQueries({ queryKey: ["class", classId] });
+      setSectionModalOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.detail || "Failed to create section");
+    },
+  });
+
+  const handleCreateSection = (data: SectionForm) => {
+    createSectionMutation.mutate(data, {
+      onSuccess: () => {
+        setSectionModalOpen(false);
+        toast.success("Section created successfully");
+      },
+    });
+  };
 
   if (isLoading) {
     return (
@@ -55,7 +93,7 @@ export default function ClassDetailPage() {
           description={t("detailNotFound")}
           actions={
             <Button variant="outline" asChild>
-              <Link href="/dashboard/analytics">
+              <Link href="/dashboard/academics/classes">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 {tc("back")}
               </Link>
@@ -79,12 +117,18 @@ export default function ClassDetailPage() {
         title={classData.name}
         description={`${t("grade")} ${classData.grade_level}`}
         actions={
-          <Button variant="outline" asChild>
-            <Link href="/dashboard/analytics">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {tc("back")}
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setSectionModalOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              {ta("addSection")}
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/dashboard/academics/classes">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                {tc("back")}
+              </Link>
+            </Button>
+          </div>
         }
       />
 
@@ -210,6 +254,14 @@ export default function ClassDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Section Modal */}
+      <SectionModal
+        open={sectionModalOpen}
+        onOpenChange={setSectionModalOpen}
+        onSubmit={handleCreateSection}
+        isLoading={createSectionMutation.isPending}
+      />
     </div>
   );
 }

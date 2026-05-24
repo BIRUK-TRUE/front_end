@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { axiosInstance } from '@/lib/api/axios';
+import { Subject } from '@/features/academics/types';
 import {
   Command,
   CommandEmpty,
@@ -23,14 +24,6 @@ import { Check, ChevronsUpDown, Search, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-interface Subject {
-  id: string;
-  code: string;
-  name: string;
-  category: string;
-  is_active: boolean;
-}
 
 interface SubjectMultiSelectProps {
   selectedSubjects: Subject[];

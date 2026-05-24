@@ -52,13 +52,15 @@ export const useCreateTerm = (yearId: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [...academicsKeys.years.detail(yearId), "terms"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: academicsKeys.years.detail(yearId),
-      }); // Invalidate year to update term_count
-      toast.success("Term created successfully");
+      // Immediately refetch terms and year details
+      return Promise.all([
+        queryClient.refetchQueries({
+          queryKey: [...academicsKeys.years.detail(yearId), "terms"],
+        }),
+        queryClient.refetchQueries({
+          queryKey: academicsKeys.years.detail(yearId),
+        }),
+      ]);
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to create term"));
@@ -84,10 +86,10 @@ export const useUpdateTerm = (yearId: string) => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      // Immediately refetch terms list
+      return queryClient.refetchQueries({
         queryKey: [...academicsKeys.years.detail(yearId), "terms"],
       });
-      toast.success("Term updated successfully");
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to update term"));
@@ -103,13 +105,15 @@ export const useDeleteTerm = (yearId: string) => {
       await axiosInstance.delete(`/academics/terms/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [...academicsKeys.years.detail(yearId), "terms"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: academicsKeys.years.detail(yearId),
-      }); // Update term count
-      toast.success("Term deleted successfully");
+      // Immediately refetch terms and year details
+      return Promise.all([
+        queryClient.refetchQueries({
+          queryKey: [...academicsKeys.years.detail(yearId), "terms"],
+        }),
+        queryClient.refetchQueries({
+          queryKey: academicsKeys.years.detail(yearId),
+        }),
+      ]);
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(

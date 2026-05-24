@@ -8,6 +8,7 @@ import { AcademicYearModal } from '@/features/academics/components/AcademicYearM
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { toast } from 'sonner';
 import {
   Plus,
   Calendar,
@@ -185,8 +186,10 @@ export default function AcademicYearsPage() {
     try {
       if (editingYear) {
         await updateYear.mutateAsync({ id: editingYear.id, data: formData });
+        toast.success("Academic year updated successfully");
       } else {
         const result = await createYear.mutateAsync(formData);
+        toast.success("Academic year created successfully");
         // Show setup checklist after creation
         setNewlyCreated({ id: result.id, name: result.name });
       }

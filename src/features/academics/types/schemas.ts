@@ -5,6 +5,7 @@ export const academicYearSchema = z.object({
   name: z.string().min(4, "Name must be at least 4 characters").max(20),
   start_date: z.string().min(1, "Start date is required"),
   end_date: z.string().min(1, "End date is required"),
+  status: z.enum(['planning', 'active', 'completed', 'archived']).default('planning'),
   description: z.string().max(500).optional().nullable()
 }).refine((data) => {
   const start = new Date(data.start_date);

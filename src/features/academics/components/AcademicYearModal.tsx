@@ -98,6 +98,7 @@ export function AcademicYearModal({
       name: '',
       start_date: format(new Date(), 'yyyy-MM-dd'),
       end_date: format(addYears(new Date(), 1), 'yyyy-MM-dd'),
+      status: 'planning',
       description: '',
     },
   });
@@ -114,6 +115,7 @@ export function AcademicYearModal({
         name: year.name,
         start_date: year.start_date.split('T')[0],
         end_date: year.end_date.split('T')[0],
+        status: year.status,
         description: year.description || '',
       });
     } else {
@@ -128,6 +130,7 @@ export function AcademicYearModal({
         name: '',
         start_date: format(new Date(), 'yyyy-MM-dd'),
         end_date: format(addYears(new Date(), 1), 'yyyy-MM-dd'),
+        status: 'planning',
         description: '',
       });
     }
@@ -288,6 +291,31 @@ export function AcademicYearModal({
                       className="h-11"
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* ── Status ── */}
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }: { field: any }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="planning">Planning</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
