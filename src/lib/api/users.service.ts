@@ -20,7 +20,30 @@ export const usersService = {
       params.role_name = params.role;
     }
     delete params.role;
+    
+    // Debug logging
+    console.log('🔍 usersService.getAll called with filters:', filters);
+    console.log('🔍 Sending params to backend:', params);
+    
     const { data } = await axiosInstance.get('/users', { params });
+    
+    console.log('✅ usersService.getAll RAW response:', JSON.stringify(data, null, 2));
+    console.log('✅ Response type:', typeof data);
+    console.log('✅ Has items?:', Array.isArray(data?.items));
+    console.log('✅ Items length:', data?.items?.length);
+    console.log('✅ Total:', data?.total);
+    
+    // Ensure we always return a properly structured response
+    if (!data) {
+      console.error('❌ No data returned from API');
+      return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+    }
+    
+    if (!Array.isArray(data.items)) {
+      console.error('❌ data.items is not an array:', data.items);
+      return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+    }
+    
     return data;
   },
 
@@ -41,7 +64,13 @@ export const usersService = {
 
   async getStats() {
     const { data } = await axiosInstance.get('/users/stats/summary');
-    return data;
+    // Normalize backend field names to what the dashboard expects
+    return {
+      total: data.total_users ?? data.total ?? 0,
+      active: data.active_users ?? data.active ?? 0,
+      inactive: data.inactive_users ?? data.inactive ?? 0,
+      growth: data.growth ?? 0,
+    };
   },
 
   async create(payload: {

@@ -14,7 +14,27 @@ export interface StudentFilters {
 
 export const studentsService = {
   async getAll(filters: StudentFilters = {}) {
+    console.log('🔍 studentsService.getAll called with filters:', filters);
+    
     const { data } = await axiosInstance.get('/students', { params: filters });
+    
+    console.log('✅ studentsService.getAll RAW response:', JSON.stringify(data, null, 2));
+    console.log('✅ Response type:', typeof data);
+    console.log('✅ Has items?:', Array.isArray(data?.items));
+    console.log('✅ Items length:', data?.items?.length);
+    console.log('✅ Total:', data?.total);
+    
+    // Ensure we always return a properly structured response
+    if (!data) {
+      console.error('❌ No data returned from API');
+      return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+    }
+    
+    if (!Array.isArray(data.items)) {
+      console.error('❌ data.items is not an array:', data.items);
+      return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+    }
+    
     return data;
   },
 
@@ -31,8 +51,25 @@ export const studentsService = {
   },
 
   async getStats() {
+    console.log('🔍 studentsService.getStats called');
+    
     const { data } = await axiosInstance.get('/students/stats/summary');
-    return data;
+    
+    console.log('✅ studentsService.getStats response:', data);
+    
+    // Normalize backend field names to what the dashboard expects
+    const normalized = {
+      total: data.total_students ?? data.total ?? 0,
+      active: data.active_students ?? data.active ?? 0,
+      male: data.male_students ?? 0,
+      female: data.female_students ?? 0,
+      graduated: data.graduated_students ?? 0,
+      growth: data.growth ?? 0,
+    };
+    
+    console.log('✅ Normalized stats:', normalized);
+    
+    return normalized;
   },
 
   async create(payload: {

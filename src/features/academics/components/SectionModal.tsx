@@ -25,8 +25,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTeachers } from '@/features/teachers/api/useTeachers';
+import { useBuildings, useClassrooms } from '../api/useInfrastructure';
 
 interface SectionModalProps {
   open: boolean;
@@ -53,6 +54,7 @@ export function SectionModal({
       capacity: 40,
       room_number: '',
       homeroom_teacher_id: null,
+      classroom_id: null,
     },
   });
 
@@ -60,6 +62,10 @@ export function SectionModal({
     is_active: true,
     size: 50,
   });
+
+  const { data: buildingsData } = useBuildings(1, 50);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string>('');
+  const { data: classroomsData } = useClassrooms(selectedBuildingId || undefined);
 
   // Reset form when modal opens/closes or section changes
   useEffect(() => {
@@ -70,6 +76,7 @@ export function SectionModal({
           capacity: section.capacity || 40,
           room_number: section.room_number || '',
           homeroom_teacher_id: section.homeroom_teacher_id || null,
+          classroom_id: section.classroom_id || null,
         });
       } else {
         form.reset({
@@ -77,6 +84,7 @@ export function SectionModal({
           capacity: 40,
           room_number: '',
           homeroom_teacher_id: null,
+          classroom_id: null,
         });
       }
     }
@@ -180,6 +188,57 @@ export function SectionModal({
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="classroom_id"
+              render={({ field }: { field: any }) => (
+                <FormItem>
+                  <FormLabel>{ta('classroom') || 'Classroom'}</FormLabel>
+                  <div className="space-y-2">
+                    <Select
+                      onValueChange={(value) => {
+                        setSelectedBuildingId(value);
+                        field.onChange(null);
+                      }}
+                      value={selectedBuildingId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select building first" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Building</SelectItem>
+                        {buildingsData?.items?.map((building: any) => (
+                          <SelectItem key={building.id} value={building.id}>
+                            {building.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {selectedBuildingId && selectedBuildingId !== 'none' && (
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value || "none"}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select classroom" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No Classroom</SelectItem>
+                          {classroomsData?.items?.map((classroom: any) => (
+                            <SelectItem key={classroom.id} value={classroom.id}>
+                              {classroom.room_number} ({classroom.room_type}, Cap: {classroom.capacity})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}

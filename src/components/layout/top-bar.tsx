@@ -12,6 +12,8 @@ import { useRealtimeToasts } from '@/features/notifications/hooks/useRealtimeToa
 import { NotificationPriority } from '@/features/notifications/types';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useTheme } from 'next-themes';
+import { useUIStore } from '@/lib/store/ui-store';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Menu, LogOut, User, ChevronRight } from 'lucide-react';
+import { Menu, LogOut, User, ChevronRight, Sun, Moon, Laptop, Search } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 
 interface TopBarProps {
@@ -33,6 +35,8 @@ export function TopBar({ onMenuClick }: TopBarProps) {
   const { user } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
+  const { theme, setTheme } = useTheme();
+  const { setCommandMenuOpen } = useUIStore();
 
   const handleLogout = () => {
     authService.logout();
@@ -112,8 +116,52 @@ export function TopBar({ onMenuClick }: TopBarProps) {
         </nav>
       </div>
 
-      {/* Right: notification center + language + user menu */}
+      {/* Right: search + theme + notification center + language + user menu */}
       <div className="flex items-center gap-2">
+        {/* Search trigger button */}
+        <Button
+          variant="outline"
+          className="relative h-9 w-32 justify-start rounded-[0.5rem] bg-muted/40 text-xs font-normal text-muted-foreground shadow-none sm:pr-12 md:w-44 lg:w-56 min-h-0 border-dashed"
+          onClick={() => setCommandMenuOpen(true)}
+          aria-label="Open Command Menu"
+        >
+          <Search className="h-3.5 w-3.5 mr-2 shrink-0 opacity-60" aria-hidden="true" />
+          <span className="hidden sm:inline-flex">Search...</span>
+          <kbd className="pointer-events-none absolute right-[0.3rem] top-[0.35rem] hidden h-4.5 select-none items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[9px] font-medium opacity-100 sm:flex">
+            <span className="text-[10px]">⌘</span>K
+          </kbd>
+        </Button>
+
+        {/* Theme Switcher */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 w-9 px-0 min-h-0"
+              aria-label="Toggle theme"
+            >
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-amber-500" />
+              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-indigo-400" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setTheme('light')}>
+              <Sun className="h-4 w-4 mr-2 text-amber-500" />
+              <span>Light</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme('dark')}>
+              <Moon className="h-4 w-4 mr-2 text-indigo-400" />
+              <span>Dark</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme('system')}>
+              <Laptop className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span>System</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <NotificationCenter
           notifications={notifications}
           unreadCount={unreadCount}

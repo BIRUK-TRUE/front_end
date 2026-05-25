@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/utils/formatApiError";
-import type { Assessment, Grade, BulkGradePayload, ReportCard } from "../types";
+import { AssessmentType, type Assessment, type Grade, type BulkGradePayload, type ReportCard } from "../types";
 
 const gradesKeys = {
   all: ["grades"] as const,
@@ -48,20 +48,26 @@ export function useAssessments(
       const { data } = await axiosInstance.get("/assessments", { params });
       // Backend returns PaginatedAssessmentsResponse: { items, total, page, size, pages }
       const items = data?.items ?? (Array.isArray(data) ? data : []);
+      const toAssessmentType = (value: unknown): AssessmentType => {
+        const normalized = String(value ?? "final").toLowerCase();
+        return Object.values(AssessmentType).includes(normalized as AssessmentType)
+          ? (normalized as AssessmentType)
+          : AssessmentType.FINAL;
+      };
+
       return items.map(
         (a: Record<string, unknown>): Assessment => ({
           id: a.id as string,
-          title: (a.title ?? a.name ?? "") as string,
-          type: (a.assessment_type ?? a.type ?? "exam") as string,
+          name: (a.title ?? a.name ?? "") as string,
+          type: toAssessmentType(a.assessment_type ?? a.type),
           max_score: (a.max_score ?? 100) as number,
           weight: (a.weight ?? 0) as number,
           date: (a.assessment_date ?? a.date ?? "") as string,
-          status: (a.status ?? "draft") as string,
-          teacher_subject_id: (a.teacher_subject_id ?? "") as string,
+          subject_id: (a.subject_id ?? "") as string,
           term_id: (a.term_id ?? "") as string,
+          class_id: (a.class_id ?? "") as string,
           subject_name: (a.subject_name ?? "") as string,
           class_name: (a.class_name ?? "") as string,
-          section_name: (a.section_name ?? "") as string,
           term_name: (a.term_name ?? "") as string,
           created_at: (a.created_at ?? "") as string,
         }),
@@ -122,11 +128,10 @@ export function useGradesByAssessment(assessmentId: string) {
           id: s.id as string,
           student_id: (s.student_id ?? "") as string,
           student_name: (s.student_name ?? "") as string,
-          enrollment_id: (s.enrollment_id ?? "") as string,
+          registration_number: (s.registration_number ?? "") as string,
+          assessment_id: (s.assessment_id ?? assessmentId) as string,
           score: (s.score ?? null) as number | null,
-          is_absent: (s.is_absent ?? false) as boolean,
-          remark: (s.remark ?? "") as string,
-          graded_at: (s.graded_at ?? s.created_at ?? "") as string,
+          comment: (s.remark ?? s.comment ?? "") as string,
         }),
       );
     },

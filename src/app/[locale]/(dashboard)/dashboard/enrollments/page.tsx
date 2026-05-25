@@ -66,10 +66,14 @@ export default function EnrollmentsPage() {
 
   const { data: yearsData } = useAcademicYears(1, 50);
   
+  // Get current year as default filter to ensure data loads
+  const currentYear = yearsData?.items?.find(y => y.is_current);
+  const effectiveYearFilter = yearFilter === 'all' && currentYear ? currentYear.id : yearFilter;
+  
   const enrollmentFilters = {
     page,
     search: debouncedSearch || undefined,
-    academic_year_id: yearFilter !== 'all' ? yearFilter : undefined,
+    yearId: effectiveYearFilter !== 'all' ? effectiveYearFilter : undefined, // Fixed: was academic_year_id
     status: statusFilter !== 'all' ? statusFilter : undefined,
   };
 

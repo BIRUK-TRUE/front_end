@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Sidebar } from '@/components/layout/sidebar';
 import { TopBar } from '@/components/layout/top-bar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
+import { CommandMenu } from '@/components/layout/command-menu';
 
 export default function DashboardLayout({
   children,
@@ -35,6 +36,7 @@ export default function DashboardLayout({
           </main>
         </div>
       </div>
+      <CommandMenu />
     </ProtectedRoute>
   );
 }

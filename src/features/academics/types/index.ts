@@ -57,6 +57,7 @@ export interface Class {
   academic_year_id: string;
   name: string;
   grade_level: number;
+  stream?: string | null;
   description: string | null;
   capacity: number | null;
   section_count: number;
@@ -76,6 +77,8 @@ export interface Section {
   is_full: boolean;
   homeroom_teacher_id: string | null;
   homeroom_teacher_name: string | null;
+  classroom_id: string | null;
+  classroom_name: string | null;
 }
 
 export interface Student {
@@ -93,4 +96,30 @@ export interface PaginatedResponse<T> {
   page: number;
   size: number;
   pages: number;
+}
+
+export interface Building {
+  id: string;
+  name: string;
+  code: string | null;
+  description: string | null;
+  classroom_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ClassroomType = 'normal' | 'laboratory' | 'computer_lab' | 'auditorium' | 'other';
+
+export interface Classroom {
+  id: string;
+  building_id: string;
+  building_name?: string;
+  room_number: string;
+  capacity: number;
+  room_type: ClassroomType;
+  description: string | null;
+  is_available?: boolean;
+  assigned_section_name?: string | null;
+  created_at: string;
+  updated_at: string;
 }

@@ -42,8 +42,8 @@ export function useCreateUser() {
   return useMutation({
     mutationFn: usersService.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success(t("userCreated"));
+      // Immediately refetch all users data
+      return queryClient.refetchQueries({ queryKey: queryKeys.users.all });
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("userCreateFailed")));
@@ -63,11 +63,13 @@ export function useUpdateUser() {
       data: Parameters<typeof usersService.update>[1];
     }) => usersService.update(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.users.detail(variables.id),
-      });
-      toast.success(t("userUpdated"));
+      // Immediately refetch users list and detail
+      return Promise.all([
+        queryClient.refetchQueries({ queryKey: queryKeys.users.all }),
+        queryClient.refetchQueries({
+          queryKey: queryKeys.users.detail(variables.id),
+        }),
+      ]);
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("userUpdateFailed")));
@@ -81,8 +83,8 @@ export function useDeleteUser() {
   return useMutation({
     mutationFn: usersService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success(t("userDeleted"));
+      // Immediately refetch all users data
+      return queryClient.refetchQueries({ queryKey: queryKeys.users.all });
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("userDeleteFailed")));
@@ -96,8 +98,8 @@ export function useRestoreUser() {
   return useMutation({
     mutationFn: usersService.restore,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success(t("userRestored"));
+      // Immediately refetch all users data
+      return queryClient.refetchQueries({ queryKey: queryKeys.users.all });
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("userRestoreFailed")));
@@ -112,11 +114,13 @@ export function useUpdateRoles() {
     mutationFn: ({ id, roleNames }: { id: string; roleNames: string[] }) =>
       usersService.updateRoles(id, roleNames),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.users.detail(variables.id),
-      });
-      toast.success(t("rolesUpdated"));
+      // Immediately refetch users list and detail
+      return Promise.all([
+        queryClient.refetchQueries({ queryKey: queryKeys.users.all }),
+        queryClient.refetchQueries({
+          queryKey: queryKeys.users.detail(variables.id),
+        }),
+      ]);
     },
     onError: (error: any) => {
       toast.error(formatApiError(error, t("rolesUpdateFailed")));

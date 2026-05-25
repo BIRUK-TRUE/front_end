@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 interface TermModalProps {
   open: boolean;
@@ -32,6 +33,9 @@ interface TermModalProps {
   term?: Term | null;
   onSubmit: (data: TermForm) => void;
   isLoading?: boolean;
+  yearStart?: string;
+  yearEnd?: string;
+  existingTerms?: Term[];
 }
 
 export function TermModal({
@@ -40,6 +44,9 @@ export function TermModal({
   term,
   onSubmit,
   isLoading,
+  yearStart,
+  yearEnd,
+  existingTerms = [],
 }: TermModalProps) {
   const t = useTranslations("common");
   const ta = useTranslations("academics");
@@ -76,6 +83,36 @@ export function TermModal({
   }, [open, term, form]);
 
   const handleSubmit = (data: TermForm) => {
+    // Client-side validation for year boundaries
+    if (yearStart && yearEnd) {
+      const termStart = new Date(data.start_date);
+      const termEnd = new Date(data.end_date);
+      const yStart = new Date(yearStart);
+      const yEnd = new Date(yearEnd);
+
+      if (termStart < yStart || termEnd > yEnd) {
+        toast.error("Term dates must be within the academic year range.");
+        return;
+      }
+    }
+
+    // Client-side overlap check
+    if (!term) {
+      const newStart = new Date(data.start_date);
+      const newEnd = new Date(data.end_date);
+      
+      const hasOverlap = existingTerms.some(t => {
+        const tStart = new Date(t.start_date);
+        const tEnd = new Date(t.end_date);
+        return newStart <= tEnd && newEnd >= tStart;
+      });
+
+      if (hasOverlap) {
+        toast.error("Term date range overlaps with an existing term.");
+        return;
+      }
+    }
+
     onSubmit(data);
   };
 

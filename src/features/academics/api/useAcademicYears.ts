@@ -10,12 +10,32 @@ export const useAcademicYears = (page = 1, size = 20) => {
   return useQuery({
     queryKey: academicsKeys.years.list({ page, size }),
     queryFn: async () => {
+      console.log('🔍 useAcademicYears called with page:', page, 'size:', size);
+      
       const { data } = await axiosInstance.get<PaginatedResponse<AcademicYear>>(
         "/academics/years",
         {
           params: { page, size },
         },
       );
+      
+      console.log('✅ useAcademicYears RAW response:', JSON.stringify(data, null, 2));
+      console.log('✅ Response type:', typeof data);
+      console.log('✅ Has items?:', Array.isArray(data?.items));
+      console.log('✅ Items length:', data?.items?.length);
+      console.log('✅ Total:', data?.total);
+      
+      // Ensure we always return a properly structured response
+      if (!data) {
+        console.error('❌ No data returned from API');
+        return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+      }
+      
+      if (!Array.isArray(data.items)) {
+        console.error('❌ data.items is not an array:', data.items);
+        return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+      }
+      
       return data;
     },
   });
@@ -45,8 +65,8 @@ export const useCreateAcademicYear = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: academicsKeys.years.all() });
-      toast.success("Academic Year created successfully");
+      // Immediately refetch all academic years data
+      return queryClient.refetchQueries({ queryKey: academicsKeys.years.all() });
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to create academic year"));
@@ -75,11 +95,13 @@ export const useUpdateAcademicYear = () => {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: academicsKeys.years.all() });
-      queryClient.invalidateQueries({
-        queryKey: academicsKeys.years.detail(variables.id),
-      });
-      toast.success("Academic Year updated successfully");
+      // Immediately refetch all academic years and the specific year
+      return Promise.all([
+        queryClient.refetchQueries({ queryKey: academicsKeys.years.all() }),
+        queryClient.refetchQueries({
+          queryKey: academicsKeys.years.detail(variables.id),
+        }),
+      ]);
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to update academic year"));
@@ -95,11 +117,29 @@ export const useDeleteAcademicYear = () => {
       await axiosInstance.delete(`/academics/years/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: academicsKeys.years.all() });
-      toast.success("Academic Year deleted successfully");
+      // Immediately refetch all academic years data
+      return queryClient.refetchQueries({ queryKey: academicsKeys.years.all() });
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
       toast.error(formatApiError(error, "Failed to delete academic year"));
+    },
+  });
+};
+
+export const useSetCurrentAcademicYear = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await axiosInstance.post(`/academics/years/${id}/set-current`);
+      return data;
+    },
+    onSuccess: () => {
+      // Immediately refetch all academic years data
+      return queryClient.refetchQueries({ queryKey: academicsKeys.years.all() });
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast.error(formatApiError(error, "Failed to set current academic year"));
     },
   });
 };

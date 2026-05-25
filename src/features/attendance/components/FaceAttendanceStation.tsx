@@ -35,7 +35,7 @@ import { AttendanceStatus } from "../types";
 import { LiveAttendanceLog } from "./LiveAttendanceLog";
 import { AttendanceSessionSummary } from "./AttendanceSessionSummary";
 import { ManualOverrideSearch } from "./ManualOverrideSearch";
-import { useAcademicSettings } from "@/hooks/useSettings";
+import { useAcademicSettings } from "@/hooks/use-settings";
 
 interface FaceAttendanceStationProps {
   sectionId: string;

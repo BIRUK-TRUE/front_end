@@ -4,8 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/utils/formatApiError";
-import type {
-  StudentFee,
+import type { 
+  StudentFee, 
   PaymentTransaction,
   GuardianDashboardData,
   CreatePaymentRequest,
@@ -15,6 +15,7 @@ import type {
   PaymentMethod,
   PaymentStatus,
 } from "../types";
+import { FeeStatus, FeeType, PaymentMethod, PaymentStatus } from "../types";
 
 const paymentsKeys = {
   all: ["payments"] as const,
@@ -96,6 +97,18 @@ export function useStudentFees(studentId: string) {
         params: { student_id: studentId, size: 100 },
       });
       const items = data?.items ?? (Array.isArray(data) ? data : []);
+      const toFeeType = (value: unknown): FeeType => {
+        const normalized = String(value ?? FeeType.TUITION).toLowerCase();
+        return Object.values(FeeType).includes(normalized as FeeType)
+          ? (normalized as FeeType)
+          : FeeType.TUITION;
+      };
+      const toFeeStatus = (value: unknown): FeeStatus => {
+        const normalized = String(value ?? FeeStatus.UNPAID).toLowerCase();
+        return Object.values(FeeStatus).includes(normalized as FeeStatus)
+          ? (normalized as FeeStatus)
+          : FeeStatus.UNPAID;
+      };
       return items.map(
         (s: Record<string, unknown>): StudentFee => ({
           id: (s.id ?? "") as string,
@@ -130,6 +143,18 @@ export function usePaymentTransactions(studentId: string) {
         params: { student_id: studentId, size: 100 },
       });
       const items = data?.items ?? (Array.isArray(data) ? data : []);
+      const toPaymentMethod = (value: unknown): PaymentMethod => {
+        const normalized = String(value ?? PaymentMethod.CASH).toLowerCase();
+        return Object.values(PaymentMethod).includes(normalized as PaymentMethod)
+          ? (normalized as PaymentMethod)
+          : PaymentMethod.CASH;
+      };
+      const toPaymentStatus = (value: unknown): PaymentStatus => {
+        const normalized = String(value ?? PaymentStatus.PENDING).toLowerCase();
+        return Object.values(PaymentStatus).includes(normalized as PaymentStatus)
+          ? (normalized as PaymentStatus)
+          : PaymentStatus.PENDING;
+      };
       return items.map(
         (p: Record<string, unknown>): PaymentTransaction => ({
           id: (p.id ?? "") as string,

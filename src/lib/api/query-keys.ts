@@ -117,9 +117,11 @@ export const queryKeys = {
     weightConfigs: (yearId: string) => ['settings', 'grade-weights', yearId] as const,
     gradingScales: (yearId: string) => ['settings', 'grading-scales', yearId] as const,
   },
-  inventory: {
-    all: ['inventory'] as const,
-    items: (filters?: object) => ['inventory', 'items', filters] as const,
-    logs: (itemId: string) => ['inventory', 'logs', itemId] as const,
+  adminLogs: {
+    all: ['admin-logs'] as const,
+    list: (filters: object) => ['admin-logs', 'list', filters] as const,
+    detail: (id: string) => ['admin-logs', 'detail', id] as const,
+    actionTypes: ['admin-logs', 'action-types'] as const,
+    resourceTypes: ['admin-logs', 'resource-types'] as const,
   },
 };

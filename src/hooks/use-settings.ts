@@ -38,41 +38,55 @@ export function useNotificationSettings() {
 
 export function useUpdateSchoolInfo() {
   const queryClient = useQueryClient();
-  const t = useTranslations("common");
+  const tCommon = useTranslations("common");
+  const tSettings = useTranslations("settingsPage");
   return useMutation({
     mutationFn: (data: Partial<SchoolInfo>) =>
       settingsService.updateSchoolInfo(data),
-    onSuccess: () => {
+    onMutate: async (data) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.settings.schoolInfo });
+      const previous = queryClient.getQueryData<SchoolInfo>(queryKeys.settings.schoolInfo);
+      queryClient.setQueryData(queryKeys.settings.schoolInfo, {
+        ...previous,
+        ...data,
+      });
+      return { previous };
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(queryKeys.settings.schoolInfo, data);
       queryClient.invalidateQueries({
         queryKey: queryKeys.settings.schoolInfo,
       });
-      toast.success(t("settingsSaved"));
+      toast.success(tSettings("settingsSaved"));
     },
-    onError: () => {
-      toast.error(t("settingsSaveFailed"));
+    onError: (_error, _data, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.settings.schoolInfo, context.previous);
+      }
+      toast.error(tSettings("settingsSaveFailed"));
     },
   });
 }
 
 export function useUpdateAcademicSettings() {
   const queryClient = useQueryClient();
-  const t = useTranslations("common");
+  const tSettings = useTranslations("settingsPage");
   return useMutation({
     mutationFn: (data: Partial<AcademicSettings>) =>
       settingsService.updateAcademicSettings(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.settings.academic });
-      toast.success(t("settingsSaved"));
+      toast.success(tSettings("settingsSaved"));
     },
     onError: () => {
-      toast.error(t("settingsSaveFailed"));
+      toast.error(tSettings("settingsSaveFailed"));
     },
   });
 }
 
 export function useUpdateNotificationSettings() {
   const queryClient = useQueryClient();
-  const t = useTranslations("common");
+  const tSettings = useTranslations("settingsPage");
   return useMutation({
     mutationFn: (data: Partial<NotificationSettings>) =>
       settingsService.updateNotificationSettings(data),
@@ -80,10 +94,10 @@ export function useUpdateNotificationSettings() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.settings.notifications,
       });
-      toast.success(t("settingsSaved"));
+      toast.success(tSettings("settingsSaved"));
     },
     onError: () => {
-      toast.error(t("settingsSaveFailed"));
+      toast.error(tSettings("settingsSaveFailed"));
     },
   });
 }
@@ -123,7 +137,7 @@ export function useTestSms() {
     onSuccess: () => {
       toast.success("Test SMS sent successfully");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error(formatApiError(error, "Failed to send test SMS"));
     },
   });

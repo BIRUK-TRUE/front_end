@@ -33,11 +33,15 @@ import {
   Package,
   Send,
   ShieldAlert,
+  Layers,
+  Activity,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { useSchoolInfo } from '@/hooks/use-settings';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -84,6 +88,7 @@ export function Sidebar({
   
   const { user } = useAuthStore();
   const { data: unreadCount } = useUnreadNotifications(user?.id || '');
+  const { data: schoolInfo } = useSchoolInfo();
 
   // Teacher-specific nav items (shown only to teachers)
   const teacherNavItems: NavItem[] = [
@@ -238,10 +243,40 @@ export function Sidebar({
       show: canManageAcademics,
     },
     {
+      href: '/dashboard/academics/subjects',
+      label: t('subjects'),
+      icon: BookOpen,
+      show: canManageAcademics,
+    },
+    {
+      href: '/dashboard/academics/bulk-assignment',
+      label: t('bulkAssignment'),
+      icon: Layers,
+      show: canManageAcademics,
+    },
+    {
+      href: '/dashboard/academics/subject-assignment',
+      label: 'Subject Assignment',
+      icon: BookOpen,
+      show: canManageAcademics,
+    },
+    {
+      href: '/dashboard/academics/infrastructure',
+      label: 'Infrastructure',
+      icon: Building2,
+      show: canManageAcademics,
+    },
+    {
       href: '/dashboard/enrollments',
       label: t('enrollments'),
       icon: History,
       show: canManageEnrollments,
+    },
+    {
+      href: '/dashboard/promotions',
+      label: 'Promotions',
+      icon: ArrowRightLeft,
+      show: canManageAcademics,
     },
     {
       href: '/dashboard/schedule',
@@ -253,6 +288,18 @@ export function Sidebar({
       href: '/dashboard/teachers',
       label: t('teachers'),
       icon: BookOpen,
+      show: canManageTeachers,
+    },
+    {
+      href: '/dashboard/teachers/assignments',
+      label: 'Teacher Assignments',
+      icon: UserCheck,
+      show: canManageTeachers,
+    },
+    {
+      href: '/dashboard/teachers/workload',
+      label: 'Workload Dashboard',
+      icon: Activity,
       show: canManageTeachers,
     },
     {
@@ -391,14 +438,14 @@ export function Sidebar({
         aria-label={t('mainNavigation')}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center justify-between border-b px-4">
+        <div className="flex min-h-[64px] items-center justify-between border-b px-4 py-3">
           {!isCollapsed && (
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <div className="flex items-center gap-3 w-full pr-2">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <GraduationCap className="h-4 w-4" aria-hidden="true" />
               </div>
-              <span className="text-base font-bold text-sidebar-foreground">
-                SMS
+              <span className="text-sm font-semibold leading-tight text-sidebar-foreground break-words line-clamp-2">
+                {schoolInfo?.school_name || 'SMS'}
               </span>
             </div>
           )}

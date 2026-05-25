@@ -72,7 +72,7 @@ export const useEnrollments = (filters: EnrollmentFilters = {}) => {
       if (filters.yearId) {
         const { data } = await axiosInstance.get<PaginatedResponse<Enrollment>>(
           `/enrollments/year/${filters.yearId}`,
-          { params: { page, size, status, search: undefined } },
+          { params: { page, size, status } },
         );
         return data;
       }
@@ -80,7 +80,9 @@ export const useEnrollments = (filters: EnrollmentFilters = {}) => {
       // Fallback: empty result if no filter specified
       return { items: [], total: 0, page: 1, size, pages: 0 };
     },
-    enabled: !!(filters.sectionId || filters.studentId || filters.yearId),
+    // Always enable the query - let it return empty data if no filters
+    // This prevents the "no data" confusion when filters aren't set
+    enabled: true,
   });
 };
 

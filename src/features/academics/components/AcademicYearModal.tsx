@@ -37,6 +37,7 @@ import { Separator } from '@/components/ui/separator';
 import { Loader2, Copy, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { format, addYears, parseISO } from 'date-fns';
+import { toast } from 'sonner';
 
 interface AcademicYearModalProps {
   open: boolean;
@@ -97,6 +98,7 @@ export function AcademicYearModal({
       name: '',
       start_date: format(new Date(), 'yyyy-MM-dd'),
       end_date: format(addYears(new Date(), 1), 'yyyy-MM-dd'),
+      status: 'planning',
       description: '',
     },
   });
@@ -113,6 +115,7 @@ export function AcademicYearModal({
         name: year.name,
         start_date: year.start_date.split('T')[0],
         end_date: year.end_date.split('T')[0],
+        status: year.status,
         description: year.description || '',
       });
     } else {
@@ -127,6 +130,7 @@ export function AcademicYearModal({
         name: '',
         start_date: format(new Date(), 'yyyy-MM-dd'),
         end_date: format(addYears(new Date(), 1), 'yyyy-MM-dd'),
+        status: 'planning',
         description: '',
       });
     }
@@ -158,6 +162,23 @@ export function AcademicYearModal({
   }, [cloneEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = (data: AcademicYearForm) => {
+    // Client-side overlap check
+    if (!isEditing) {
+      const newStart = new Date(data.start_date);
+      const newEnd = new Date(data.end_date);
+      
+      const hasOverlap = existingYears.some(y => {
+        const yStart = new Date(y.start_date);
+        const yEnd = new Date(y.end_date);
+        return newStart <= yEnd && newEnd >= yStart;
+      });
+
+      if (hasOverlap) {
+        toast.error("Date range overlaps with an existing academic year.");
+        return;
+      }
+    }
+
     onSubmit({
       ...data,
       ...(cloneEnabled && cloneSourceId ? { clone_from_year_id: cloneSourceId } : {}),
@@ -270,6 +291,31 @@ export function AcademicYearModal({
                       className="h-11"
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* ── Status ── */}
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }: { field: any }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="planning">Planning</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

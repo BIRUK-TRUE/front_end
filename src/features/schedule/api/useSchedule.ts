@@ -11,6 +11,12 @@ export const scheduleKeys = {
     [...scheduleKeys.all, "section", sectionId, termId] as const,
   byTeacher: (teacherId: string, termId: string) =>
     [...scheduleKeys.all, "teacher", teacherId, termId] as const,
+  byClassroom: (classroomId: string, termId: string) =>
+    [...scheduleKeys.all, "classroom", classroomId, termId] as const,
+  byTerm: (termId: string) =>
+    [...scheduleKeys.all, "term", termId] as const,
+  period: (periodId: string) =>
+    [...scheduleKeys.all, "period", periodId] as const,
 };
 
 /**

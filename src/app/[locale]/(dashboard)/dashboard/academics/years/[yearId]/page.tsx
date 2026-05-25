@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import {
   useAcademicYear,
   useDeleteAcademicYear,
+  useUpdateAcademicYear,
 } from "@/features/academics/api/useAcademicYears";
 import { AcademicYearStatus } from "@/features/academics/types";
 import { PageHeader } from "@/components/shared/page-header";
@@ -44,6 +46,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { AcademicYearModal } from "@/features/academics/components/AcademicYearModal";
 import {
   useTerms,
   useCreateTerm,
@@ -72,6 +75,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { Progress } from "@/components/ui/progress";
 
 export default function AcademicYearDetailPage() {
   const t = useTranslations("common");
@@ -92,6 +96,7 @@ export default function AcademicYearDetailPage() {
   const updateClass = useUpdateClass(yearId);
   const deleteClass = useDeleteClass(yearId);
   const deleteYear = useDeleteAcademicYear();
+  const updateYear = useUpdateAcademicYear();
 
   const [isTermModalOpen, setIsTermModalOpen] = useState(false);
   const [editingTerm, setEditingTerm] = useState<Term | null>(null);
@@ -101,6 +106,7 @@ export default function AcademicYearDetailPage() {
   const [editingClass, setEditingClass] = useState<Class | null>(null);
   const [deleteClassId, setDeleteClassId] = useState<string | null>(null);
   const [deleteYearDialogOpen, setDeleteYearDialogOpen] = useState(false);
+  const [isYearModalOpen, setIsYearModalOpen] = useState(false);
 
   const [classSearch, setClassSearch] = useState("");
   const [classGradeFilter, setClassGradeFilter] = useState("all");
@@ -121,8 +127,10 @@ export default function AcademicYearDetailPage() {
     try {
       if (editingTerm) {
         await updateTerm.mutateAsync({ id: editingTerm.id, data: formData });
+        toast.success("Term updated successfully");
       } else {
         await createTerm.mutateAsync(formData);
+        toast.success("Term created successfully");
       }
       setIsTermModalOpen(false);
     } catch (error: any) {
@@ -144,10 +152,26 @@ export default function AcademicYearDetailPage() {
     try {
       if (editingClass) {
         await updateClass.mutateAsync({ id: editingClass.id, data: formData });
+        toast.success("Class updated successfully");
       } else {
         await createClass.mutateAsync(formData);
+        toast.success("Class created successfully");
       }
       setIsClassModalOpen(false);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || t("error"));
+    }
+  };
+
+  const openEditYearModal = () => {
+    setIsYearModalOpen(true);
+  };
+
+  const handleYearSubmit = async (formData: any) => {
+    try {
+      await updateYear.mutateAsync({ id: yearId, data: formData });
+      toast.success("Academic year updated successfully");
+      setIsYearModalOpen(false);
     } catch (error: any) {
       toast.error(error?.response?.data?.detail || t("error"));
     }
@@ -279,7 +303,28 @@ export default function AcademicYearDetailPage() {
         actions={
           <div className="flex items-center gap-4">
             {getStatusBadge(year.status, year.is_current, ta)}
-            {/* We will add global year actions here later if needed */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <MoreHorizontal className="h-4 w-4" />
+                  Actions
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[180px]">
+                <DropdownMenuItem onClick={openEditYearModal}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Year
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setDeleteYearDialogOpen(true)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Year
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         }
       />
@@ -313,6 +358,54 @@ export default function AcademicYearDetailPage() {
               {ta("addTerm")}
             </Button>
           </div>
+
+          {/* Term Timeline */}
+          {termsData?.items && termsData.items.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                  {ta("termTimeline") || "Term Timeline"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="relative pt-6 pb-2">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary/20 w-full" />
+                  </div>
+                  <div className="absolute top-0 left-0 right-0 flex justify-between px-1">
+                    {termsData.items.map((term) => {
+                      const yearStart = new Date(year.start_date).getTime();
+                      const yearEnd = new Date(year.end_date).getTime();
+                      const termStart = new Date(term.start_date).getTime();
+                      const termEnd = new Date(term.end_date).getTime();
+                      
+                      const totalDuration = yearEnd - yearStart;
+                      const startOffset = ((termStart - yearStart) / totalDuration) * 100;
+                      const width = ((termEnd - termStart) / totalDuration) * 100;
+
+                      return (
+                        <div
+                          key={term.id}
+                          className="absolute top-[-8px] h-4 rounded-full bg-primary transition-all hover:bg-primary/80 cursor-pointer group"
+                          style={{ left: `${startOffset}%`, width: `${width}%` }}
+                          title={`${term.name}: ${new Date(term.start_date).toLocaleDateString()} - ${new Date(term.end_date).toLocaleDateString()}`}
+                        >
+                          <div className="opacity-0 group-hover:opacity-100 absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-xs py-1 px-2 rounded shadow-md whitespace-nowrap z-10 pointer-events-none">
+                            {term.name}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between text-[10px] text-muted-foreground mt-2">
+                    <span>{new Date(year.start_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                    <span>{new Date(year.end_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardContent className="p-0">
               <div className="relative overflow-x-auto min-h-[200px]">
@@ -651,6 +744,9 @@ export default function AcademicYearDetailPage() {
         term={editingTerm}
         onSubmit={handleTermSubmit}
         isLoading={createTerm.isPending || updateTerm.isPending}
+        yearStart={year?.start_date}
+        yearEnd={year?.end_date}
+        existingTerms={termsData?.items || []}
       />
 
       <ClassModal
@@ -703,6 +799,14 @@ export default function AcademicYearDetailPage() {
         title={ta("deleteYearTitle")}
         description={ta("deleteYearDescription")}
         isLoading={deleteYear.isPending}
+      />
+
+      <AcademicYearModal
+        open={isYearModalOpen}
+        onOpenChange={setIsYearModalOpen}
+        year={year}
+        onSubmit={handleYearSubmit}
+        isLoading={updateYear.isPending}
       />
     </div>
   );

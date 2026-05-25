@@ -1,24 +1,26 @@
 import { axiosInstance } from './axios';
-import { useAuthStore, type User } from '@/lib/store/auth-store';
+import { useAuthStore } from '@/lib/store/auth-store';
 
-export interface LoginResponse {
-  user: User;
-  tokens: {
-    access_token: string;
-    refresh_token: string;
-    token_type: string;
-    expires_in: number;
-  };
-  message?: string;
-}
-
+// ============================================================
+// Auth service — uses real API only (no mock fallback)
+// ============================================================
 export const authService = {
-  async login(email: string, password: string): Promise<LoginResponse> {
-    const { data } = await axiosInstance.post<LoginResponse>('/auth/login', {
-      email,
-      password,
-    });
-    return data;
+  async login(email: string, password: string) {
+    console.log('[AuthService] Sending login request to:', `${process.env.NEXT_PUBLIC_API_URL}/auth/login`);
+    console.log('[AuthService] Request payload:', { email, password: '***' });
+    try {
+      const { data } = await axiosInstance.post('/auth/login', {
+        email,
+        password,
+      });
+      console.log('[AuthService] Login response received:', data);
+      return data;
+    } catch (error: any) {
+      console.error('[AuthService] Login error:', error);
+      console.error('[AuthService] Error response:', error.response?.data);
+      console.error('[AuthService] Error status:', error.response?.status);
+      throw error;
+    }
   },
 
   async refresh(refreshToken: string) {
@@ -56,7 +58,7 @@ export const authService = {
     const { data } = await axiosInstance.post('/auth/reset-password', {
       token,
       new_password: newPassword,
-      confirm_password: newPasswordConfirm,
+      new_password_confirm: newPasswordConfirm,
     });
     return data;
   },

@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { useAcademicYears, useCreateAcademicYear, useUpdateAcademicYear, useDeleteAcademicYear } from '@/features/academics/api/useAcademicYears';
+import { useAcademicYears, useCreateAcademicYear, useUpdateAcademicYear, useDeleteAcademicYear, useSetCurrentAcademicYear } from '@/features/academics/api/useAcademicYears';
 import { type AcademicYearForm } from '@/features/academics/types/schemas';import { type AcademicYear, AcademicYearStatus } from '@/features/academics/types';
 import { AcademicYearModal } from '@/features/academics/components/AcademicYearModal';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { toast } from 'sonner';
 import {
   Plus,
   Calendar,
@@ -174,6 +175,7 @@ export default function AcademicYearsPage() {
   const createYear = useCreateAcademicYear();
   const updateYear = useUpdateAcademicYear();
   const deleteYear = useDeleteAcademicYear();
+  const setCurrentYear = useSetCurrentAcademicYear();
 
   const openCreateModal = () => {
     setEditingYear(null);
@@ -184,8 +186,10 @@ export default function AcademicYearsPage() {
     try {
       if (editingYear) {
         await updateYear.mutateAsync({ id: editingYear.id, data: formData });
+        toast.success("Academic year updated successfully");
       } else {
         const result = await createYear.mutateAsync(formData);
+        toast.success("Academic year created successfully");
         // Show setup checklist after creation
         setNewlyCreated({ id: result.id, name: result.name });
       }
@@ -196,10 +200,7 @@ export default function AcademicYearsPage() {
   };
 
   const handleActivate = async (id: string) => {
-    await updateYear.mutateAsync({
-      id,
-      data: { status: AcademicYearStatus.ACTIVE, is_current: true } as any,
-    });
+    await setCurrentYear.mutateAsync(id);
   };
 
   return (

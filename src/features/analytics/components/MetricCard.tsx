@@ -23,13 +23,13 @@ export function MetricCard({
   className,
 }: MetricCardProps) {
   return (
-    <Card className={cn("overflow-hidden border-none shadow-md", className)}>
+    <Card className={cn("overflow-hidden shadow-sm", className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-semibold text-muted-foreground leading-tight line-clamp-2">
           {title}
         </CardTitle>
-        <div className="bg-primary/10 p-2 rounded-full">
-          <Icon className="h-4 w-4 text-primary" />
+        <div className="rounded-lg bg-primary/10 p-2">
+          <Icon className="h-4 w-4 text-primary" aria-hidden="true" />
         </div>
       </CardHeader>
       <CardContent>
@@ -38,8 +38,8 @@ export function MetricCard({
           <div className="mt-1 flex items-center gap-2">
             {trend && (
               <span className={cn(
-                "text-xs font-semibold px-1.5 py-0.5 rounded-full flex items-center",
-                trend.isUp ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                "flex items-center rounded-full border px-1.5 py-0.5 text-xs font-semibold",
+                trend.isUp ? "border-success/20 bg-success/10 text-success" : "border-destructive/20 bg-destructive/10 text-destructive"
               )}>
                 {trend.isUp ? "+" : "-"}{trend.value}%
               </span>

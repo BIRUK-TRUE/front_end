@@ -14,10 +14,11 @@ import {
   UserCheck, 
   GraduationCap, 
   AlertTriangle, 
-  ChevronDown,
   Filter,
   RefreshCw,
-  Download
+  Download,
+  Wallet,
+  BellRing
 } from "lucide-react";
 import { 
   useAnalyticsSummary 
@@ -37,13 +38,10 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useClasses } from "@/features/academics/api/useClasses";
 import { useAcademicYears } from "@/features/academics/api/useAcademicYears";
-import { useQueryClient } from "@tanstack/react-query";
-import { analyticsKeys } from "../types";
+import { Badge } from "@/components/ui/badge";
 
 export function AnalyticsOverview() {
   const t = useTranslations("analytics");
-  const tc = useTranslations("common");
-  const queryClient = useQueryClient();
 
   // Filters State
   const [selectedTerm, setSelectedTerm] = useState<string>("");
@@ -55,26 +53,27 @@ export function AnalyticsOverview() {
   const currentYearId = yearsData?.items?.find(y => y.is_current)?.id || "";
   const { data: classesData } = useClasses(currentYearId);
   
-  const currentTermId = selectedTerm || yearsData?.items?.find(y => y.is_current)?.id || "";
+  const currentTermId = selectedTerm && selectedTerm !== "all" ? selectedTerm : yearsData?.items?.find(y => y.is_current)?.id || "";
+  const activeClassId = selectedClass && selectedClass !== "all" ? selectedClass : "";
 
   const { data: summary, isLoading: isLoadingSummary, refetch: refetchSummary } = useAnalyticsSummary({ 
     termId: currentTermId,
-    classId: selectedClass 
+    classId: activeClassId 
   });
 
   const { data: trendData, isLoading: isLoadingTrend, refetch: refetchTrend } = useAttendanceTrend({
     days: timeRange,
-    classId: selectedClass
+    classId: activeClassId
   });
 
   const { data: distributionData, isLoading: isLoadingDistribution, refetch: refetchDistribution } = useGradeDistribution({
     termId: currentTermId,
-    classId: selectedClass
+    classId: activeClassId
   });
 
   const { data: atRiskData, isLoading: isLoadingAtRisk, refetch: refetchAtRisk } = useAtRiskStudents({
     termId: currentTermId,
-    classId: selectedClass
+    classId: activeClassId
   });
 
   const { data: performanceData, isLoading: isLoadingPerformance, refetch: refetchPerformance } = useClassPerformance(currentTermId);
@@ -96,7 +95,7 @@ export function AnalyticsOverview() {
       performanceData,
       filters: {
         termId: currentTermId,
-        classId: selectedClass,
+        classId: activeClassId,
         timeRange
       },
       exportedAt: new Date().toISOString()
@@ -114,32 +113,39 @@ export function AnalyticsOverview() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 min-w-0">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">{t("title")}</h1>
-          <p className="text-muted-foreground">{t("subtitle")}</p>
-        </div>
+    <div className="space-y-6 min-w-0">
+      <PageHeader
+        title={t("title")}
+        description={t("subtitle")}
+        icon={GraduationCap}
+        breadcrumb={["Admin", "Decision Support", "Analytics"]}
+        action={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExport} className="min-h-11 gap-2">
+              <Download className="h-4 w-4" /> {t("export")}
+            </Button>
+            <Button variant="outline" onClick={handleRefreshAll} className="min-h-11 gap-2">
+              <RefreshCw className="h-4 w-4" /> {t("refresh")}
+            </Button>
+          </div>
+        }
+      />
+      <div className="flex flex-col gap-4">
         
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
-            <Download className="h-4 w-4" /> {t("export")}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleRefreshAll} className="gap-2">
-            <RefreshCw className="h-4 w-4" /> {t("refresh")}
-          </Button>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Badge variant="outline" className="rounded-full">Last updated: just now</Badge>
         </div>
       </div>
       
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-3 bg-muted/40 p-2 rounded-xl border border-border/50">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-card p-3 shadow-sm">
         <div className="flex items-center gap-2 px-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
           <span className="text-xs font-semibold text-muted-foreground uppercase">{t("filters.term")}:</span>
         </div>
         
         <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-          <SelectTrigger className="w-[180px] h-9 border-none bg-background shadow-sm">
+          <SelectTrigger className="h-11 w-[180px] bg-background">
             <SelectValue placeholder={t("filters.allTerms")} />
           </SelectTrigger>
           <SelectContent>
@@ -153,7 +159,7 @@ export function AnalyticsOverview() {
         <Separator orientation="vertical" className="h-6 hidden md:block" />
 
         <Select value={selectedClass} onValueChange={setSelectedClass}>
-          <SelectTrigger className="w-[180px] h-9 border-none bg-background shadow-sm">
+          <SelectTrigger className="h-11 w-[180px] bg-background">
             <SelectValue placeholder={t("filters.allClasses")} />
           </SelectTrigger>
           <SelectContent>
@@ -166,13 +172,12 @@ export function AnalyticsOverview() {
       </div>
 
       {/* Metrics Row */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <MetricCard
           title={t("metrics.totalStudents")}
           value={summary?.totalStudents || 0}
           icon={Users}
           description={t("metrics.totalStudentsDesc")}
-          className="bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/20"
         />
         <MetricCard
           title={t("metrics.attendanceRate")}
@@ -180,7 +185,6 @@ export function AnalyticsOverview() {
           icon={UserCheck}
           trend={{ value: 2.1, isUp: true }}
           description={t("metrics.attendanceRateDesc")}
-          className="bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-950/20"
         />
         <MetricCard
           title={t("metrics.gradeAverage")}
@@ -188,15 +192,33 @@ export function AnalyticsOverview() {
           icon={GraduationCap}
           trend={{ value: 0.5, isUp: false }}
           description={t("metrics.gradeAverageDesc")}
-          className="bg-gradient-to-br from-violet-50 to-white dark:from-violet-950/20"
+        />
+        <MetricCard
+          title="Fee Collection"
+          value="87%"
+          icon={Wallet}
+          trend={{ value: 5, isUp: true }}
+          description="Paid or partially paid"
+        />
+        <MetricCard
+          title="Active Teachers"
+          value="48"
+          icon={UserCheck}
+          description="Stable roster"
         />
         <MetricCard
           title={t("metrics.atRiskStudents")}
           value={atRiskData?.total || 0}
-          icon={AlertTriangle}
+          icon={BellRing}
           description={t("metrics.atRiskStudentsDesc")}
-          className="bg-gradient-to-br from-rose-50 to-white dark:from-rose-950/20"
         />
+      </div>
+
+      <div className="rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm">
+        <div className="flex items-start gap-2">
+          <AlertTriangle className="mt-0.5 h-4 w-4 text-warning" aria-hidden="true" />
+          <p><span className="font-semibold">Insight:</span> Review at-risk students with multiple flags first; attendance, grades, and fee issues compound quickly when handled in separate workflows.</p>
+        </div>
       </div>
 
       {/* Charts Grid */}

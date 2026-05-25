@@ -1,36 +1,64 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
-import { useState } from 'react';
-import { useStudents, useDeleteStudent, useRestoreStudent } from '@/hooks/use-students';
-import { usePermissions } from '@/hooks/use-permissions';
-import { PageHeader } from '@/components/shared/page-header';
-import { StatusBadge } from '@/components/shared/status-badge';
-import { EmptyState } from '@/components/shared/empty-state';
-import { LoadingSpinner } from '@/components/shared/loading-spinner';
-import { ConfirmDialog } from '@/components/shared/confirm-dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { DataTable } from '@/components/shared/data-table';
-import { ColumnDef } from '@tanstack/react-table';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
-import { Link } from '@/i18n/navigation';
-import { Plus, Search, MoreHorizontal, Eye, Pencil, Trash2, RotateCcw, GraduationCap, FileDown, Camera } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
+import { ColumnDef } from '@tanstack/react-table';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
+import { useStudents, useDeleteStudent, useRestoreStudent, useStudentStats } from '@/hooks/use-students';
+import type { StudentFilters } from '@/lib/api/students.service';
+import { usePermissions } from '@/hooks/use-permissions';
 import { useDownloadReportCard } from '@/hooks/use-grades';
 import { useCurrentTerm } from '@/hooks/use-academic-years';
+import { ActionsDropdown } from '@/components/shared/actions-dropdown';
+import { DataTableToolbar } from '@/components/shared/data-table-toolbar';
+import { EmptyState } from '@/components/shared/empty-state';
+import { PageHeader } from '@/components/shared/page-header';
+import { StatsRow } from '@/components/shared/stats-row';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { DataTable } from '@/components/shared/data-table';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Activity,
+  Camera,
+  Download,
+  Eye,
+  FileDown,
+  GraduationCap,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Trash2,
+  UserRoundCheck,
+  UserRoundX,
+} from 'lucide-react';
+
+type StudentRow = {
+  id: string;
+  registration_number?: string;
+  full_name: string;
+  sex?: 'M' | 'F';
+  status?: StudentFilters['status'] | 'inactive';
+  admission_date?: string;
+};
+
+function getInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'ST';
+}
 
 export default function StudentsPage() {
   const t = useTranslations('students');
   const tc = useTranslations('common');
   const { canManageStudents } = usePermissions();
-
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -38,34 +66,74 @@ export default function StudentsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const filters = {
-    page, size: 20,
+    page,
+    size: 20,
     search: search || undefined,
-    status: (statusFilter || undefined) as any,
-    sex: (sexFilter || undefined) as any,
-  };
+    status: (statusFilter || undefined) as StudentFilters['status'],
+    sex: (sexFilter || undefined) as StudentFilters['sex'],
+  } satisfies StudentFilters;
 
   const { data, isLoading } = useStudents(filters);
+  const { data: studentStats, isLoading: statsLoading } = useStudentStats();
   const deleteStudent = useDeleteStudent();
   const restoreStudent = useRestoreStudent();
   const downloadReportCard = useDownloadReportCard();
   const { data: currentTerm } = useCurrentTerm();
+  const students = useMemo<StudentRow[]>(() => data?.items || [], [data?.items]);
 
-  const handleDelete = () => {
-    if (deleteId) {
-      deleteStudent.mutate(deleteId, { onSuccess: () => setDeleteId(null) });
-    }
-  };
+  const stats = useMemo(() => {
+    // Use actual stats from API, not filtered page data
+    const totalStudents = studentStats?.total || 0;
+    const activeStudents = studentStats?.active || 0;
+    const maleStudents = studentStats?.male || 0;
+    const femaleStudents = studentStats?.female || 0;
+    const inactiveStudents = totalStudents - activeStudents;
+    
+    return [
+      { title: 'Total', value: totalStudents, icon: GraduationCap, description: 'All students in the system' },
+      { title: 'Active', value: activeStudents, icon: UserRoundCheck, description: 'Ready for attendance and grading', trend: { label: 'Available today', tone: 'positive' as const } },
+      { title: 'Male', value: maleStudents, icon: Activity, description: 'Male students' },
+      { title: 'Female', value: femaleStudents, icon: UserRoundX, description: 'Female students' },
+    ];
+  }, [studentStats]);
 
-  const columns: ColumnDef<any>[] = [
+  const columns: ColumnDef<StudentRow>[] = [
     {
-      accessorKey: 'registration_number',
-      header: t('registrationNumber'),
-      cell: ({ row }) => <span className="font-mono text-sm">{row.original.registration_number}</span>,
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all students"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label={`Select ${row.original.full_name}`}
+        />
+      ),
     },
     {
       accessorKey: 'full_name',
       header: tc('name'),
-      cell: ({ row }) => <span className="font-medium">{row.original.full_name}</span>,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <Avatar className="h-9 w-9">
+            <AvatarFallback>{getInitials(row.original.full_name)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="font-medium">{row.original.full_name}</p>
+            <p className="font-mono text-xs text-muted-foreground">{row.original.registration_number}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'registration_number',
+      header: 'ID',
+      cell: ({ row }) => <span className="font-mono text-sm">{row.original.registration_number}</span>,
     },
     {
       accessorKey: 'sex',
@@ -82,7 +150,7 @@ export default function StudentsPage() {
       header: t('admissionDate'),
       cell: ({ row }) => (
         <span className="text-muted-foreground">
-          {row.original.admission_date ? format(new Date(row.original.admission_date), 'MMM d, yyyy') : '—'}
+          {row.original.admission_date ? format(new Date(row.original.admission_date), 'MMM d, yyyy') : '-'}
         </span>
       ),
     },
@@ -91,142 +159,113 @@ export default function StudentsPage() {
       header: () => <span className="sr-only">{tc('actions')}</span>,
       cell: ({ row }) => {
         const student = row.original;
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/dashboard/students/${student.id}`} className="flex items-center gap-2">
-                  <Eye className="h-4 w-4" aria-hidden="true" />{tc('view')}
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/dashboard/students/${student.id}/edit`} className="flex items-center gap-2">
-                  <Pencil className="h-4 w-4" aria-hidden="true" />{tc('edit')}
-                </Link>
-              </DropdownMenuItem>
-              {student.status === 'inactive' && (
-                <>
-                  <DropdownMenuItem asChild className="flex items-center gap-2">
-                    <Link href={`/dashboard/students/${student.id}/face-enrollment`} className="flex items-center gap-2">
-                      <Camera className="h-4 w-4" aria-hidden="true" />
-                      {t('faceEnrollment')}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => restoreStudent.mutate(student.id)} className="flex items-center gap-2">
-                    <RotateCcw className="h-4 w-4" aria-hidden="true" />{tc('restore')}
-                  </DropdownMenuItem>
-                </>
-              )}
-              {currentTerm && (
-                <DropdownMenuItem 
-                  onClick={() => downloadReportCard.mutate({ studentId: student.id, termId: currentTerm.id })}
-                  className="flex items-center gap-2"
-                  disabled={downloadReportCard.isPending}
-                >
-                  <FileDown className="h-4 w-4" aria-hidden="true" />
-                  {t('downloadReportCard')}
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onClick={() => setDeleteId(student.id)} className="text-destructive focus:text-destructive flex items-center gap-2">
-                <Trash2 className="h-4 w-4" aria-hidden="true" />{tc('delete')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
+        const items = [
+          {
+            label: tc('view'),
+            icon: Eye,
+            href: <Link href={`/dashboard/students/${student.id}`} className="flex items-center gap-2"><Eye className="h-4 w-4" />{tc('view')}</Link>,
+          },
+          {
+            label: tc('edit'),
+            icon: Pencil,
+            href: <Link href={`/dashboard/students/${student.id}/edit`} className="flex items-center gap-2"><Pencil className="h-4 w-4" />{tc('edit')}</Link>,
+          },
+          {
+            label: t('faceEnrollment'),
+            icon: Camera,
+            href: <Link href={`/dashboard/students/${student.id}/face-enrollment`} className="flex items-center gap-2"><Camera className="h-4 w-4" />{t('faceEnrollment')}</Link>,
+          },
+          ...(currentTerm ? [{
+            label: t('downloadReportCard'),
+            icon: FileDown,
+            onSelect: () => downloadReportCard.mutate({ studentId: student.id, termId: currentTerm.id }),
+            disabled: downloadReportCard.isPending,
+          }] : []),
+          ...(student.status === 'inactive' ? [{
+            label: tc('restore'),
+            icon: RotateCcw,
+            onSelect: () => restoreStudent.mutate(student.id),
+          }] : []),
+          {
+            label: tc('delete'),
+            icon: Trash2,
+            destructive: true,
+            onSelect: () => setDeleteId(student.id),
+          },
+        ];
+        return <ActionsDropdown items={items} label={`${tc('actions')} for ${student.full_name}`} />;
       },
     },
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       <PageHeader
         title={t('title')}
-        actions={
-          canManageStudents ? (
-            <Link href="/dashboard/students/create">
-              <Button className="gap-2 min-h-[44px]">
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                {t('createStudent')}
-              </Button>
-            </Link>
-          ) : undefined
-        }
+        icon={GraduationCap}
+        breadcrumb={['Admin', 'People', 'Students']}
+        action={canManageStudents ? (
+          <Link href="/dashboard/students/create">
+            <Button className="min-h-11 gap-2">
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              {t('createStudent')}
+            </Button>
+          </Link>
+        ) : undefined}
       />
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-              <Input
-                placeholder={t('searchStudents')}
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                className="pl-9 h-11"
-                aria-label={tc('search')}
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v === 'all' ? '' : v); setPage(1); }}>
-              <SelectTrigger className="w-full sm:w-[160px] h-11">
-                <SelectValue placeholder={tc('status')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{tc('all')}</SelectItem>
-                {['active', 'graduated', 'transferred', 'expelled', 'withdrawn'].map((s) => (
-                  <SelectItem key={s} value={s}>{t(`status${s.charAt(0).toUpperCase() + s.slice(1)}` as any)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={sexFilter} onValueChange={(v) => { setSexFilter(v === 'all' ? '' : v); setPage(1); }}>
-              <SelectTrigger className="w-full sm:w-[120px] h-11">
-                <SelectValue placeholder={t('sex')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{tc('all')}</SelectItem>
-                <SelectItem value="M">{t('male')}</SelectItem>
-                <SelectItem value="F">{t('female')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <StatsRow items={stats} isLoading={statsLoading} />
 
-      {/* Table */}
+      <DataTableToolbar
+        search={search}
+        onSearchChange={(value) => { setSearch(value); setPage(1); }}
+        searchPlaceholder={t('searchStudents')}
+      >
+        <Select value={statusFilter || 'all'} onValueChange={(value) => { setStatusFilter(value === 'all' ? '' : value); setPage(1); }}>
+          <SelectTrigger className="h-11 w-full sm:w-[160px]"><SelectValue placeholder={tc('status')} /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{tc('all')}</SelectItem>
+            {['active', 'graduated', 'transferred', 'expelled', 'withdrawn'].map((status) => (
+              <SelectItem key={status} value={status}>{status.replace(/_/g, ' ')}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={sexFilter || 'all'} onValueChange={(value) => { setSexFilter(value === 'all' ? '' : value); setPage(1); }}>
+          <SelectTrigger className="h-11 w-full sm:w-[140px]"><SelectValue placeholder={t('sex')} /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{tc('all')}</SelectItem>
+            <SelectItem value="M">{t('male')}</SelectItem>
+            <SelectItem value="F">{t('female')}</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button variant="outline" className="h-11 gap-2">
+          <Download className="h-4 w-4" aria-hidden="true" />
+          Export
+        </Button>
+      </DataTableToolbar>
+
       <DataTable
         columns={columns}
-        data={data?.items || []}
+        data={students}
         isLoading={isLoading}
         manualPagination
         pageCount={data?.pages || 1}
         pagination={{ pageIndex: page - 1, pageSize: 20 }}
         onPaginationChange={(updater) => {
-          if (typeof updater === 'function') {
-            const newState = updater({ pageIndex: page - 1, pageSize: 20 });
-            setPage(newState.pageIndex + 1);
-          } else {
-            setPage(updater.pageIndex + 1);
-          }
+          const next = typeof updater === 'function'
+            ? updater({ pageIndex: page - 1, pageSize: 20 })
+            : updater;
+          setPage(next.pageIndex + 1);
         }}
-        emptyState={
-          <EmptyState
-            icon={GraduationCap}
-            title={t('noStudents')}
-            action={canManageStudents ? (
-              <Link href="/dashboard/students/create">
-                <Button className="gap-2"><Plus className="h-4 w-4" aria-hidden="true" />{t('createStudent')}</Button>
-              </Link>
-            ) : undefined}
-          />
-        }
+        emptyState={<EmptyState icon={GraduationCap} title={t('noStudents')} />}
       />
 
-      <ConfirmDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)} onConfirm={handleDelete} isLoading={deleteStudent.isPending} />
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={() => deleteId && deleteStudent.mutate(deleteId, { onSuccess: () => setDeleteId(null) })}
+        isLoading={deleteStudent.isPending}
+      />
     </div>
   );
 }

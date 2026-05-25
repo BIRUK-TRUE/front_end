@@ -13,7 +13,27 @@ export interface TeacherFilters {
 
 export const teachersService = {
   async getAll(filters: TeacherFilters = {}) {
+    console.log('🔍 teachersService.getAll called with filters:', filters);
+    
     const { data } = await axiosInstance.get('/teachers', { params: filters });
+    
+    console.log('✅ teachersService.getAll RAW response:', JSON.stringify(data, null, 2));
+    console.log('✅ Response type:', typeof data);
+    console.log('✅ Has items?:', Array.isArray(data?.items));
+    console.log('✅ Items length:', data?.items?.length);
+    console.log('✅ Total:', data?.total);
+    
+    // Ensure we always return a properly structured response
+    if (!data) {
+      console.error('❌ No data returned from API');
+      return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+    }
+    
+    if (!Array.isArray(data.items)) {
+      console.error('❌ data.items is not an array:', data.items);
+      return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+    }
+    
     return data;
   },
 
@@ -31,7 +51,13 @@ export const teachersService = {
 
   async getStats() {
     const { data } = await axiosInstance.get('/teachers/stats/summary');
-    return data;
+    // Normalize backend field names to what the dashboard expects
+    return {
+      total: data.total_teachers ?? data.total ?? 0,
+      active: data.active_teachers ?? data.active ?? 0,
+      on_leave: data.on_leave_teachers ?? 0,
+      growth: data.growth ?? 0,
+    };
   },
 
   async create(payload: {
@@ -81,5 +107,21 @@ export const teachersService = {
   async restore(id: string) {
     const { data } = await axiosInstance.post(`/teachers/${id}/restore`);
     return data;
+  },
+
+  async exportCsv() {
+    const response = await axiosInstance.get('/teachers/export/csv', {
+      responseType: 'blob',
+    });
+    
+    // Create a download link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `teachers_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   },
 };

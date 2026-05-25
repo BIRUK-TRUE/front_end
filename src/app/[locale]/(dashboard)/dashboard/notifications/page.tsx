@@ -1,422 +1,293 @@
 "use client";
 
-import { useState } from "react";
-import { PageHeader } from "@/components/shared/page-header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Send,
-  Bell,
-  Mail,
-  MessageSquare,
-  Eye,
-  Filter,
-  Users,
-  CheckCircle2,
-  Clock,
-  XCircle,
-  ShieldAlert,
-  History,
-  ArrowRight,
-} from "lucide-react";
-import {
-  useNotificationHistory,
-  useNotificationDetail,
-} from "@/features/notifications/api/useNotifications";
-import type { NotificationHistory } from "@/features/notifications/types";
+import { useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
+import { Bell, CheckCircle2, Clock, Edit3, Inbox, Mail, MessageSquare, Search, Send, Trash2, Users, XCircle } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { PageHeader } from "@/components/shared/page-header";
+import { StatusBadge } from "@/components/shared/status-badge";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNotificationHistory } from "@/features/notifications/api/useNotifications";
+import type { NotificationHistory } from "@/features/notifications/types";
 
-// ── Quick-action cards ────────────────────────────────────────────────────────
+const folders = [
+  { label: "Inbox", icon: Inbox, count: 12 },
+  { label: "Sent", icon: Send, count: 0 },
+  { label: "Drafts", icon: Edit3, count: 2 },
+  { label: "Broadcast", icon: Bell, count: 0 },
+  { label: "Trash", icon: Trash2, count: 0 },
+];
 
-function NotificationHub() {
-  const actions = [
-    {
-      icon: <Send className="h-6 w-6 text-primary" />,
-      title: "Send a Message",
-      description: "Compose and send a notification to students, guardians, or staff.",
-      href: "/dashboard/notifications/compose",
-      cta: "Compose",
-    },
-    {
-      icon: <ShieldAlert className="h-6 w-6 text-amber-600" />,
-      title: "Alert Rules",
-      description: "Set up automatic alerts for absences, low grades, or overdue fees.",
-      href: "/dashboard/notifications/alert-rules",
-      cta: "Manage Rules",
-    },
-    {
-      icon: <History className="h-6 w-6 text-muted-foreground" />,
-      title: "Sent History",
-      description: "View all previously sent notifications and their delivery status.",
-      href: "#history",
-      cta: "View History",
-      isTab: true,
-    },
-  ];
+function ChannelIcon({ channel }: { channel: string }) {
+  if (channel === "sms") return <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />;
+  if (channel === "email") return <Mail className="h-3.5 w-3.5" aria-hidden="true" />;
+  return <Bell className="h-3.5 w-3.5" aria-hidden="true" />;
+}
 
+function DeliveryStatus({ status }: { status: { delivered: number; pending: number; failed: number } }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
-      {actions.map((a) =>
-        a.isTab ? (
-          <Card key={a.title} className="group hover:border-primary/40 transition-colors cursor-pointer">
-            <CardContent className="p-5 flex flex-col gap-3 h-full">
-              <div className="h-11 w-11 rounded-xl bg-muted flex items-center justify-center">
-                {a.icon}
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-sm">{a.title}</h3>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{a.description}</p>
-              </div>
-              <Button variant="ghost" size="sm" className="justify-start gap-2 px-0 text-muted-foreground group-hover:text-foreground">
-                {a.cta} <ArrowRight className="h-3.5 w-3.5" />
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <Link key={a.title} href={a.href}>
-            <Card className="group hover:border-primary/40 transition-colors cursor-pointer h-full">
-              <CardContent className="p-5 flex flex-col gap-3 h-full">
-                <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center">
-                  {a.icon}
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-sm">{a.title}</h3>
-                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{a.description}</p>
-                </div>
-                <Button variant="ghost" size="sm" className="justify-start gap-2 px-0 text-primary group-hover:underline">
-                  {a.cta} <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </CardContent>
-            </Card>
-          </Link>
-        )
-      )}
+    <div className="flex flex-wrap gap-2 text-xs">
+      <span className="flex items-center gap-1 text-success"><CheckCircle2 className="h-3.5 w-3.5" />{status.delivered} delivered</span>
+      <span className="flex items-center gap-1 text-warning"><Clock className="h-3.5 w-3.5" />{status.pending} pending</span>
+      <span className="flex items-center gap-1 text-destructive"><XCircle className="h-3.5 w-3.5" />{status.failed} failed</span>
     </div>
   );
 }
 
-// ── History tab ───────────────────────────────────────────────────────────────
-
-function HistoryTab() {
-  const ALL = "all";
-  const [filters, setFilters] = useState({ type: "", dateFrom: "", dateTo: "", channel: "" });
-  const [selectedNotification, setSelectedNotification] = useState<NotificationHistory | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-
-  const { data: history, isLoading } = useNotificationHistory(filters);
-  const { data: detail } = useNotificationDetail(selectedNotification?.id || "");
-
-  const getPriorityColor = (priority: string) => {
-    const map: Record<string, string> = {
-      urgent: "bg-red-500 text-white",
-      high: "bg-orange-500 text-white",
-      medium: "bg-blue-500 text-white",
-      low: "bg-slate-400 text-white",
-    };
-    return map[priority] ?? "bg-slate-400 text-white";
-  };
-
-  const getChannelIcon = (channel: string) => {
-    if (channel === "in_app") return <Bell className="h-3.5 w-3.5" />;
-    if (channel === "sms") return <MessageSquare className="h-3.5 w-3.5" />;
-    if (channel === "email") return <Mail className="h-3.5 w-3.5" />;
-    return null;
-  };
-
-  const getStatusIcon = (status: string) => {
-    if (status === "delivered") return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
-    if (status === "pending") return <Clock className="h-4 w-4 text-amber-500" />;
-    if (status === "failed") return <XCircle className="h-4 w-4 text-red-500" />;
-    return null;
-  };
-
-  const hasFilters = filters.type || filters.dateFrom || filters.dateTo || filters.channel;
+function ComposeSheet() {
+  const [recipientMode, setRecipientMode] = useState("all_guardians");
+  const [channels, setChannels] = useState(["in_app", "email"]);
 
   return (
-    <>
-      {/* Filter bar */}
-      <Card>
-        <CardContent className="pt-5 pb-4">
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-              <Filter className="h-3.5 w-3.5" />
-              Filter by:
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button className="min-h-11 gap-2">
+          <Edit3 className="h-4 w-4" aria-hidden="true" />
+          Compose Message
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="right" className="w-full overflow-y-auto p-0 sm:max-w-2xl">
+        <SheetHeader className="border-b p-6 text-left">
+          <SheetTitle>Compose Message</SheetTitle>
+          <SheetDescription>Send a clear, targeted message to students, staff, or guardians.</SheetDescription>
+        </SheetHeader>
+        <div className="space-y-6 p-6">
+          <section className="space-y-3">
+            <h3>Recipients</h3>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {[
+                ["all_students", "All Students"],
+                ["all_teachers", "All Teachers"],
+                ["all_guardians", "All Guardians"],
+                ["by_grade", "By Grade"],
+              ].map(([value, label]) => (
+                <Button key={value} type="button" variant={recipientMode === value ? "default" : "outline"} className="justify-start" onClick={() => setRecipientMode(value)}>
+                  <Users className="mr-2 h-4 w-4" aria-hidden="true" />
+                  {label}
+                </Button>
+              ))}
             </div>
+            <Badge variant="outline" className="rounded-full">Sending to 247 recipients</Badge>
+          </section>
 
-            <Select
-              value={filters.type || ALL}
-              onValueChange={(v) => setFilters({ ...filters, type: v === ALL ? "" : v })}
-            >
-              <SelectTrigger className="w-[160px] h-9">
-                <SelectValue placeholder="All types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>All types</SelectItem>
-                <SelectItem value="absence_alert">Absence Alert</SelectItem>
-                <SelectItem value="low_grade">Low Grade</SelectItem>
-                <SelectItem value="fee_reminder">Fee Reminder</SelectItem>
-                <SelectItem value="general">General</SelectItem>
-                <SelectItem value="announcement">Announcement</SelectItem>
-                <SelectItem value="emergency">Emergency</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={filters.channel || ALL}
-              onValueChange={(v) => setFilters({ ...filters, channel: v === ALL ? "" : v })}
-            >
-              <SelectTrigger className="w-[140px] h-9">
-                <SelectValue placeholder="All channels" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>All channels</SelectItem>
-                <SelectItem value="in_app">In-App</SelectItem>
-                <SelectItem value="sms">SMS</SelectItem>
-                <SelectItem value="email">Email</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="flex items-center gap-2">
-              <Input
-                type="date"
-                value={filters.dateFrom}
-                onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                className="w-[140px] h-9"
-                aria-label="From date"
-              />
-              <span className="text-muted-foreground text-xs">to</span>
-              <Input
-                type="date"
-                value={filters.dateTo}
-                onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                className="w-[140px] h-9"
-                aria-label="To date"
-              />
+          <section className="space-y-4">
+            <h3>Message</h3>
+            <div className="space-y-2">
+              <Label htmlFor="template">Template</Label>
+              <Select defaultValue="general">
+                <SelectTrigger id="template"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fee">Fee Reminder</SelectItem>
+                  <SelectItem value="attendance">Attendance Alert</SelectItem>
+                  <SelectItem value="event">Event Notice</SelectItem>
+                  <SelectItem value="exam">Exam Schedule</SelectItem>
+                  <SelectItem value="emergency">Emergency Notice</SelectItem>
+                  <SelectItem value="general">General Announcement</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="subject">Subject</Label>
+              <Input id="subject" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="message">Message</Label>
+              <Textarea id="message" rows={8} />
+              <p className="text-xs text-muted-foreground">0 words</p>
+            </div>
+          </section>
 
-            {hasFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setFilters({ type: "", dateFrom: "", dateTo: "", channel: "" })}
-                className="text-muted-foreground h-9"
-              >
-                Clear filters
-              </Button>
-            )}
+          <section className="space-y-3">
+            <h3>Delivery</h3>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                ["in_app", "In-App", Bell],
+                ["email", "Email", Mail],
+                ["sms", "SMS", MessageSquare],
+              ].map(([value, label, Icon]) => (
+                <label key={value as string} className="flex min-h-11 items-center gap-2 rounded-md border p-3 text-sm">
+                  <Checkbox
+                    checked={channels.includes(value as string)}
+                    onCheckedChange={(checked) => setChannels((current) => checked ? [...current, value as string] : current.filter((channel) => channel !== value))}
+                  />
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  {label as string}
+                </label>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-lg border bg-muted/40 p-4">
+            <h3>Preview</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Your message preview will appear here before sending.</p>
+          </section>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="outline">Save Draft</Button>
+            <Button>Send Now</Button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Channels</TableHead>
-                <TableHead>Sent by</TableHead>
-                <TableHead>Sent</TableHead>
-                <TableHead>Recipients</TableHead>
-                <TableHead className="sr-only">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-10">
-                    <div className="animate-spin h-6 w-6 rounded-full border-4 border-primary border-r-transparent mx-auto" />
-                  </TableCell>
-                </TableRow>
-              ) : history && history.length > 0 ? (
-                history.map((n) => (
-                  <TableRow key={n.id} className="hover:bg-muted/40">
-                    <TableCell>
-                      <div className="space-y-0.5">
-                        <div className="font-medium text-sm">{n.title}</div>
-                        <div className="text-xs text-muted-foreground truncate max-w-[200px]">
-                          {n.message_preview}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={`text-[10px] ${getPriorityColor(n.priority as string)}`}>
-                        {n.priority}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        {["in_app", "sms", "email"].map((ch) => (
-                          <div key={ch} className="p-1 rounded bg-muted text-muted-foreground">
-                            {getChannelIcon(ch)}
-                          </div>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">{n.sent_by_name}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(n.sent_at), { addSuffix: true })}
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <span className="font-medium">{n.recipient_count}</span>
-                        <span className="text-muted-foreground"> · </span>
-                        <span className="text-emerald-600">{n.status.delivered} delivered</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => { setSelectedNotification(n); setIsDetailOpen(true); }}
-                        aria-label="View details"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-10 text-muted-foreground text-sm">
-                    No notifications sent yet.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Detail modal */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Notification Details</DialogTitle>
-            <DialogDescription>Full message and delivery status.</DialogDescription>
-          </DialogHeader>
-
-          {detail && (
-            <div className="space-y-5 py-2">
-              <div>
-                <h3 className="font-semibold mb-1">{detail.title}</h3>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{detail.full_message}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Sent by</p>
-                  <p>{detail.sent_by_name}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Sent</p>
-                  <p>{formatDistanceToNow(new Date(detail.sent_at), { addSuffix: true })}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { label: "Delivered", count: detail.status.delivered, color: "emerald" },
-                  { label: "Pending", count: detail.status.pending, color: "amber" },
-                  { label: "Failed", count: detail.status.failed, color: "red" },
-                ].map(({ label, count, color }) => (
-                  <div key={label} className={`text-center p-3 rounded-lg bg-${color}-50 dark:bg-${color}-950/20`}>
-                    <p className={`text-2xl font-bold text-${color}-600`}>{count}</p>
-                    <p className="text-xs text-muted-foreground">{label}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Recipients</p>
-                <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
-                  {detail.recipients.map((r) => (
-                    <div key={r.id} className="flex items-center justify-between p-2 rounded bg-muted">
-                      <div className="flex items-center gap-2">
-                        <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Users className="h-3.5 w-3.5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{r.recipient_name}</p>
-                          <p className="text-xs text-muted-foreground">{r.recipient_role}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        {getStatusIcon(r.status)}
-                        <span className="text-xs text-muted-foreground">{r.status}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
 export default function NotificationsPage() {
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<NotificationHistory | null>(null);
+  const { data: history, isLoading } = useNotificationHistory({});
+
+  const messages = useMemo(() => {
+    return (history || []).filter((message) => {
+      const query = search.toLowerCase();
+      return !query || message.title.toLowerCase().includes(query) || message.message_preview.toLowerCase().includes(query);
+    });
+  }, [history, search]);
+
+  const activeMessage = selected || messages[0];
+
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       <PageHeader
-        title="Notifications"
-        description="Send messages, manage alert rules, and review delivery history."
-        actions={
-          <Link href="/dashboard/notifications/compose">
-            <Button className="gap-2">
-              <Send className="h-4 w-4" />
-              Send Message
-            </Button>
-          </Link>
-        }
+        title="Messaging"
+        description="Compose, send, and audit school communication from one familiar workspace."
+        icon={MessageSquare}
+        breadcrumb={["Admin", "Communication", "Messaging"]}
+        action={<ComposeSheet />}
       />
 
-      <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="history">Sent History</TabsTrigger>
-        </TabsList>
+      <Card className="overflow-hidden shadow-sm">
+        <CardContent className="grid min-h-[640px] p-0 lg:grid-cols-[220px_minmax(300px,0.9fr)_minmax(360px,1.1fr)]">
+          <aside className="border-b bg-muted/30 p-4 lg:border-b-0 lg:border-r">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Folders</p>
+            <nav className="space-y-1" aria-label="Message folders">
+              {folders.map(({ label, icon: Icon, count }, index) => (
+                <button
+                  key={label}
+                  className={`flex min-h-11 w-full items-center justify-between rounded-md px-3 text-sm font-medium transition-colors hover:bg-muted ${index === 0 ? "bg-primary/10 text-primary" : "text-muted-foreground"}`}
+                >
+                  <span className="flex items-center gap-2"><Icon className="h-4 w-4" aria-hidden="true" />{label}</span>
+                  {count > 0 && <Badge variant="secondary" className="rounded-full">{count}</Badge>}
+                </button>
+              ))}
+            </nav>
 
-        <TabsContent value="overview" className="mt-4">
-          <NotificationHub />
-        </TabsContent>
+            <Separator className="my-5" />
 
-        <TabsContent value="history" className="mt-4 space-y-4">
-          <HistoryTab />
-        </TabsContent>
-      </Tabs>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quick Send</p>
+            <div className="space-y-1">
+              {["All Students", "All Teachers", "All Guardians", "By Grade"].map((label) => (
+                <Button key={label} variant="ghost" className="min-h-11 w-full justify-start text-muted-foreground">{label}</Button>
+              ))}
+            </div>
+          </aside>
+
+          <section className="border-b lg:border-b-0 lg:border-r">
+            <div className="border-b p-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search messages..." className="pl-9" />
+              </div>
+            </div>
+            <div className="divide-y">
+              {isLoading ? (
+                Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="space-y-2 p-4">
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/3" />
+                  </div>
+                ))
+              ) : messages.length > 0 ? (
+                messages.map((message) => (
+                  <button
+                    key={message.id}
+                    onClick={() => setSelected(message)}
+                    className={`w-full border-l-2 p-4 text-left transition-colors hover:bg-muted/60 ${activeMessage?.id === message.id ? "border-primary bg-primary/5" : "border-transparent"}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">{message.title}</p>
+                        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{message.message_preview}</p>
+                      </div>
+                      {message.priority === "urgent" && <Badge variant="destructive">Urgent</Badge>}
+                    </div>
+                    <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{formatDistanceToNow(new Date(message.sent_at), { addSuffix: true })}</span>
+                      <span>{message.recipient_count} recipients</span>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="p-8 text-center text-sm text-muted-foreground">No messages match your filters.</div>
+              )}
+            </div>
+          </section>
+
+          <section className="p-6">
+            {activeMessage ? (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2>{activeMessage.title}</h2>
+                    <Badge variant={activeMessage.priority === "urgent" ? "destructive" : "secondary"}>{activeMessage.priority}</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Sent by {activeMessage.sent_by_name} {formatDistanceToNow(new Date(activeMessage.sent_at), { addSuffix: true })}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {["in_app", "email", "sms"].map((channel) => (
+                    <Badge key={channel} variant="outline" className="gap-1.5 rounded-full">
+                      <ChannelIcon channel={channel} />
+                      {channel.replace("_", "-")}
+                    </Badge>
+                  ))}
+                </div>
+
+                <div className="rounded-lg border bg-muted/30 p-4">
+                  <p className="whitespace-pre-wrap text-sm leading-6">{activeMessage.message_preview}</p>
+                </div>
+
+                <DeliveryStatus status={activeMessage.status} />
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <StatusBadge status="paid" label={`${activeMessage.status.delivered} delivered`} />
+                  <StatusBadge status="late" label={`${activeMessage.status.pending} pending`} />
+                  <StatusBadge status="overdue" label={`${activeMessage.status.failed} failed`} />
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline">Mark read</Button>
+                  <Button variant="outline">Forward</Button>
+                  <Button variant="destructive">Delete</Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex h-full items-center justify-center text-center text-sm text-muted-foreground">
+                Click a message to preview it here.
+              </div>
+            )}
+          </section>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Link href="/dashboard/notifications/compose" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+          Open advanced composer
+        </Link>
+      </div>
     </div>
   );
 }
