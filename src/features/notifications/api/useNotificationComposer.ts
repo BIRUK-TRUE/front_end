@@ -33,7 +33,30 @@ export function useNotificationComposer() {
 
   const sendNotification = useMutation({
     mutationFn: async (payload: CreateNotificationPayload) => {
-      const { data } = await axiosInstance.post("/notifications/send", payload);
+      // Transform frontend payload to backend format
+      const backendPayload: any = {
+        title: payload.title,
+        message: payload.message,
+        notification_type: "system",
+        target_user_ids: [],
+        target_roles: [],
+        send_email: payload.channels.includes("email"),
+        metadata: payload.scheduledAt ? { scheduledAt: payload.scheduledAt } : undefined,
+      };
+
+      // Map targetType to target_roles or target_user_ids
+      if (payload.targetType === "all_students") {
+        backendPayload.target_roles = ["student"];
+      } else if (payload.targetType === "all_guardians") {
+        backendPayload.target_roles = ["guardian"];
+      } else if (payload.targetType === "all_teachers") {
+        backendPayload.target_roles = ["teacher"];
+      } else if (["class", "section", "individual"].includes(payload.targetType)) {
+        // For specific targets, use targetIds as user IDs
+        backendPayload.target_user_ids = payload.targetIds;
+      }
+
+      const { data } = await axiosInstance.post("/notifications/send", backendPayload);
       return data;
     },
     onSuccess: (_, variables) => {

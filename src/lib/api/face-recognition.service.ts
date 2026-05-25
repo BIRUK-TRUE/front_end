@@ -15,48 +15,44 @@ export interface EnrollmentStatusResponse {
   photo_count: number;
 }
 
+/**
+ * Face Recognition Service
+ * 
+ * TODO: Face recognition module not yet implemented in backend.
+ * All methods return stub/mock data until /face-recognition/* endpoints are created.
+ */
 export const faceRecognitionService = {
   enrollFace: async (studentId: string, photo: File): Promise<FaceEnrollmentResponse> => {
-    const formData = new FormData();
-    formData.append('photo', photo);
-    const { data } = await axiosInstance.post<FaceEnrollmentResponse>(
-      `/face-recognition/enroll/${studentId}`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
-    return data;
+    // TODO: Backend endpoint /face-recognition/enroll/{studentId} not yet implemented
+    return {
+      student_id: studentId,
+      enrollment_status: 'pending',
+      message: 'Face recognition not yet available',
+    };
   },
 
   getEnrollmentStatus: async (studentId: string): Promise<EnrollmentStatusResponse> => {
-    const { data } = await axiosInstance.get<EnrollmentStatusResponse>(
-      `/face-recognition/enrollment-status/${studentId}`
-    );
-    return data;
+    // TODO: Backend endpoint /face-recognition/enrollment-status/{studentId} not yet implemented
+    return {
+      student_id: studentId,
+      student_name: '',
+      is_enrolled: false,
+      photo_count: 0,
+    };
   },
 
   deleteEnrollment: async (studentId: string): Promise<{ message: string }> => {
-    const { data } = await axiosInstance.delete<{ message: string }>(
-      `/face-recognition/enroll/${studentId}`
-    );
-    return data;
+    // TODO: Backend endpoint DELETE /face-recognition/enroll/{studentId} not yet implemented
+    return {
+      message: 'Face recognition not yet available',
+    };
   },
 
   recognizeInSection: async (sectionId: string, photo: File): Promise<{ recognized_student_ids: string[]; count: number }> => {
-    const formData = new FormData();
-    formData.append('photo', photo);
-    const { data } = await axiosInstance.post<{ recognized_student_ids: string[]; count: number }>(
-      `/face-recognition/recognize/section/${sectionId}`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
-    return data;
+    // TODO: Backend endpoint /face-recognition/recognize/section/{sectionId} not yet implemented
+    return {
+      recognized_student_ids: [],
+      count: 0,
+    };
   },
 };

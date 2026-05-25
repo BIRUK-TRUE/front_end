@@ -7,18 +7,15 @@ import { formatApiError } from "@/lib/utils/formatApiError";
 import type { 
   StudentFee, 
   PaymentTransaction,
+  GuardianDashboardData,
   CreatePaymentRequest,
   ChapaPaymentPayload,
+  FeeStatus,
+  FeeType,
+  PaymentMethod,
+  PaymentStatus,
 } from "../types";
 import { FeeStatus, FeeType, PaymentMethod, PaymentStatus } from "../types";
-
-interface GuardianDashboardData {
-  total_fees: number;
-  total_paid: number;
-  total_balance: number;
-  students: unknown[];
-  recent_payments: unknown[];
-}
 
 const paymentsKeys = {
   all: ["payments"] as const,
@@ -62,44 +59,12 @@ export function useFeeStructures(filters?: {
   });
 }
 
-/**
- * Create a fee structure.
- * Backend: POST /payments/fee-structures
- */
-export function useCreateFeeStructure() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (payload: {
-      name: string;
-      academic_year_id: string;
-      grade_level?: number;
-      amount: number;
-      fee_type?: string;
-      description?: string;
-      is_active?: boolean;
-    }) => {
-      const { data } = await axiosInstance.post(
-        "/payments/fee-structures",
-        payload,
-      );
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: paymentsKeys.feeStructures() });
-      toast.success("Fee structure created");
-    },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(formatApiError(error, "Failed to create fee structure"));
-    },
-  });
-}
-
 // ==========================================
 // PAYMENT SCHEDULES
 // ==========================================
 
 /**
- * List payment schedules (admin sees all, student/guardian sees own).
+ * List payment schedules.
  * Backend: GET /payments/schedules
  */
 export function usePaymentSchedules(filters?: {
@@ -146,19 +111,19 @@ export function useStudentFees(studentId: string) {
       };
       return items.map(
         (s: Record<string, unknown>): StudentFee => ({
-          id: s.id as string,
+          id: (s.id ?? "") as string,
           student_id: (s.student_id ?? studentId) as string,
           student_name: (s.student_name ?? "") as string,
           registration_number: (s.registration_number ?? "") as string,
-          fee_type: toFeeType(s.fee_type),
+          fee_type: (s.fee_type ?? FeeType.TUITION) as FeeType,
           amount: (s.total_amount ?? s.amount ?? 0) as number,
           paid_amount: (s.paid_amount ?? 0) as number,
           balance: (s.balance ?? 0) as number,
-          status: toFeeStatus(s.status),
           due_date: (s.due_date ?? "") as string,
+          status: (s.status ?? FeeStatus.UNPAID) as FeeStatus,
           academic_year: (s.academic_year_name ?? "") as string,
           term: (s.term_name ?? "") as string,
-          description: (s.fee_structure_name ?? s.fee_name ?? "") as string,
+          description: (s.description ?? "") as string,
         }),
       );
     },
@@ -192,19 +157,19 @@ export function usePaymentTransactions(studentId: string) {
       };
       return items.map(
         (p: Record<string, unknown>): PaymentTransaction => ({
-          id: p.id as string,
+          id: (p.id ?? "") as string,
           student_id: (p.student_id ?? studentId) as string,
           student_name: (p.student_name ?? "") as string,
-          fee_id: (p.fee_id ?? p.schedule_id ?? "") as string,
+          fee_id: (p.schedule_id ?? p.fee_id ?? "") as string,
           amount: (p.amount ?? 0) as number,
           currency: (p.currency ?? "ETB") as string,
-          payment_method: toPaymentMethod(p.payment_method ?? p.method),
-          status: toPaymentStatus(p.status),
-          reference_number: (p.tx_ref ?? p.receipt_number ?? "") as string,
-          chapa_reference: (p.chapa_reference ?? undefined) as string | undefined,
+          payment_method: (p.payment_method ?? PaymentMethod.CASH) as PaymentMethod,
+          status: (p.status ?? PaymentStatus.PENDING) as PaymentStatus,
+          reference_number: (p.receipt_number ?? p.reference_number ?? "") as string,
+          chapa_reference: (p.tx_ref ?? p.chapa_reference) as string | undefined,
           paid_at: (p.paid_at ?? p.created_at ?? "") as string,
           created_at: (p.created_at ?? "") as string,
-          verified_at: (p.verified_at ?? undefined) as string | undefined,
+          verified_at: (p.verified_at) as string | undefined,
         }),
       );
     },
@@ -230,44 +195,40 @@ export function useStudentPaymentSummary(studentId: string) {
 }
 
 /**
- * Get guardian dashboard data (aggregate from linked students).
- * Constructs dashboard data from payment schedules.
+ * Get guardian dashboard data.
+ * Constructs from the guardian's linked students via GET /guardians/{id}.
  */
 export function useGuardianDashboard(guardianId: string) {
   return useQuery({
     queryKey: paymentsKeys.guardian(guardianId),
     queryFn: async (): Promise<GuardianDashboardData> => {
-      // Guardian dashboard is constructed from available data.
-      // The backend doesn't have a dedicated guardian dashboard endpoint.
       try {
-        const { data } = await axiosInstance.get("/payments/schedules", {
-          params: { size: 100 },
-        });
-        const items = data?.items ?? [];
-        const totalFees = items.reduce(
-          (sum: number, s: Record<string, unknown>) =>
-            sum + ((s.total_amount as number) ?? 0),
-          0,
+        const { data: guardian } = await axiosInstance.get(
+          `/guardians/${guardianId}`,
         );
-        const totalPaid = items.reduce(
-          (sum: number, s: Record<string, unknown>) =>
-            sum + ((s.paid_amount as number) ?? 0),
-          0,
-        );
+        const students = guardian?.students ?? guardian?.linked_students ?? [];
         return {
-          total_fees: totalFees,
-          total_paid: totalPaid,
-          total_balance: totalFees - totalPaid,
-          students: [],
-          recent_payments: [],
+          guardian_id: guardianId,
+          guardian_name: `${guardian?.first_name ?? ""} ${guardian?.last_name ?? ""}`.trim(),
+          linked_students: students.map((s: Record<string, unknown>) => ({
+            id: (s.id ?? s.student_id ?? "") as string,
+            name: `${s.first_name ?? ""} ${s.last_name ?? ""}`.trim(),
+            registration_number: (s.registration_number ?? "") as string,
+            class_name: (s.class_name ?? "") as string,
+            section_name: (s.section_name ?? "") as string,
+            fees: [],
+            total_balance: 0,
+          })),
+          total_balance: 0,
+          recent_transactions: [],
         };
       } catch {
         return {
-          total_fees: 0,
-          total_paid: 0,
+          guardian_id: guardianId,
+          guardian_name: "",
+          linked_students: [],
           total_balance: 0,
-          students: [],
-          recent_payments: [],
+          recent_transactions: [],
         };
       }
     },
@@ -276,7 +237,7 @@ export function useGuardianDashboard(guardianId: string) {
 }
 
 /**
- * Get payment history for the current user.
+ * Get payment history.
  * Backend: GET /payments/history
  */
 export function usePaymentHistory(filters?: {
@@ -287,12 +248,11 @@ export function usePaymentHistory(filters?: {
 }) {
   return useQuery({
     queryKey: paymentsKeys.history(filters),
-    queryFn: async (): Promise<PaymentTransaction[]> => {
+    queryFn: async () => {
       const { data } = await axiosInstance.get("/payments/history", {
         params: filters,
       });
-      const items = data?.items ?? (Array.isArray(data) ? data : []);
-      return items;
+      return data;
     },
   });
 }
@@ -349,17 +309,12 @@ export function useVerifyChapaPayment() {
 /**
  * Record a manual payment.
  * Backend: POST /payments/manual
- * Maps frontend CreatePaymentRequest fields to backend ManualPaymentCreate schema.
  */
 export function useCreatePayment() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: CreatePaymentRequest) => {
-      const { data } = await axiosInstance.post("/payments/manual", {
-        schedule_id: payload.fee_id,
-        amount: payload.amount,
-        method: payload.payment_method ?? "cash",
-      });
+      const { data } = await axiosInstance.post("/payments/manual", payload);
       return data;
     },
     onSuccess: () => {
