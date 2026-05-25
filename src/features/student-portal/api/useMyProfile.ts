@@ -6,23 +6,28 @@ import { toast } from "sonner";
 import { formatApiError } from "@/lib/utils/formatApiError";
 import type { StudentProfile } from "../types";
 
+/**
+ * Get student profile.
+ * Backend: GET /students/{student_id}
+ */
 export function useMyProfile() {
   const { user, isHydrated } = useAuthStore();
   const studentId = user?.student_id || user?.id || "";
 
   return useQuery({
     queryKey: queryKeys.studentPortal.profile(studentId),
-    queryFn: async () => {
-      // GET /students/{id}/profile returns StudentProfile-shaped data
-      const { data } = await api.get<StudentProfile>(
-        `/students/${studentId}/profile`,
-      );
+    queryFn: async (): Promise<StudentProfile> => {
+      const { data } = await api.get(`/students/${studentId}`);
       return data;
     },
     enabled: isHydrated && !!studentId,
   });
 }
 
+/**
+ * Update profile photo.
+ * Backend: PATCH /users/{user_id} (with multipart form data)
+ */
 export function useUpdateProfilePhoto() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
@@ -30,8 +35,6 @@ export function useUpdateProfilePhoto() {
 
   return useMutation({
     mutationFn: async (formData: FormData) => {
-      // Upload via PATCH /users/{user_id} with profile_image_url
-      // or via a multipart endpoint on students if available
       const { data } = await api.patch(
         `/users/${user?.id}`,
         formData,
@@ -57,6 +60,10 @@ export function useUpdateProfilePhoto() {
   });
 }
 
+/**
+ * Update student profile.
+ * Backend: PATCH /students/{student_id}
+ */
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
@@ -64,7 +71,6 @@ export function useUpdateProfile() {
 
   return useMutation({
     mutationFn: async (payload: Partial<StudentProfile>) => {
-      // PATCH /students/{student_id} to update student profile data
       const { data: response } = await api.patch(
         `/students/${studentId}`,
         payload,

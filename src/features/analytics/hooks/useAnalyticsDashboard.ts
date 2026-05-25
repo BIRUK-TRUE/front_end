@@ -37,56 +37,27 @@ export const analyticsKeys = {
   recentActivity: [...analyticsAll, 'recent-activity'] as const,
 };
 
+/**
+ * TODO: Analytics module not yet implemented in backend.
+ * These hooks return stub data until /analytics/* endpoints are created.
+ */
+
 export function useAnalyticsSummary(filters?: AnalyticsFilters) {
   return useQuery({
     queryKey: analyticsKeys.summary(filters),
     queryFn: async (): Promise<AnalyticsSummary> => {
-      const [summaryRes, atRiskRes] = await Promise.all([
-        axiosInstance.get<{
-          total_students: number;
-          total_teachers: number;
-          total_guardians: number;
-          total_classes: number;
-          active_enrollments: number;
-          attendance_rate: number;
-          average_grade: number;
-          pending_payments: number;
-        }>('/analytics/summary', { params: filters }),
-        axiosInstance.get<{
-          data: Array<{
-            student_id: string;
-            risk_factors: string[];
-          }>;
-        }>('/analytics/at-risk-students', { params: filters }).catch(() => ({ data: { data: [] } })),
-      ]);
-
-      const summaryData = summaryRes.data;
-      const atRiskList = atRiskRes.data?.data || [];
-      const atRiskCounts = {
-        critical: 0,
-        high: 0,
-        medium: 0,
-        low: 0,
-      };
-
-      atRiskList.forEach(item => {
-        const factorCount = (item.risk_factors || []).length;
-        if (factorCount >= 3) {
-          atRiskCounts.critical++;
-        } else if (factorCount === 2) {
-          atRiskCounts.high++;
-        } else if (factorCount === 1) {
-          atRiskCounts.medium++;
-        } else {
-          atRiskCounts.low++;
-        }
-      });
-
+      // TODO: Backend endpoint /analytics/summary not yet implemented
+      // Returning stub data
       return {
-        totalStudents: summaryData.total_students,
-        schoolAttendanceRate: summaryData.attendance_rate,
-        schoolGradeAverage: summaryData.average_grade,
-        atRiskCounts,
+        totalStudents: 0,
+        schoolAttendanceRate: 0,
+        schoolGradeAverage: 0,
+        atRiskCounts: {
+          critical: 0,
+          high: 0,
+          medium: 0,
+          low: 0,
+        },
       };
     },
     enabled: true,
@@ -97,8 +68,8 @@ export function useEnrollmentTrends() {
   return useQuery({
     queryKey: analyticsKeys.enrollmentTrends,
     queryFn: async (): Promise<{ year: string; students: number }[]> => {
-      const { data } = await axiosInstance.get('/analytics/enrollment-trends');
-      return data;
+      // TODO: Backend endpoint /analytics/enrollment-trends not yet implemented
+      return [];
     },
     enabled: true,
   });
@@ -108,8 +79,8 @@ export function useRecentActivity() {
   return useQuery({
     queryKey: analyticsKeys.recentActivity,
     queryFn: async (): Promise<RecentActivity[]> => {
-      const { data } = await axiosInstance.get('/analytics/recent-activity');
-      return data;
+      // TODO: Backend endpoint /analytics/recent-activity not yet implemented
+      return [];
     },
     enabled: true,
   });

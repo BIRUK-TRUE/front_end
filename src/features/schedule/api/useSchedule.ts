@@ -1,7 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
+import { toast } from "sonner";
 import type { ScheduleEntry } from "../types";
 
 export const scheduleKeys = {
@@ -56,3 +57,63 @@ export function useTeacherSchedule(teacherId: string, termId: string) {
 // TeacherSubject assignments. There are no POST/PATCH/DELETE endpoints.
 // To manage schedule, use the academics module to manage teacher-subject
 // assignments (TeacherSubject CRUD via the teachers router).
+
+/**
+ * Create schedule entry (stub - not implemented in backend).
+ * TODO: Schedule management should be done via teacher-subject assignments.
+ */
+export function useCreateScheduleEntry() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: any) => {
+      // TODO: Backend does not have POST /schedule endpoint
+      // Schedule is derived from TeacherSubject assignments
+      toast.error("Schedule creation not yet implemented. Use teacher-subject assignments instead.");
+      throw new Error("Not implemented");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: scheduleKeys.all });
+    },
+  });
+}
+
+/**
+ * Update schedule entry (stub - not implemented in backend).
+ * TODO: Schedule management should be done via teacher-subject assignments.
+ */
+export function useUpdateScheduleEntry() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      // TODO: Backend does not have PATCH /schedule/{id} endpoint
+      // Schedule is derived from TeacherSubject assignments
+      toast.error("Schedule update not yet implemented. Use teacher-subject assignments instead.");
+      throw new Error("Not implemented");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: scheduleKeys.all });
+    },
+  });
+}
+
+/**
+ * Delete schedule entry (stub - not implemented in backend).
+ * TODO: Schedule management should be done via teacher-subject assignments.
+ */
+export function useDeleteScheduleEntry() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (entryId: string) => {
+      // TODO: Backend does not have DELETE /schedule/{id} endpoint
+      // Schedule is derived from TeacherSubject assignments
+      toast.error("Schedule deletion not yet implemented. Use teacher-subject assignments instead.");
+      throw new Error("Not implemented");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: scheduleKeys.all });
+    },
+  });
+}
