@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { TeacherScheduleEntry } from "../types";
@@ -18,7 +18,7 @@ type TeacherSubjectApiResponse = {
 };
 
 export function useTeacherSchedule(teacherId: string, weekOffset: number = 0) {
-  return useQuery({
+  return useAuthenticatedQuery({
     queryKey: queryKeys.teacher.schedule(teacherId, weekOffset),
     queryFn: async (): Promise<TeacherScheduleEntry[]> => {
       const { data } = await axiosInstance.get<TeacherSubjectApiResponse[]>(

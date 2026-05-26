@@ -24,6 +24,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAuthReady } from "@/hooks/use-auth-ready";
 
 interface ActivityItem {
   id: string;
@@ -54,10 +55,11 @@ interface ActivityDetail {
 
 export function ActivityFeed() {
   const t = useTranslations("dashboard");
+  const authReady = useAuthReady();
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isPending, isError } = useQuery({
     queryKey: ["analytics", "recent-activity"],
     queryFn: async (): Promise<ActivityItem[]> => {
       const { data } = await axiosInstance.get("/analytics/recent-activity", {
@@ -65,6 +67,7 @@ export function ActivityFeed() {
       });
       return data.data || [];
     },
+    enabled: authReady,
     refetchInterval: 60_000,
   });
 
@@ -152,9 +155,14 @@ export function ActivityFeed() {
       </CardHeader>
       <CardContent className="p-0">
         <ScrollArea className="h-[300px] w-full rounded-md">
-          {isLoading ? (
+          {isPending ? (
             <div className="flex h-full min-h-[300px] w-full items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : isError ? (
+            <div className="flex h-full min-h-[300px] w-full flex-col items-center justify-center text-muted-foreground">
+              <Bell className="h-8 w-8 mb-2 opacity-50" />
+              <p>Unable to load activity</p>
             </div>
           ) : !data || data.length === 0 ? (
             <div className="flex h-full min-h-[300px] w-full flex-col items-center justify-center text-muted-foreground">

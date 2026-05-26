@@ -2,10 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { axiosInstance as api } from '@/lib/api/axios';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useAuthReady } from '@/hooks/use-auth-ready';
 import type { StudentDashboardData } from '../types';
 
 export function useStudentDashboard() {
-  const { user, isHydrated } = useAuthStore();
+  const { user } = useAuthStore();
+  const authReady = useAuthReady();
   const studentId = user?.student_id ?? '';
 
   return useQuery({
@@ -14,6 +16,6 @@ export function useStudentDashboard() {
       const { data } = await api.get(`/students/${studentId}/dashboard`);
       return data;
     },
-    enabled: isHydrated && !!studentId,
+    enabled: authReady && !!studentId,
   });
 }

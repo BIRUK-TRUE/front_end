@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedQuery } from "@/hooks/use-authenticated-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { AnalyticsSummary, analyticsKeys } from "../types";
 
@@ -25,7 +25,7 @@ interface RecentActivity {
 }
 
 export function useAnalyticsSummary(filters?: AnalyticsFilters) {
-  return useQuery({
+  return useAuthenticatedQuery({
     queryKey: analyticsKeys.summary(filters),
     queryFn: async (): Promise<AnalyticsSummary> => {
       const { data } = await axiosInstance.get('/analytics/summary', {
@@ -50,7 +50,7 @@ export function useAnalyticsSummary(filters?: AnalyticsFilters) {
 }
 
 export function useEnrollmentTrends() {
-  return useQuery({
+  return useAuthenticatedQuery({
     queryKey: analyticsKeys.enrollmentTrends,
     queryFn: async (): Promise<{ year: string; students: number }[]> => {
       const { data } = await axiosInstance.get('/analytics/enrollment-trends');
@@ -64,7 +64,7 @@ export function useEnrollmentTrends() {
 }
 
 export function useRecentActivity() {
-  return useQuery({
+  return useAuthenticatedQuery({
     queryKey: analyticsKeys.recentActivity,
     queryFn: async (): Promise<RecentActivity[]> => {
       const { data } = await axiosInstance.get('/analytics/recent-activity');

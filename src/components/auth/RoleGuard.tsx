@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useAuthReady } from "@/hooks/use-auth-ready";
 import { useRouter } from "@/i18n/navigation";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
@@ -15,12 +16,12 @@ interface RoleGuardProps {
  * Use this in layouts to protect entire route segments.
  */
 export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
-  const { user, isHydrated } = useAuthStore();
+  const { user } = useAuthStore();
+  const authReady = useAuthReady();
   const router = useRouter();
 
   useEffect(() => {
-    // Only check once the store is hydrated
-    if (!isHydrated) return;
+    if (!authReady) return;
 
     // If no user, ProtectedRoute will handle redirect to login
     if (!user) return;
@@ -31,10 +32,9 @@ export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
     if (!hasAccess) {
       router.push("/unauthorized");
     }
-  }, [user, isHydrated, allowedRoles, router]);
+  }, [user, authReady, allowedRoles, router]);
 
-  // Show loading while hydrating
-  if (!isHydrated) {
+  if (!authReady) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

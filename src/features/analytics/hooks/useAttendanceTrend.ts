@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedQuery } from "@/hooks/use-authenticated-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { AttendanceTrendEntry, analyticsKeys } from "../types";
 
@@ -10,7 +10,7 @@ export function useAttendanceTrend(filters?: {
   sectionId?: string;
   teacherId?: string;
 }) {
-  return useQuery({
+  return useAuthenticatedQuery({
     queryKey: analyticsKeys.trend(filters),
     queryFn: async (): Promise<AttendanceTrendEntry[]> => {
       const { data } = await axiosInstance.get('/analytics/attendance-trend', {

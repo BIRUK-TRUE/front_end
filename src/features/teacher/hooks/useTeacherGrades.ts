@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuthenticatedQuery } from "@/hooks/use-authenticated-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { queryKeys } from "@/lib/api/query-keys";
 import { toast } from "sonner";
@@ -55,7 +56,7 @@ export function useTeacherAssessments(
   teacherId: string,
   filters: TeacherAssessmentFilter,
 ) {
-  return useQuery({
+  return useAuthenticatedQuery({
     queryKey: queryKeys.teacher.assessments(teacherId, filters),
     queryFn: async (): Promise<{
       items: TeacherAssessment[];
@@ -118,7 +119,7 @@ type AssessmentGradesApiResponse = {
 };
 
 export function useAssessmentGrades(assessmentId: string) {
-  return useQuery({
+  return useAuthenticatedQuery({
     queryKey: queryKeys.teacher.assessmentGrades(assessmentId),
     queryFn: async (): Promise<TeacherAssessmentGrade[]> => {
       const { data } = await axiosInstance.get<AssessmentGradesApiResponse>(

@@ -23,7 +23,8 @@ interface NotificationFilters {
  * authenticated user (including guardians).
  */
 export function useGuardianNotifications(filters: NotificationFilters) {
-  const { user, isHydrated } = useAuthStore();
+  const { user } = useAuthStore();
+  const authReady = useAuthReady();
   const guardianId = user?.guardian_id ?? "";
 
   return useQuery({
@@ -43,7 +44,7 @@ export function useGuardianNotifications(filters: NotificationFilters) {
       );
       return data;
     },
-    enabled: isHydrated && !!guardianId,
+    enabled: authReady && !!guardianId,
   });
 }
 

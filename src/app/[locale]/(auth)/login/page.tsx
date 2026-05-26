@@ -15,6 +15,7 @@ import {
   Mail,
   ArrowRight,
 } from 'lucide-react';
+import axios from 'axios';
 import { useRouter, Link } from '@/i18n/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { authService } from '@/lib/api/auth.service';
@@ -120,11 +121,18 @@ export default function LoginPage() {
       }
     } catch (error: unknown) {
       const err = error as { response?: { data?: { detail?: string; errors?: { message: string }[] } } };
-      const msg = !err.response
-        ? 'Unable to connect to the server. Please try again later.'
-        : err.response.data?.errors?.map((e) => e.message).join(', ') ||
+      let msg: string;
+      if (axios.isAxiosError(error) && error.code === 'ECONNABORTED') {
+        msg =
+          'Server is taking too long to respond. Check that the backend is running and your database connection is fast.';
+      } else if (!err.response) {
+        msg = 'Unable to connect to the server. Please try again later.';
+      } else {
+        msg =
+          err.response.data?.errors?.map((e) => e.message).join(', ') ||
           err.response.data?.detail ||
           t('invalidCredentials');
+      }
       setServerError(msg);
     } finally {
       setIsLoading(false);

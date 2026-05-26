@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { TeacherClassItem, TeacherRosterResponse } from "../types";
@@ -18,7 +18,7 @@ type TeacherSubjectApiResponse = {
 };
 
 export function useTeacherClasses(teacherId: string) {
-  return useQuery({
+  return useAuthenticatedQuery({
     queryKey: queryKeys.teacher.classes(teacherId),
     queryFn: async (): Promise<TeacherClassItem[]> => {
       const { data } = await axiosInstance.get<TeacherSubjectApiResponse[] | { classes: TeacherSubjectApiResponse[] }>(
@@ -42,7 +42,7 @@ export function useTeacherClasses(teacherId: string) {
 }
 
 export function useClassRoster(sectionId: string) {
-  return useQuery({
+  return useAuthenticatedQuery({
     queryKey: queryKeys.teacher.classRoster(sectionId),
     queryFn: async (): Promise<TeacherRosterResponse> => {
       // Use the academics sections students endpoint

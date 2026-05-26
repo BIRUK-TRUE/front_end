@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { axiosInstance as api } from '@/lib/api/axios';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useAuthReady } from '@/hooks/use-auth-ready';
 import type {
   AttendanceSummary,
   AttendanceCalendarResponse,
@@ -10,7 +11,8 @@ import type {
 } from '../types';
 
 export function useMyAttendanceSummary() {
-  const { user, isHydrated } = useAuthStore();
+  const { user } = useAuthStore();
+  const authReady = useAuthReady();
   const studentId = user?.student_id ?? '';
 
   return useQuery({
@@ -26,12 +28,13 @@ export function useMyAttendanceSummary() {
         attendanceRate: data?.attendanceRate ?? 0,
       };
     },
-    enabled: isHydrated && !!studentId,
+    enabled: authReady && !!studentId,
   });
 }
 
 export function useMyAttendanceCalendar(month: number, year: number) {
-  const { user, isHydrated } = useAuthStore();
+  const { user } = useAuthStore();
+  const authReady = useAuthReady();
   const studentId = user?.student_id ?? '';
 
   return useQuery({
@@ -46,7 +49,7 @@ export function useMyAttendanceCalendar(month: number, year: number) {
       });
       return { records: data?.records ?? [] };
     },
-    enabled: isHydrated && !!studentId,
+    enabled: authReady && !!studentId,
   });
 }
 
@@ -57,7 +60,8 @@ export function useMyAttendanceRecords(filters: {
   page: number;
   size: number;
 }) {
-  const { user, isHydrated } = useAuthStore();
+  const { user } = useAuthStore();
+  const authReady = useAuthReady();
   const studentId = user?.student_id ?? '';
 
   return useQuery({
@@ -77,6 +81,6 @@ export function useMyAttendanceRecords(filters: {
       });
       return data;
     },
-    enabled: isHydrated && !!studentId,
+    enabled: authReady && !!studentId,
   });
 }

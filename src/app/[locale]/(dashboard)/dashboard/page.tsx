@@ -30,10 +30,19 @@ export default function DashboardPage() {
   const { canViewUsers, canManageStudents, canManageTeachers, canManageGuardians } =
     usePermissions();
 
-  const { data: userStats, isLoading: userLoading } = useUserStats();
-  const { data: studentStats, isLoading: studentLoading } = useStudentStats();
-  const { data: teacherStats, isLoading: teacherLoading } = useTeacherStats();
-  const { data: guardianStats, isLoading: guardianLoading } = useGuardianStats();
+  const { data: userStats, isPending: userLoading, isError: userError } = useUserStats();
+  const { data: studentStats, isPending: studentLoading, isError: studentError } =
+    useStudentStats();
+  const { data: teacherStats, isPending: teacherLoading, isError: teacherError } =
+    useTeacherStats();
+  const { data: guardianStats, isPending: guardianLoading, isError: guardianError } =
+    useGuardianStats();
+
+  const statDescription = (
+    loading: boolean,
+    error: boolean,
+    text: string
+  ) => (loading ? tc('loading') : error ? '—' : text);
 
   const isStaff = canViewUsers;
 
@@ -53,7 +62,11 @@ export default function DashboardPage() {
               title={t('totalUsers')}
               value={userStats?.total?.toString() || '0'}
               icon={Users}
-              description={userLoading ? tc('loading') : `${userStats?.active || 0} ${t('activeUsers')}`}
+              description={statDescription(
+                userLoading,
+                userError,
+                `${userStats?.active || 0} ${t('activeUsers')}`
+              )}
               trend={userStats?.growth !== undefined ? { value: userStats.growth, positive: userStats.growth >= 0 } : undefined}
             />
           )}
@@ -62,7 +75,11 @@ export default function DashboardPage() {
               title={t('activeStudents')}
               value={studentStats?.active?.toString() || '0'}
               icon={GraduationCap}
-              description={studentLoading ? tc('loading') : `${t('total')}: ${studentStats?.total || 0}`}
+              description={statDescription(
+                studentLoading,
+                studentError,
+                `${t('total')}: ${studentStats?.total || 0}`
+              )}
               trend={studentStats?.growth !== undefined ? { value: studentStats.growth, positive: studentStats.growth >= 0 } : undefined}
             />
           )}
@@ -71,7 +88,11 @@ export default function DashboardPage() {
               title={t('activeTeachers')}
               value={teacherStats?.active?.toString() || '0'}
               icon={BookOpen}
-              description={teacherLoading ? tc('loading') : `${t('total')}: ${teacherStats?.total || 0}`}
+              description={statDescription(
+                teacherLoading,
+                teacherError,
+                `${t('total')}: ${teacherStats?.total || 0}`
+              )}
               trend={teacherStats?.growth !== undefined ? { value: teacherStats.growth, positive: teacherStats.growth >= 0 } : undefined}
             />
           )}
@@ -80,7 +101,11 @@ export default function DashboardPage() {
               title={t('totalGuardians')}
               value={guardianStats?.total?.toString() || '0'}
               icon={UserCheck}
-              description={guardianLoading ? tc('loading') : `${guardianStats?.active || 0} ${t('verified')}`}
+              description={statDescription(
+                guardianLoading,
+                guardianError,
+                `${guardianStats?.active || 0} ${t('verified')}`
+              )}
             />
           )}
         </div>

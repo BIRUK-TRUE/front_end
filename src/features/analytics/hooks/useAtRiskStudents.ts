@@ -1,6 +1,7 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthenticatedQuery } from "@/hooks/use-authenticated-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { StudentRisk, analyticsKeys, Intervention } from "../types";
 import { toast } from "sonner";
@@ -13,7 +14,7 @@ export function useAtRiskStudents(filters?: {
   termId?: string;
   teacherId?: string;
 }) {
-  return useQuery({
+  return useAuthenticatedQuery({
     queryKey: analyticsKeys.atRisk(filters),
     queryFn: async (): Promise<{ students: StudentRisk[]; total: number }> => {
       const { data } = await axiosInstance.get('/analytics/at-risk-students', {
@@ -99,7 +100,7 @@ export function useAddInterventionNote() {
 }
 
 export function useStudentInterventions(studentId: string) {
-  return useQuery({
+  return useAuthenticatedQuery({
     queryKey: analyticsKeys.interventions(studentId),
     queryFn: async (): Promise<Intervention[]> => {
       const { data } = await axiosInstance.get('/analytics/interventions', {

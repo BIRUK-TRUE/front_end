@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { axiosInstance as api } from '@/lib/api/axios';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useAuthReady } from '@/hooks/use-auth-ready';
 import type { GuardianDashboardData, ChildSummary } from '../types';
 
 /**
@@ -12,7 +13,8 @@ import type { GuardianDashboardData, ChildSummary } from '../types';
  * available via GET /guardians/{id} which includes student details.
  */
 export function useGuardianDashboard() {
-  const { user, isHydrated } = useAuthStore();
+  const { user } = useAuthStore();
+  const authReady = useAuthReady();
   const guardianId = user?.guardian_id ?? '';
 
   return useQuery({
@@ -40,6 +42,6 @@ export function useGuardianDashboard() {
         recentAlerts: [],
       };
     },
-    enabled: isHydrated && !!guardianId,
+    enabled: authReady && !!guardianId,
   });
 }

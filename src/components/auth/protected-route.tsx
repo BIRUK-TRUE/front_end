@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
@@ -12,12 +13,13 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireRoles }: ProtectedRouteProps) {
-  const { user, isHydrated } = useAuthStore();
+  const { user } = useAuthStore();
+  const authReady = useAuthReady();
   const router = useRouter();
   const t = useTranslations('common');
 
   useEffect(() => {
-    if (!isHydrated) return;
+    if (!authReady) return;
 
     if (!user) {
       router.push('/login');
@@ -32,9 +34,9 @@ export function ProtectedRoute({ children, requireRoles }: ProtectedRouteProps) 
     if (requireRoles && !requireRoles.some((r) => user.roles.includes(r))) {
       router.push('/unauthorized');
     }
-  }, [user, isHydrated, requireRoles, router]);
+  }, [user, authReady, requireRoles, router]);
 
-  if (!isHydrated) {
+  if (!authReady) {
     return (
       <div className="flex h-screen items-center justify-center" role="status">
         <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />

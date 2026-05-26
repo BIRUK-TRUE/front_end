@@ -2,10 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { axiosInstance as api } from '@/lib/api/axios';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useAuthReady } from '@/hooks/use-auth-ready';
 import type { ScheduleResponse } from '../types';
 
 export function useMySchedule(_weekOffset: number = 0) {
-  const { user, isHydrated } = useAuthStore();
+  const { user } = useAuthStore();
+  const authReady = useAuthReady();
   const studentId = user?.student_id ?? '';
 
   return useQuery({
@@ -16,6 +18,6 @@ export function useMySchedule(_weekOffset: number = 0) {
         schedule: Array.isArray(data?.schedule) ? data.schedule : [],
       };
     },
-    enabled: isHydrated && !!studentId,
+    enabled: authReady && !!studentId,
   });
 }

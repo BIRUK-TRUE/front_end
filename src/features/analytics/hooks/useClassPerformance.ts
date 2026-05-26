@@ -1,11 +1,11 @@
 'use client';
 
-import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedQuery } from "@/hooks/use-authenticated-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { ClassPerformanceEntry, analyticsKeys } from "../types";
 
 export function useClassPerformance(termId?: string) {
-  return useQuery({
+  return useAuthenticatedQuery({
     queryKey: analyticsKeys.performance(termId),
     queryFn: async (): Promise<ClassPerformanceEntry[]> => {
       const { data } = await axiosInstance.get('/analytics/class-performance', {

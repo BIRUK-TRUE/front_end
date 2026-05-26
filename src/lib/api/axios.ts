@@ -3,8 +3,9 @@ import axios from 'axios';
 import { useAuthStore } from '@/lib/store/auth-store';
 import {
   waitForAuthHydration,
-  refreshAccessTokenIfNeeded,
   redirectToLogin,
+  isPublicAuthRequest,
+  authHttpClient,
 } from '@/lib/auth/session';
 
 const API_BASE_URL =
@@ -12,6 +13,7 @@ const API_BASE_URL =
 
 export const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 20_000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -23,8 +25,10 @@ let refreshPromise: Promise<any> | null = null;
 // Request interceptor: wait for persisted auth, refresh if needed, attach token
 axiosInstance.interceptors.request.use(
   async (config) => {
-    await waitForAuthHydration();
-    await refreshAccessTokenIfNeeded();
+    const url = config.url ?? '';
+    if (!isPublicAuthRequest(url)) {
+      await waitForAuthHydration();
+    }
 
     const token = useAuthStore.getState().accessToken;
     if (token) {
@@ -66,7 +70,7 @@ axiosInstance.interceptors.response.use(
       try {
         // Use existing refresh promise if one is in progress (concurrency control)
         if (!refreshPromise) {
-          refreshPromise = axios.post(`${API_BASE_URL}/auth/refresh`, {
+          refreshPromise = authHttpClient.post('/auth/refresh', {
             refresh_token: refreshToken,
           });
         }
@@ -82,7 +86,7 @@ axiosInstance.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        refreshPromise = null;
+        refreshPromise = null; // always release lock (timeout/network/401)
         const refreshRejected =
           axios.isAxiosError(refreshError) &&
           refreshError.response?.status === 401;

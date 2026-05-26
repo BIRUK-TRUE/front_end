@@ -9,26 +9,32 @@ import { queryKeys } from "@/lib/api/query-keys";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/utils/formatApiError";
 import { useTranslations } from "next-intl";
+import { useAuthReady } from "@/hooks/use-auth-ready";
 
 export function useStudents(filters: StudentFilters = {}) {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.students.list(filters),
     queryFn: () => studentsService.getAll(filters),
+    enabled: authReady,
   });
 }
 
 export function useStudent(id: string) {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.students.detail(id),
     queryFn: () => studentsService.getById(id),
-    enabled: !!id,
+    enabled: authReady && !!id,
   });
 }
 
 export function useStudentStats() {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.students.stats,
     queryFn: () => studentsService.getStats(),
+    enabled: authReady,
   });
 }
 

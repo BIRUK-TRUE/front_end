@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useAuthReady } from "@/hooks/use-auth-ready";
 import { useMyChildren } from "@/features/guardian-portal/hooks/useMyChildren";
 import { useChildDetails } from "@/features/guardian-portal/hooks/useChildDetails";
 import { ChildDetailTabs } from "@/features/guardian-portal/components/ChildDetailTabs";
@@ -18,7 +19,8 @@ export default function ChildDetailPage() {
   const t = useTranslations("guardianPortal.childDetail");
   
   // CRITICAL IDOR SECURITY CHECK (Check Group 10.1)
-  const { user, isHydrated } = useAuthStore();
+  const { user } = useAuthStore();
+  const authReady = useAuthReady();
   const guardianId = user?.id ?? '';
   
   // 1. Fetch guardian's linked children
@@ -30,7 +32,7 @@ export default function ChildDetailPage() {
   // 3. Only fetch child data if authorized
   const { data: child, isLoading: isLoadingChild, isError } = useChildDetails(studentId);
 
-  if (!isHydrated || isLoadingChildren) {
+  if (!authReady || isLoadingChildren) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-10 w-64" />

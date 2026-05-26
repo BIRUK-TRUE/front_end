@@ -14,12 +14,18 @@ import { syncAuthCookies, useAuthStore } from '@/lib/store/auth-store';
 export function AuthBootstrap() {
   useEffect(() => {
     void (async () => {
+      const isAuthPage = /\/(login|forgot-password|reset-password)(\/|$)/.test(
+        window.location.pathname
+      );
       await waitForAuthHydration();
+      useAuthStore.getState().setHydrated();
       const { user, accessToken } = useAuthStore.getState();
       if (user && accessToken) {
         syncAuthCookies(user, accessToken);
+        if (!isAuthPage) {
+          await refreshAccessTokenIfNeeded();
+        }
       }
-      await refreshAccessTokenIfNeeded();
     })();
   }, []);
 

@@ -4,6 +4,25 @@ import { useAuthStore } from '@/lib/store/auth-store';
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
+const AUTH_HTTP_TIMEOUT_MS = 15_000;
+const HYDRATION_TIMEOUT_MS = 2_500;
+
+export const authHttpClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: AUTH_HTTP_TIMEOUT_MS,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+/** Routes that must not wait on hydration or refresh stale tokens first. */
+export function isPublicAuthRequest(url?: string): boolean {
+  if (!url) return false;
+  return (
+    url.includes('/auth/login') ||
+    url.includes('/auth/forgot-password') ||
+    url.includes('/auth/reset-password')
+  );
+}
+
 /** Wait until zustand persist has restored auth from localStorage. */
 export function waitForAuthHydration(): Promise<void> {
   if (useAuthStore.getState().isHydrated) {
@@ -13,12 +32,21 @@ export function waitForAuthHydration(): Promise<void> {
     useAuthStore.getState().setHydrated();
     return Promise.resolve();
   }
-  return new Promise((resolve) => {
-    const unsub = useAuthStore.persist.onFinishHydration(() => {
-      unsub();
-      resolve();
-    });
-  });
+  return Promise.race([
+    new Promise<void>((resolve) => {
+      const unsub = useAuthStore.persist.onFinishHydration(() => {
+        unsub();
+        useAuthStore.getState().setHydrated();
+        resolve();
+      });
+    }),
+    new Promise<void>((resolve) => {
+      setTimeout(() => {
+        useAuthStore.getState().setHydrated();
+        resolve();
+      }, HYDRATION_TIMEOUT_MS);
+    }),
+  ]);
 }
 
 function decodeJwtPayload(token: string): { exp?: number } | null {
@@ -56,7 +84,7 @@ export async function refreshAccessTokenIfNeeded(): Promise<void> {
       const currentRefresh = useAuthStore.getState().refreshToken;
       if (!currentRefresh) return;
       try {
-        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+        const { data } = await authHttpClient.post('/auth/refresh', {
           refresh_token: currentRefresh,
         });
         updateTokens(

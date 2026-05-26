@@ -16,7 +16,7 @@ import { Loader2 } from 'lucide-react';
 
 export function EnrollmentChart() {
   const t = useTranslations('dashboard');
-  const { data, isLoading } = useHistoricalEnrollment();
+  const { data, isPending, isError } = useHistoricalEnrollment();
 
   return (
     <Card className="col-span-full lg:col-span-4 shadow-sm border overflow-hidden">
@@ -25,9 +25,13 @@ export function EnrollmentChart() {
         <CardDescription>{t('enrollmentGrowthDesc')}</CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
-        {isLoading ? (
+        {isPending ? (
           <div className="flex h-[300px] w-full items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : isError ? (
+          <div className="flex h-[300px] w-full items-center justify-center text-sm text-muted-foreground">
+            {t('noEnrollmentData')}
           </div>
         ) : !data || data.length === 0 ? (
           <div className="flex h-[300px] w-full items-center justify-center text-muted-foreground">

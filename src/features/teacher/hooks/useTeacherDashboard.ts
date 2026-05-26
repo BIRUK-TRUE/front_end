@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useAuthenticatedQuery } from "@/hooks/use-authenticated-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { queryKeys } from "@/lib/api/query-keys";
 import type { TeacherDashboardStats } from "../types";
@@ -22,7 +22,7 @@ type DashboardApiResponse = {
 };
 
 export function useTeacherDashboard(teacherId: string) {
-  return useQuery({
+  return useAuthenticatedQuery({
     queryKey: queryKeys.teacher.dashboard(teacherId),
     queryFn: async (): Promise<TeacherDashboardStats> => {
       const { data } = await axiosInstance.get<DashboardApiResponse>(

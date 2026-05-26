@@ -69,7 +69,7 @@ export const useAuthStore = create<AuthState>()(
       isHydrated: false,
       setAuth: (user, accessToken, refreshToken) => {
         syncAuthCookies(user, accessToken);
-        set({ user, accessToken, refreshToken });
+        set({ user, accessToken, refreshToken, isHydrated: true });
       },
       clearAuth: () => {
         syncAuthCookies(null, null);
@@ -117,3 +117,13 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+
+if (typeof window !== 'undefined') {
+  if (useAuthStore.persist.hasHydrated()) {
+    useAuthStore.getState().setHydrated();
+  } else {
+    useAuthStore.persist.onFinishHydration(() => {
+      useAuthStore.getState().setHydrated();
+    });
+  }
+}

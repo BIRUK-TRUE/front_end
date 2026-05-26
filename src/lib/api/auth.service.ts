@@ -1,4 +1,6 @@
 import { axiosInstance } from './axios';
+import { authClient } from './auth-client';
+import { authHttpClient } from '@/lib/auth/session';
 import { useAuthStore } from '@/lib/store/auth-store';
 
 // ============================================================
@@ -6,7 +8,7 @@ import { useAuthStore } from '@/lib/store/auth-store';
 // ============================================================
 export const authService = {
   async login(email: string, password: string) {
-    const { data } = await axiosInstance.post('/auth/login', {
+    const { data } = await authClient.post('/auth/login', {
       email,
       password,
     });
@@ -14,7 +16,7 @@ export const authService = {
   },
 
   async refresh(refreshToken: string) {
-    const { data } = await axiosInstance.post('/auth/refresh', {
+    const { data } = await authHttpClient.post('/auth/refresh', {
       refresh_token: refreshToken,
     });
     return data;
@@ -34,7 +36,7 @@ export const authService = {
   },
 
   async forgotPassword(email: string) {
-    const { data } = await axiosInstance.post('/auth/forgot-password', {
+    const { data } = await authClient.post('/auth/forgot-password', {
       email,
     });
     return data;
@@ -45,7 +47,7 @@ export const authService = {
     newPassword: string,
     newPasswordConfirm: string
   ) {
-    const { data } = await axiosInstance.post('/auth/reset-password', {
+    const { data } = await authClient.post('/auth/reset-password', {
       token,
       new_password: newPassword,
       confirm_password: newPasswordConfirm,

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { axiosInstance as api } from '@/lib/api/axios';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useAuthReady } from '@/hooks/use-auth-ready';
 import type { ChildDetails } from '../types';
 import type { AttendanceRecord, PaginatedResponse } from '../../student-portal/types';
 
@@ -24,7 +25,7 @@ interface GradeFilters {
  * Backend: GET /students/{id}
  */
 export function useChildDetails(studentId: string) {
-  const { isHydrated } = useAuthStore();
+  const authReady = useAuthReady();
 
   return useQuery({
     queryKey: queryKeys.guardianPortal.childDetails(studentId),
@@ -32,7 +33,7 @@ export function useChildDetails(studentId: string) {
       const { data } = await api.get(`/students/${studentId}`);
       return data;
     },
-    enabled: isHydrated && !!studentId,
+    enabled: authReady && !!studentId,
   });
 }
 
@@ -41,7 +42,7 @@ export function useChildDetails(studentId: string) {
  * Backend: GET /attendance/student/{student_id}
  */
 export function useChildAttendance(studentId: string, filters: AttendanceFilters) {
-  const { isHydrated } = useAuthStore();
+  const authReady = useAuthReady();
 
   return useQuery({
     queryKey: queryKeys.guardianPortal.attendance(studentId, filters),
@@ -57,7 +58,7 @@ export function useChildAttendance(studentId: string, filters: AttendanceFilters
       );
       return data;
     },
-    enabled: isHydrated && !!studentId,
+    enabled: authReady && !!studentId,
   });
 }
 
@@ -70,7 +71,7 @@ export function useChildAttendance(studentId: string, filters: AttendanceFilters
  * if the endpoint is not accessible.
  */
 export function useChildGrades(studentId: string, filters: GradeFilters) {
-  const { isHydrated } = useAuthStore();
+  const authReady = useAuthReady();
 
   return useQuery({
     queryKey: queryKeys.guardianPortal.grades(studentId, filters),
@@ -86,7 +87,7 @@ export function useChildGrades(studentId: string, filters: GradeFilters) {
         return { items: [], subjects: [] };
       }
     },
-    enabled: isHydrated && !!studentId,
+    enabled: authReady && !!studentId,
   });
 }
 
@@ -98,7 +99,7 @@ export function useChildGrades(studentId: string, filters: GradeFilters) {
  * first fetching the student's enrollment to determine their section.
  */
 export function useChildSchedule(studentId: string) {
-  const { isHydrated } = useAuthStore();
+  const authReady = useAuthReady();
 
   return useQuery({
     queryKey: queryKeys.guardianPortal.schedule(studentId),
@@ -123,6 +124,6 @@ export function useChildSchedule(studentId: string) {
         return [];
       }
     },
-    enabled: isHydrated && !!studentId,
+    enabled: authReady && !!studentId,
   });
 }

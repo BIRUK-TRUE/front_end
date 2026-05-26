@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { axiosInstance as api } from '@/lib/api/axios';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useAuthReady } from '@/hooks/use-auth-ready';
 import type {
   GradesSummaryResponse,
   PaginatedResponse,
@@ -10,7 +11,8 @@ import type {
 } from '../types';
 
 export function useMySubjectSummary(termId?: string) {
-  const { user, isHydrated } = useAuthStore();
+  const { user } = useAuthStore();
+  const authReady = useAuthReady();
   const studentId = user?.student_id ?? '';
 
   return useQuery({
@@ -21,7 +23,7 @@ export function useMySubjectSummary(termId?: string) {
       });
       return { subjects: data?.subjects ?? [] };
     },
-    enabled: isHydrated && !!studentId,
+    enabled: authReady && !!studentId,
   });
 }
 
@@ -31,7 +33,8 @@ export function useMyAssessmentGrades(filters: {
   page: number;
   size: number;
 }) {
-  const { user, isHydrated } = useAuthStore();
+  const { user } = useAuthStore();
+  const authReady = useAuthReady();
   const studentId = user?.student_id ?? '';
 
   return useQuery({
@@ -47,12 +50,13 @@ export function useMyAssessmentGrades(filters: {
       });
       return data;
     },
-    enabled: isHydrated && !!studentId,
+    enabled: authReady && !!studentId,
   });
 }
 
 export function useMyReportCard(termId: string) {
-  const { user, isHydrated } = useAuthStore();
+  const { user } = useAuthStore();
+  const authReady = useAuthReady();
   const studentId = user?.student_id ?? '';
 
   return useQuery({
@@ -97,6 +101,6 @@ export function useMyReportCard(termId: string) {
         generalRemarks: null,
       };
     },
-    enabled: isHydrated && !!studentId && !!termId,
+    enabled: authReady && !!studentId && !!termId,
   });
 }

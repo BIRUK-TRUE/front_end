@@ -6,33 +6,41 @@ import { queryKeys } from "@/lib/api/query-keys";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/utils/formatApiError";
 import { useTranslations } from "next-intl";
+import { useAuthReady } from "@/hooks/use-auth-ready";
 
 export function useUsers(filters: UserFilters = {}) {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.users.list(filters),
     queryFn: () => usersService.getAll(filters),
+    enabled: authReady,
   });
 }
 
 export function useUser(id: string) {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.users.detail(id),
     queryFn: () => usersService.getById(id),
-    enabled: !!id,
+    enabled: authReady && !!id,
   });
 }
 
 export function useRoles() {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.users.roles,
     queryFn: () => usersService.getRoles(),
+    enabled: authReady,
   });
 }
 
 export function useUserStats() {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: queryKeys.users.stats,
     queryFn: () => usersService.getStats(),
+    enabled: authReady,
   });
 }
 

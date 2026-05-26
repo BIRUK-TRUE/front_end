@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance as api } from "@/lib/api/axios";
 import { queryKeys } from "@/lib/api/query-keys";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useAuthReady } from "@/hooks/use-auth-ready";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/utils/formatApiError";
 import type { ChildFeeBalance, PaymentRecord } from "../types";
@@ -11,7 +12,7 @@ import type { ChildFeeBalance, PaymentRecord } from "../types";
  * Backend: GET /payments/students/{student_id}/summary
  */
 export function useFeeBalance(studentId: string) {
-  const { isHydrated } = useAuthStore();
+  const authReady = useAuthReady();
 
   return useQuery({
     queryKey: queryKeys.guardianPortal.fees(studentId),
@@ -46,7 +47,7 @@ export function useFeeBalance(studentId: string) {
         };
       }
     },
-    enabled: isHydrated && !!studentId,
+    enabled: authReady && !!studentId,
   });
 }
 
@@ -55,7 +56,7 @@ export function useFeeBalance(studentId: string) {
  * Backend: GET /payments/history?student_id=...
  */
 export function usePaymentHistory(studentId: string) {
-  const { isHydrated } = useAuthStore();
+  const authReady = useAuthReady();
 
   return useQuery({
     queryKey: queryKeys.guardianPortal.payments(studentId),
@@ -78,7 +79,7 @@ export function usePaymentHistory(studentId: string) {
         return [];
       }
     },
-    enabled: isHydrated && !!studentId,
+    enabled: authReady && !!studentId,
   });
 }
 

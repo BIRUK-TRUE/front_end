@@ -1,13 +1,15 @@
 "use client";
 
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useAuthReady } from "@/hooks/use-auth-ready";
 import { GuardianDashboardHome } from "@/features/guardian-portal/components/GuardianDashboardHome";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function GuardianPageClient() {
-  const { user, isHydrated } = useAuthStore();
+  const { user } = useAuthStore();
+  const authReady = useAuthReady();
 
-  if (!isHydrated) {
+  if (!authReady) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-10 w-48" />

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance as api } from "@/lib/api/axios";
 import { queryKeys } from "@/lib/api/query-keys";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useAuthReady } from "@/hooks/use-auth-ready";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/utils/formatApiError";
 import type { StudentProfile } from "../types";
@@ -11,7 +12,8 @@ import type { StudentProfile } from "../types";
  * Backend: GET /students/{student_id}
  */
 export function useMyProfile() {
-  const { user, isHydrated } = useAuthStore();
+  const { user } = useAuthStore();
+  const authReady = useAuthReady();
   const studentId = user?.student_id || user?.id || "";
 
   return useQuery({
@@ -20,7 +22,7 @@ export function useMyProfile() {
       const { data } = await api.get(`/students/${studentId}`);
       return data;
     },
-    enabled: isHydrated && !!studentId,
+    enabled: authReady && !!studentId,
   });
 }
 
