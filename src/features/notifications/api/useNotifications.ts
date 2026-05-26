@@ -77,7 +77,7 @@ export function useNotifications(userId: string) {
       return arr.map(normalizeNotification);
     },
     enabled: !!userId,
-    refetchInterval: 30000,
+    refetchInterval: 120_000,
   });
 }
 
@@ -93,7 +93,7 @@ export function useUnreadNotifications(userId: string) {
       return data.unread_count ?? data.count ?? 0;
     },
     enabled: !!userId,
-    refetchInterval: 10000,
+    refetchInterval: 60_000,
   });
 }
 

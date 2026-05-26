@@ -65,13 +65,18 @@ export interface ClassPerformanceEntry {
   totalStudents: number;
 }
 
+const analyticsAll = ['analytics'] as const;
+
 export const analyticsKeys = {
-  atRisk: (filters?: object) => ['analytics', 'at-risk', filters] as const,
-  trend: (filters?: object) => ['analytics', 'attendance-trend', filters] as const,
-  distribution: (filters?: object) => ['analytics', 'grade-distribution', filters] as const,
-  performance: (termId?: string) => ['analytics', 'class-performance', termId] as const,
-  summary: () => ['analytics', 'summary'] as const,
-  interventions: (studentId: string) => ['analytics', 'interventions', studentId] as const,
+  all: analyticsAll,
+  atRisk: (filters?: object) => [...analyticsAll, 'at-risk', filters] as const,
+  trend: (filters?: object) => [...analyticsAll, 'attendance-trend', filters] as const,
+  distribution: (filters?: object) => [...analyticsAll, 'grade-distribution', filters] as const,
+  performance: (termId?: string) => [...analyticsAll, 'class-performance', termId] as const,
+  summary: (filters?: object) => [...analyticsAll, 'summary', filters] as const,
+  interventions: (studentId: string) => [...analyticsAll, 'interventions', studentId] as const,
+  enrollmentTrends: [...analyticsAll, 'enrollment-trends'] as const,
+  recentActivity: [...analyticsAll, 'recent-activity'] as const,
 };
 
 export interface Intervention {

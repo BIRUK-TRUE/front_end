@@ -12,7 +12,7 @@ import { StatsCard } from '@/components/shared/stats-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
-import { EnrollmentChart } from '@/components/shared/enrollment-chart';
+import { EnrollmentChart } from '@/components/shared/enrollment-chart-lazy';
 import { ActivityFeed } from '@/components/shared/activity-feed';
 import {
   Users,

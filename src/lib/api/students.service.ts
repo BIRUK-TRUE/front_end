@@ -14,27 +14,16 @@ export interface StudentFilters {
 
 export const studentsService = {
   async getAll(filters: StudentFilters = {}) {
-    console.log('🔍 studentsService.getAll called with filters:', filters);
-    
     const { data } = await axiosInstance.get('/students', { params: filters });
-    
-    console.log('✅ studentsService.getAll RAW response:', JSON.stringify(data, null, 2));
-    console.log('✅ Response type:', typeof data);
-    console.log('✅ Has items?:', Array.isArray(data?.items));
-    console.log('✅ Items length:', data?.items?.length);
-    console.log('✅ Total:', data?.total);
-    
-    // Ensure we always return a properly structured response
+
     if (!data) {
-      console.error('❌ No data returned from API');
       return { items: [], total: 0, page: 1, size: 20, pages: 0 };
     }
-    
+
     if (!Array.isArray(data.items)) {
-      console.error('❌ data.items is not an array:', data.items);
       return { items: [], total: 0, page: 1, size: 20, pages: 0 };
     }
-    
+
     return data;
   },
 
@@ -51,14 +40,9 @@ export const studentsService = {
   },
 
   async getStats() {
-    console.log('🔍 studentsService.getStats called');
-    
     const { data } = await axiosInstance.get('/students/stats/summary');
-    
-    console.log('✅ studentsService.getStats response:', data);
-    
-    // Normalize backend field names to what the dashboard expects
-    const normalized = {
+
+    return {
       total: data.total_students ?? data.total ?? 0,
       active: data.active_students ?? data.active ?? 0,
       male: data.male_students ?? 0,
@@ -66,10 +50,6 @@ export const studentsService = {
       graduated: data.graduated_students ?? 0,
       growth: data.growth ?? 0,
     };
-    
-    console.log('✅ Normalized stats:', normalized);
-    
-    return normalized;
   },
 
   async create(payload: {
@@ -78,44 +58,37 @@ export const studentsService = {
     phone_number?: string;
     address?: string;
     password?: string;
-    admission_date: string;
     date_of_birth: string;
     sex: 'M' | 'F';
     nationality?: string;
     previous_school?: string;
-    ministry_exam_result?: number;
-    guardian_id?: string;
-    profile_image_url?: string;
+    ministry_exam_result?: string;
+    admission_date: string;
+    status?: string;
   }) {
     const { data } = await axiosInstance.post('/students', payload);
     return data;
   },
 
-  async update(
-    id: string,
-    payload: {
-      full_name?: string;
-      phone_number?: string;
-      address?: string;
-      profile_image_url?: string;
-      is_active?: boolean;
-      status?: string;
-      nationality?: string;
-      previous_school?: string;
-      ministry_exam_result?: number;
-    }
-  ) {
+  async update(id: string, payload: Record<string, unknown>) {
     const { data } = await axiosInstance.patch(`/students/${id}`, payload);
     return data;
   },
 
   async delete(id: string) {
-    const { data } = await axiosInstance.delete(`/students/${id}`);
-    return data;
+    await axiosInstance.delete(`/students/${id}`);
   },
 
   async restore(id: string) {
     const { data } = await axiosInstance.post(`/students/${id}/restore`);
+    return data;
+  },
+
+  async exportCsv(filters: StudentFilters = {}) {
+    const { data } = await axiosInstance.get('/students/export/csv', {
+      params: filters,
+      responseType: 'blob',
+    });
     return data;
   },
 };

@@ -16,7 +16,7 @@ export function useSchoolInfo() {
   return useQuery({
     queryKey: queryKeys.settings.schoolInfo,
     queryFn: settingsService.getSchoolInfo,
-    staleTime: 0,
+    staleTime: 30 * 60 * 1000,
   });
 }
 
@@ -24,7 +24,7 @@ export function useAcademicSettings() {
   return useQuery({
     queryKey: queryKeys.settings.academic,
     queryFn: settingsService.getAcademicSettings,
-    staleTime: 0,
+    staleTime: 15 * 60 * 1000,
   });
 }
 
@@ -32,7 +32,7 @@ export function useNotificationSettings() {
   return useQuery({
     queryKey: queryKeys.settings.notifications,
     queryFn: settingsService.getNotificationSettings,
-    staleTime: 0,
+    staleTime: 15 * 60 * 1000,
   });
 }
 

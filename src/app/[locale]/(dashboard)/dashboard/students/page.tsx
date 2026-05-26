@@ -97,7 +97,7 @@ export default function StudentsPage() {
     ];
   }, [studentStats]);
 
-  const columns: ColumnDef<StudentRow>[] = [
+  const columns = useMemo<ColumnDef<StudentRow>[]>(() => [
     {
       id: 'select',
       header: ({ table }) => (
@@ -196,7 +196,7 @@ export default function StudentsPage() {
         return <ActionsDropdown items={items} label={`${tc('actions')} for ${student.full_name}`} />;
       },
     },
-  ];
+  ], [t, tc, currentTerm, downloadReportCard, restoreStudent]);
 
   return (
     <div className="space-y-6">

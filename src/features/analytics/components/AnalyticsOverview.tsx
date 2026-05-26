@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { PageHeader } from "@/components/shared/page-header";
 import { MetricCard } from "./MetricCard";
-import { AttendanceTrendChart } from "./AttendanceTrendChart";
-import { GradeDistributionChart } from "./GradeDistributionChart";
-import { AtRiskSummaryChart } from "./AtRiskSummaryChart";
+import {
+  AttendanceTrendChart,
+  GradeDistributionChart,
+  AtRiskSummaryChart,
+} from "./analytics-charts-lazy";
 import { AtRiskStudentsTable } from "./AtRiskStudentsTable";
 import { ClassPerformanceTable } from "./ClassPerformanceTable";
 import { 

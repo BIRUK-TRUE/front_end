@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
-import { AnalyticsSummary } from "../types";
+import { AnalyticsSummary, analyticsKeys } from "../types";
 
 interface AnalyticsFilters {
   termId?: string;
@@ -23,19 +23,6 @@ interface RecentActivity {
     name: string;
   };
 }
-
-const analyticsAll = ['analytics'] as const;
-
-export const analyticsKeys = {
-  all: analyticsAll,
-  summary: (filters?: AnalyticsFilters) => [...analyticsAll, 'summary', filters] as const,
-  atRisk: (filters?: AnalyticsFilters) => [...analyticsAll, 'at-risk', filters] as const,
-  trend: (filters?: AnalyticsFilters) => [...analyticsAll, 'trend', filters] as const,
-  distribution: (filters?: AnalyticsFilters) => [...analyticsAll, 'distribution', filters] as const,
-  performance: (filters?: AnalyticsFilters) => [...analyticsAll, 'performance', filters] as const,
-  enrollmentTrends: [...analyticsAll, 'enrollment-trends'] as const,
-  recentActivity: [...analyticsAll, 'recent-activity'] as const,
-};
 
 export function useAnalyticsSummary(filters?: AnalyticsFilters) {
   return useQuery({

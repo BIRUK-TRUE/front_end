@@ -65,7 +65,7 @@ export function ActivityFeed() {
       });
       return data.data || [];
     },
-    refetchInterval: 10000,
+    refetchInterval: 60_000,
   });
 
   // Fetch detailed activity when one is selected
