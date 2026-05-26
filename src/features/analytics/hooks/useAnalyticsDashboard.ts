@@ -37,21 +37,20 @@ export const analyticsKeys = {
   recentActivity: [...analyticsAll, 'recent-activity'] as const,
 };
 
-/**
- * TODO: Analytics module not yet implemented in backend.
- * These hooks return stub data until /analytics/* endpoints are created.
- */
-
 export function useAnalyticsSummary(filters?: AnalyticsFilters) {
   return useQuery({
     queryKey: analyticsKeys.summary(filters),
     queryFn: async (): Promise<AnalyticsSummary> => {
-      // TODO: Backend endpoint /analytics/summary not yet implemented
-      // Returning stub data
+      const { data } = await axiosInstance.get('/analytics/summary', {
+        params: {
+          termId: filters?.termId,
+          classId: filters?.classId,
+        },
+      });
       return {
-        totalStudents: 0,
-        schoolAttendanceRate: 0,
-        schoolGradeAverage: 0,
+        totalStudents: data.total_students ?? 0,
+        schoolAttendanceRate: data.attendance_rate ?? 0,
+        schoolGradeAverage: data.average_grade ?? 0,
         atRiskCounts: {
           critical: 0,
           high: 0,
@@ -60,7 +59,6 @@ export function useAnalyticsSummary(filters?: AnalyticsFilters) {
         },
       };
     },
-    enabled: true,
   });
 }
 
@@ -68,10 +66,13 @@ export function useEnrollmentTrends() {
   return useQuery({
     queryKey: analyticsKeys.enrollmentTrends,
     queryFn: async (): Promise<{ year: string; students: number }[]> => {
-      // TODO: Backend endpoint /analytics/enrollment-trends not yet implemented
-      return [];
+      const { data } = await axiosInstance.get('/analytics/enrollment-trends');
+      const items = Array.isArray(data) ? data : data?.trends ?? [];
+      return items.map((item: Record<string, unknown>) => ({
+        year: String(item.year ?? item.academic_year ?? ''),
+        students: Number(item.students ?? item.count ?? 0),
+      }));
     },
-    enabled: true,
   });
 }
 
@@ -79,9 +80,20 @@ export function useRecentActivity() {
   return useQuery({
     queryKey: analyticsKeys.recentActivity,
     queryFn: async (): Promise<RecentActivity[]> => {
-      // TODO: Backend endpoint /analytics/recent-activity not yet implemented
-      return [];
+      const { data } = await axiosInstance.get('/analytics/recent-activity');
+      const items = Array.isArray(data) ? data : data?.items ?? [];
+      return items.map((item: Record<string, unknown>) => ({
+        id: String(item.id ?? ''),
+        type: String(item.type ?? item.activity_type ?? 'info'),
+        description: String(item.description ?? item.message ?? ''),
+        timestamp: String(item.timestamp ?? item.created_at ?? ''),
+        user: item.user
+          ? {
+              id: String((item.user as Record<string, unknown>).id ?? ''),
+              name: String((item.user as Record<string, unknown>).name ?? ''),
+            }
+          : undefined,
+      }));
     },
-    enabled: true,
   });
 }

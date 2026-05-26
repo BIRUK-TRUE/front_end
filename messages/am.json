@@ -341,7 +341,9 @@
     "other": "ሌላ",
     "dateOfBirthInvalid": "የልደት ቀን በ10 እስከ 25 ዓመት መካከል መሆን አለበት",
     "phoneInvalid": "ስልክ ቁጥር በኢትዮጵያ ቅጽልግል መሆን አለበት (+251XXXXXXXXX)",
-    "noData": "ምንም ውሂብ የለም"
+    "noData": "ምንም ውሂብ የለም",
+    "faceEnrollment": "የፊት ምዝገባ",
+    "downloadReportCard": "ሪፖርት ካርድ አውርድ"
   },
   "teachers": {
     "title": "አስተማሮች",
@@ -491,7 +493,17 @@
     "deleteClassTitle": "ክፍል ሰርዝ",
     "deleteClassDescription": "ይህንን ክፍል ለመሰርዝ እርግጠኛ ነዎት? ይህ ተግባር አይታገልብጥም።",
     "deleteYearTitle": "የትምህርት ዓመት ሰርዝ",
-    "deleteYearDescription": "ይህንን የትምህርት ዓመት ለመሰርዝ እርግጠኛ ነዎት? ይህ ተግባር አይታገልብጥም።"
+    "deleteYearDescription": "ይህንን የትምህርት ዓመት ለመሰርዝ እርግጠኛ ነዎት? ይህ ተግባር አይታገልብጥም።",
+    "infrastructure": "መሠረተ ልማት",
+    "buildings": "ሕንፃዎች",
+    "classrooms": "ክፍሎች",
+    "addBuilding": "ሕንፃ ጨምር",
+    "addClassroom": "ክፍል ጨምር",
+    "buildingName": "የሕንፃ ስም",
+    "classroomNumber": "የክፍል ቁጥር",
+    "classroomType": "የክፍል ዓይነት",
+    "noBuildings": "ምንም ሕንፃዎች አልተገኙም",
+    "noClassrooms": "ምንም ክፍሎች አልተገኙም"
   },
   "attendancePage": {
     "title": "ተገኝነት",

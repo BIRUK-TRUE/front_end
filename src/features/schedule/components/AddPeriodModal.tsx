@@ -24,7 +24,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Clock } from 'lucide-react';
 import { useSubjects } from '@/features/academics/api/useSubjects';
 import { useTeachers } from '@/features/teachers/api/useTeachers';
-import { useCreateScheduleEntry } from '../api/useSchedule';
+import { useCreateScheduleEntry, useSectionSchedule } from '../api/useSchedule';
 import type { ScheduleEntry } from '../types';
 
 interface AddPeriodModalProps {
@@ -82,6 +82,7 @@ export function AddPeriodModal({
   const { data: subjectsData } = useSubjects({ page: 1, size: 100 });
   const { data: teachersData } = useTeachers({ is_active: true, page: 1, size: 100 });
   const createMutation = useCreateScheduleEntry();
+  const { data: sectionAssignments } = useSectionSchedule(sectionId, termId);
 
   // Auto-fill times when period number changes
   useEffect(() => {
@@ -172,16 +173,28 @@ export function AddPeriodModal({
       return;
     }
 
+    const assignment = sectionAssignments?.find(
+      (entry) =>
+        entry.subject_id === subjectId && entry.teacher_id === teacherId,
+    );
+    const teacherSubjectId =
+      assignment?.teacher_subject_id ?? assignment?.id;
+    if (!teacherSubjectId) {
+      setConflict(
+        'Assign this teacher to the subject in this section before scheduling a period.',
+      );
+      return;
+    }
+
     try {
       await createMutation.mutateAsync({
-        section_id: sectionId,
-        subject_id: subjectId,
-        teacher_id: teacherId,
+        teacher_subject_id: teacherSubjectId,
         term_id: termId,
         day_of_week: dayOfWeek,
-        start_time: startTime,
-        end_time: endTime,
-        room_number: room || undefined,
+        period_number: periodNumber,
+        start_time: startTime.length === 5 ? `${startTime}:00` : startTime,
+        end_time: endTime.length === 5 ? `${endTime}:00` : endTime,
+        classroom_id: room || undefined,
       });
       handleClose();
     } catch (error) {

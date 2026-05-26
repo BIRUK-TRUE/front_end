@@ -56,13 +56,7 @@ function SchedulePageContent() {
   };
 
   const handleDeletePeriod = (entry: ScheduleEntry) => {
-    if (sectionId && termId) {
-      deleteMutation.mutate({
-        id: entry.id,
-        sectionId,
-        termId,
-      });
-    }
+    deleteMutation.mutate(entry.id);
   };
 
   const handleAddPeriodClick = () => {

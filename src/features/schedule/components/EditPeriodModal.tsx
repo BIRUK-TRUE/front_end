@@ -205,15 +205,10 @@ export function EditPeriodModal({
     try {
       await updateMutation.mutateAsync({
         id: entry.id,
-        payload: {
-          section_id: sectionId,
-          subject_id: subjectId,
-          teacher_id: teacherId,
-          term_id: termId,
+        data: {
           day_of_week: dayOfWeek,
           start_time: startTime,
           end_time: endTime,
-          room_number: room || undefined,
         },
       });
       handleClose();

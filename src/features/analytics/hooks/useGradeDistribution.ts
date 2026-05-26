@@ -4,11 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { GradeDistributionEntry, analyticsKeys } from "../types";
 
-/**
- * TODO: Analytics module not yet implemented in backend.
- * This hook returns stub data until /analytics/grade-distribution endpoint is created.
- */
-
 export function useGradeDistribution(filters?: {
   termId: string;
   subjectId?: string;
@@ -17,9 +12,16 @@ export function useGradeDistribution(filters?: {
   return useQuery({
     queryKey: analyticsKeys.distribution(filters),
     queryFn: async (): Promise<GradeDistributionEntry[]> => {
-      // TODO: Backend endpoint /analytics/grade-distribution not yet implemented
-      return [];
+      const { data } = await axiosInstance.get('/analytics/grade-distribution', {
+        params: {
+          termId: filters?.termId,
+          classId: filters?.classId,
+          subjectId: filters?.subjectId,
+        },
+      });
+      const distribution = data?.distribution ?? data ?? [];
+      return Array.isArray(distribution) ? distribution : [];
     },
-    enabled: true,
+    enabled: !!filters?.termId,
   });
 }

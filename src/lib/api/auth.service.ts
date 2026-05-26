@@ -6,21 +6,11 @@ import { useAuthStore } from '@/lib/store/auth-store';
 // ============================================================
 export const authService = {
   async login(email: string, password: string) {
-    console.log('[AuthService] Sending login request to:', `${process.env.NEXT_PUBLIC_API_URL}/auth/login`);
-    console.log('[AuthService] Request payload:', { email, password: '***' });
-    try {
-      const { data } = await axiosInstance.post('/auth/login', {
-        email,
-        password,
-      });
-      console.log('[AuthService] Login response received:', data);
-      return data;
-    } catch (error: any) {
-      console.error('[AuthService] Login error:', error);
-      console.error('[AuthService] Error response:', error.response?.data);
-      console.error('[AuthService] Error status:', error.response?.status);
-      throw error;
-    }
+    const { data } = await axiosInstance.post('/auth/login', {
+      email,
+      password,
+    });
+    return data;
   },
 
   async refresh(refreshToken: string) {
@@ -58,7 +48,7 @@ export const authService = {
     const { data } = await axiosInstance.post('/auth/reset-password', {
       token,
       new_password: newPassword,
-      new_password_confirm: newPasswordConfirm,
+      confirm_password: newPasswordConfirm,
     });
     return data;
   },

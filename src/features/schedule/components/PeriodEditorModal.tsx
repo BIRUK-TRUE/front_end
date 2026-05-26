@@ -139,7 +139,7 @@ export function PeriodEditorModal({
       if (isEditing && period) {
         await updateMutation.mutateAsync({
           id: period.id,
-          payload: {
+          data: {
             classroom_id: formData.classroom_id,
             day_of_week: formData.day_of_week,
             period_number: formData.period_number,

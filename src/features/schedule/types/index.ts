@@ -6,6 +6,7 @@ export interface ScheduleEntry {
   subject_name: string;
   teacher_id: string;
   teacher_name: string;
+  teacher_subject_id?: string;
   day_of_week: number; // 0=Sunday, 1=Monday... 6=Saturday
   start_time: string; // HH:mm:ss format (e.g. "08:00:00")
   end_time: string;   // HH:mm:ss format

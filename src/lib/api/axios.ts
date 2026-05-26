@@ -46,7 +46,8 @@ axiosInstance.interceptors.response.use(
         useAuthStore.getState().clearAuth();
         if (typeof window !== 'undefined') {
           // Get current locale from localStorage or default to 'en'
-          const locale = localStorage.getItem('locale') || 'en';
+          const locale =
+            window.location.pathname.split('/').filter(Boolean)[0] || 'en';
           window.location.href = `/${locale}/login`;
         }
         return Promise.reject(error);
@@ -63,9 +64,11 @@ axiosInstance.interceptors.response.use(
         const { data } = await refreshPromise;
         refreshPromise = null; // Clear after successful refresh
 
-        useAuthStore
-          .getState()
-          .updateTokens(data.access_token, data.refresh_token);
+        const store = useAuthStore.getState();
+        store.updateTokens(
+          data.access_token,
+          data.refresh_token ?? store.refreshToken ?? '',
+        );
         originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
         return axiosInstance(originalRequest);
       } catch {
@@ -73,7 +76,8 @@ axiosInstance.interceptors.response.use(
         useAuthStore.getState().clearAuth();
         if (typeof window !== 'undefined') {
           // Get current locale from localStorage or default to 'en'
-          const locale = localStorage.getItem('locale') || 'en';
+          const locale =
+            window.location.pathname.split('/').filter(Boolean)[0] || 'en';
           window.location.href = `/${locale}/login`;
         }
         return Promise.reject(error);

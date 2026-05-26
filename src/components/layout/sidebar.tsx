@@ -339,12 +339,6 @@ export function Sidebar({
       icon: Bell,
       show: canManageNotifications,
     },
-    {
-      href: '/dashboard/inventory',
-      label: t('inventory'),
-      icon: Package,
-      show: canManageAcademics || canViewUsers,
-    },
   ];
 
   const getNavItems = (): NavItem[] => {

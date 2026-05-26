@@ -4,16 +4,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/utils/formatApiError";
-import type { 
-  StudentFee, 
+import type {
+  StudentFee,
   PaymentTransaction,
   GuardianDashboardData,
   CreatePaymentRequest,
   ChapaPaymentPayload,
-  FeeStatus,
-  FeeType,
-  PaymentMethod,
-  PaymentStatus,
 } from "../types";
 import { FeeStatus, FeeType, PaymentMethod, PaymentStatus } from "../types";
 

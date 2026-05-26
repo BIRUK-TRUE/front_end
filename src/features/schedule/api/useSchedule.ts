@@ -3,7 +3,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { toast } from "sonner";
-import type { ScheduleEntry } from "../types";
+import { formatApiError } from "@/lib/utils/formatApiError";
+import type {
+  ScheduleEntry,
+  SchedulePeriod,
+  CreateSchedulePeriodPayload,
+  UpdateSchedulePeriodPayload,
+  TimetableGenerationResult,
+} from "../types";
 
 export const scheduleKeys = {
   all: ["schedule"] as const,
@@ -13,25 +20,19 @@ export const scheduleKeys = {
     [...scheduleKeys.all, "teacher", teacherId, termId] as const,
   byClassroom: (classroomId: string, termId: string) =>
     [...scheduleKeys.all, "classroom", classroomId, termId] as const,
-  byTerm: (termId: string) =>
-    [...scheduleKeys.all, "term", termId] as const,
+  byTerm: (termId: string) => [...scheduleKeys.all, "term", termId] as const,
   period: (periodId: string) =>
     [...scheduleKeys.all, "period", periodId] as const,
 };
 
-/**
- * Get schedule for a section (teacher-subject assignments).
- * Backend: GET /schedule/section/{section_id}
- */
+/** Assignment-based schedule for a section */
 export function useSectionSchedule(sectionId: string, termId: string) {
   return useQuery({
     queryKey: scheduleKeys.bySection(sectionId, termId),
     queryFn: async (): Promise<ScheduleEntry[]> => {
       const { data } = await axiosInstance.get(
         `/schedule/section/${sectionId}`,
-        {
-          params: { term_id: termId },
-        },
+        { params: { term_id: termId } },
       );
       return data;
     },
@@ -39,19 +40,13 @@ export function useSectionSchedule(sectionId: string, termId: string) {
   });
 }
 
-/**
- * Get schedule for a teacher (which sections/subjects they teach).
- * Backend: GET /schedule/teacher/{teacher_id}
- */
 export function useTeacherSchedule(teacherId: string, termId: string) {
   return useQuery({
     queryKey: scheduleKeys.byTeacher(teacherId, termId),
     queryFn: async (): Promise<ScheduleEntry[]> => {
       const { data } = await axiosInstance.get(
         `/schedule/teacher/${teacherId}`,
-        {
-          params: { term_id: termId },
-        },
+        { params: { term_id: termId } },
       );
       return data;
     },
@@ -59,67 +54,138 @@ export function useTeacherSchedule(teacherId: string, termId: string) {
   });
 }
 
-// NOTE: The backend schedule module is read-only — it derives data from
-// TeacherSubject assignments. There are no POST/PATCH/DELETE endpoints.
-// To manage schedule, use the academics module to manage teacher-subject
-// assignments (TeacherSubject CRUD via the teachers router).
+/** Timetable periods for a section */
+export function useSectionTimetable(sectionId: string, termId: string) {
+  return useQuery({
+    queryKey: [...scheduleKeys.bySection(sectionId, termId), "timetable"] as const,
+    queryFn: async (): Promise<SchedulePeriod[]> => {
+      const { data } = await axiosInstance.get(
+        `/schedule/section/${sectionId}/timetable`,
+        { params: { term_id: termId } },
+      );
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: !!sectionId && !!termId,
+  });
+}
 
-/**
- * Create schedule entry (stub - not implemented in backend).
- * TODO: Schedule management should be done via teacher-subject assignments.
- */
+export function useTeacherTimetable(teacherId: string, termId: string) {
+  return useQuery({
+    queryKey: [...scheduleKeys.byTeacher(teacherId, termId), "timetable"] as const,
+    queryFn: async (): Promise<SchedulePeriod[]> => {
+      const { data } = await axiosInstance.get(
+        `/schedule/teacher/${teacherId}/timetable`,
+        { params: { term_id: termId } },
+      );
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: !!teacherId && !!termId,
+  });
+}
+
+export function useClassroomTimetable(classroomId: string, termId: string) {
+  return useQuery({
+    queryKey: [...scheduleKeys.byClassroom(classroomId, termId), "timetable"] as const,
+    queryFn: async (): Promise<SchedulePeriod[]> => {
+      const { data } = await axiosInstance.get(
+        `/schedule/classroom/${classroomId}/timetable`,
+        { params: { term_id: termId } },
+      );
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: !!classroomId && !!termId,
+  });
+}
+
+export function useCreateSchedulePeriod() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: CreateSchedulePeriodPayload) => {
+      const { data } = await axiosInstance.post("/schedule/periods", payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: scheduleKeys.all });
+      toast.success("Schedule period created");
+    },
+    onError: (error) => toast.error(formatApiError(error)),
+  });
+}
+
+export function useUpdateSchedulePeriod() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateSchedulePeriodPayload;
+    }) => {
+      const { data: result } = await axiosInstance.patch(
+        `/schedule/periods/${id}`,
+        data,
+      );
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: scheduleKeys.all });
+      toast.success("Schedule period updated");
+    },
+    onError: (error) => toast.error(formatApiError(error)),
+  });
+}
+
+export function useDeleteSchedulePeriod() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (periodId: string) => {
+      await axiosInstance.delete(`/schedule/periods/${periodId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: scheduleKeys.all });
+      toast.success("Schedule period deleted");
+    },
+    onError: (error) => toast.error(formatApiError(error)),
+  });
+}
+
+export function useValidateSchedulePeriod() {
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      const { data } = await axiosInstance.post("/schedule/validate", payload);
+      return data as { valid: boolean; conflicts: string[] };
+    },
+  });
+}
+
+export function useGenerateTimetable() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      term_id: string;
+      section_ids?: string[];
+      strategy?: string;
+    }): Promise<TimetableGenerationResult> => {
+      const { data } = await axiosInstance.post("/schedule/generate", payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: scheduleKeys.all });
+    },
+    onError: (error) => toast.error(formatApiError(error)),
+  });
+}
+
+// Legacy aliases used by older schedule pages
 export function useCreateScheduleEntry() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (data: any) => {
-      // TODO: Backend does not have POST /schedule endpoint
-      // Schedule is derived from TeacherSubject assignments
-      toast.error("Schedule creation not yet implemented. Use teacher-subject assignments instead.");
-      throw new Error("Not implemented");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: scheduleKeys.all });
-    },
-  });
+  return useCreateSchedulePeriod();
 }
 
-/**
- * Update schedule entry (stub - not implemented in backend).
- * TODO: Schedule management should be done via teacher-subject assignments.
- */
 export function useUpdateScheduleEntry() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      // TODO: Backend does not have PATCH /schedule/{id} endpoint
-      // Schedule is derived from TeacherSubject assignments
-      toast.error("Schedule update not yet implemented. Use teacher-subject assignments instead.");
-      throw new Error("Not implemented");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: scheduleKeys.all });
-    },
-  });
+  return useUpdateSchedulePeriod();
 }
 
-/**
- * Delete schedule entry (stub - not implemented in backend).
- * TODO: Schedule management should be done via teacher-subject assignments.
- */
 export function useDeleteScheduleEntry() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (entryId: string) => {
-      // TODO: Backend does not have DELETE /schedule/{id} endpoint
-      // Schedule is derived from TeacherSubject assignments
-      toast.error("Schedule deletion not yet implemented. Use teacher-subject assignments instead.");
-      throw new Error("Not implemented");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: scheduleKeys.all });
-    },
-  });
+  return useDeleteSchedulePeriod();
 }

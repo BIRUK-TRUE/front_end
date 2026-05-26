@@ -4,11 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/api/axios";
 import { AttendanceTrendEntry, analyticsKeys } from "../types";
 
-/**
- * TODO: Analytics module not yet implemented in backend.
- * This hook returns stub data until /analytics/attendance-trend endpoint is created.
- */
-
 export function useAttendanceTrend(filters?: {
   days: number;
   classId?: string;
@@ -18,9 +13,22 @@ export function useAttendanceTrend(filters?: {
   return useQuery({
     queryKey: analyticsKeys.trend(filters),
     queryFn: async (): Promise<AttendanceTrendEntry[]> => {
-      // TODO: Backend endpoint /analytics/attendance-trend not yet implemented
-      return [];
+      const { data } = await axiosInstance.get('/analytics/attendance-trend', {
+        params: {
+          days: filters?.days ?? 30,
+          classId: filters?.classId,
+          sectionId: filters?.sectionId,
+        },
+      });
+      const rows = data?.data ?? [];
+      return rows.map((row: Record<string, unknown>) => ({
+        date: String(row.date ?? ''),
+        present: Number(row.present_count ?? 0),
+        absent: Number(row.absent_count ?? 0),
+        late: 0,
+        excused: 0,
+        rate: Number(row.attendance_percentage ?? 0),
+      }));
     },
-    enabled: true,
   });
 }
