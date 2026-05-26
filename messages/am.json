@@ -566,7 +566,8 @@
     "subjectModalEditDesc": "የዚህ ትምህርት ዝርዝሮችን ያዘምኑ።",
     "termModalDesc": "ለዚህ የትምህርት ዓመት አዲስ የውጤት ሴሚስተር ይፍጠሩ።",
     "termModalEditDesc": "የዚህ ሴሚስተር ዝርዝሮችን ያዘምኑ።",
-    "vocational": "ሙያ"
+    "vocational": "ሙያ",
+    "extracurricular": "ከመደበኛ ትምህርት ውጭ"
   },
   "attendancePage": {
     "title": "ተገኝነት",
@@ -908,6 +909,7 @@
       "captureSuccess": "ፊት በተሳካ ሁኔታ ተነሳ",
       "saveEnrollment": "ምዝገብ አስቀምጥ",
       "cancelEnrollment": "ሰርዝ",
+      "deleteConfirm": "ለ {name} የፊት ምዝገብን ለመሰረዝ እርግጠኛ ነዎት? ይህ ተግባር አይታገልብጥም።",
       "loadModelsFailed": "የፊት ማወቂያ ሞዴሎችን መጫን አልተሳካም",
       "cameraAccessFailed": "ካሜራን ማስወገድ አልተሳካም"
     },

@@ -26,7 +26,7 @@ export function useAtRiskStudents(filters?: {
         },
       });
       const raw = data?.students ?? data?.items ?? [];
-      const students = (Array.isArray(raw) ? raw : []).map(
+      const mapped = (Array.isArray(raw) ? raw : []).map(
         (s: Record<string, unknown>): StudentRisk => ({
           studentId: String(s.student_id ?? s.studentId ?? ''),
           studentName: String(s.student_name ?? s.studentName ?? ''),
@@ -43,6 +43,15 @@ export function useAtRiskStudents(filters?: {
           guardianInfo: s.guardian_info as StudentRisk['guardianInfo'],
         }),
       );
+      // Deduplicate by studentId — keep the entry with the most risk factors
+      const seen = new Map<string, StudentRisk>();
+      for (const s of mapped) {
+        const existing = seen.get(s.studentId);
+        if (!existing || s.factors.length > existing.factors.length) {
+          seen.set(s.studentId, s);
+        }
+      }
+      const students = Array.from(seen.values());
       return { students, total: data?.total ?? students.length };
     },
   });

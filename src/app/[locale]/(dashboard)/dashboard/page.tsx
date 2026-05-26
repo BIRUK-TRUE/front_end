@@ -113,7 +113,7 @@ export default function DashboardPage() {
 
       {/* Analytics & Charts */}
       {isStaff && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <div className="grid min-w-0 gap-4 md:grid-cols-2 lg:grid-cols-7">
           <EnrollmentChart />
           <ActivityFeed />
         </div>

@@ -15,6 +15,7 @@ const ROLE_ROUTE_RULES = [
   { pattern: /^\/[a-z]{2}\/dashboard\/teacher(\/|$)/i, roles: ['teacher'] },
   { pattern: /^\/[a-z]{2}\/dashboard\/guardian(\/|$)/i, roles: ['guardian'] },
   { pattern: /^\/[a-z]{2}\/dashboard\/student(\/|$)/i, roles: ['student'] },
+  { pattern: /^\/[a-z]{2}\/guardian(\/|$)/i, roles: ['guardian'] },
 ];
 
 function getLocaleFromPath(pathname: string) {
@@ -43,8 +44,10 @@ export default function middleware(request: NextRequest) {
   }
 
   const locale = getLocaleFromPath(pathname);
+  // Protect /dashboard/* AND the standalone /guardian/* route group
   const isProtectedRoute =
-    pathname.startsWith(`/${locale}/dashboard`);
+    pathname.startsWith(`/${locale}/dashboard`) ||
+    pathname.startsWith(`/${locale}/guardian`);
 
   if (!isProtectedRoute) {
     return response;

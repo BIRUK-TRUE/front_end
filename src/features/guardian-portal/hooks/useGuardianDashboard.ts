@@ -23,15 +23,19 @@ export function useGuardianDashboard() {
       // Fetch guardian profile with linked students
       const { data: guardian } = await api.get(`/guardians/${guardianId}`);
 
-      const students = guardian?.students ?? guardian?.linked_students ?? [];
+      const studentLinks: Array<{
+        student_id: string;
+        student_name: string;
+        student_registration_number: string;
+      }> = guardian?.student_links ?? [];
 
-      const children: ChildSummary[] = students.map((s: Record<string, unknown>) => ({
-        id: (s.id ?? s.student_id ?? '') as string,
-        fullName: `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim(),
-        studentId: (s.registration_number ?? '') as string,
-        photoUrl: (s.photo_url ?? null) as string | null,
-        className: (s.class_name ?? s.current_class ?? '') as string,
-        sectionName: (s.section_name ?? '') as string,
+      const children: ChildSummary[] = studentLinks.map((link) => ({
+        id: link.student_id,
+        fullName: link.student_name,
+        studentId: link.student_registration_number,
+        photoUrl: null,
+        className: '',
+        sectionName: '',
         attendanceRate: 0,
         gradeAverage: 0,
         feeStatus: 'unpaid' as const,

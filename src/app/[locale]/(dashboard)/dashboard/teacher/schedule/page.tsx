@@ -15,7 +15,7 @@ export default function TeacherSchedulePage() {
   const tc = useTranslations("common");
   const { user } = useAuthStore();
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
-  const schedule = useTeacherSchedule(user?.id ?? "", currentWeekOffset);
+  const schedule = useTeacherSchedule(user?.teacher_id ?? user?.id ?? "", currentWeekOffset);
 
   if (!user) return null;
 

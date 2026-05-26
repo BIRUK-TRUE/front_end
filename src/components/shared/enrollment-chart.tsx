@@ -19,7 +19,7 @@ export function EnrollmentChart() {
   const { data, isPending, isError } = useHistoricalEnrollment();
 
   return (
-    <Card className="col-span-full lg:col-span-4 shadow-sm border overflow-hidden">
+    <Card className="col-span-full lg:col-span-4 min-w-0 shadow-sm border overflow-hidden">
       <CardHeader className="bg-muted/30 border-b pb-4">
         <CardTitle>{t('enrollmentTrends')}</CardTitle>
         <CardDescription>{t('enrollmentGrowthDesc')}</CardDescription>
@@ -39,7 +39,7 @@ export function EnrollmentChart() {
           </div>
         ) : (
           <div className="h-[300px] w-full min-w-0">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            <ResponsiveContainer width="100%" height={300} minWidth={0}>
               <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">

@@ -10,6 +10,6 @@ export const EnrollmentChart = dynamic(
     })),
   {
     ssr: false,
-    loading: () => <Skeleton className="h-[280px] w-full rounded-lg" />,
+    loading: () => <Skeleton className="col-span-full h-[300px] w-full min-w-0 rounded-lg lg:col-span-4" />,
   }
 );

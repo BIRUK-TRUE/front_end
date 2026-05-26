@@ -46,7 +46,7 @@ export function AtRiskSummaryChart({ data, isLoading }: AtRiskSummaryChartProps)
               <span className="text-muted-foreground">{t("allStudentsOnTrack")}</span>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            <ResponsiveContainer width="100%" height={300} minWidth={0}>
               <PieChart>
                 <Pie
                   data={chartData}

@@ -55,7 +55,7 @@ export default function MyClassesPage() {
   const { user } = useAuthStore();
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
 
-  const classes = useTeacherClasses(user?.id ?? "");
+  const classes = useTeacherClasses(user?.teacher_id ?? user?.id ?? "");
 
   if (!user) return null;
 

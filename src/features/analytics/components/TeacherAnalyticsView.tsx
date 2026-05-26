@@ -16,17 +16,19 @@ export function TeacherAnalyticsView() {
   const tt = useTranslations("analytics.teacher");
   const { user } = useAuthStore();
 
+  const teacherId = user?.teacher_id ?? user?.id;
+
   const { data: summary, isLoading: isLoadingSummary } = useAnalyticsSummary({ 
-    teacherId: user?.id 
+    teacherId
   });
 
   const { data: trendData, isLoading: isLoadingTrend } = useAttendanceTrend({
     days: 30,
-    teacherId: user?.id
+    teacherId
   });
 
   const { data: atRiskData, isLoading: isLoadingAtRisk } = useAtRiskStudents({
-    teacherId: user?.id
+    teacherId
   });
 
   return (

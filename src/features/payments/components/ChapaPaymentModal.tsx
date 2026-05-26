@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -27,7 +26,6 @@ import {
 import { toast } from 'sonner';
 import { useInitiateChapaPayment, useVerifyChapaPayment } from '../api/usePayments';
 import type { LinkedStudent } from '../types';
-import { useAuthStore } from '@/lib/store/auth-store';
 
 interface ChapaPaymentModalProps {
   isOpen: boolean;
@@ -39,12 +37,7 @@ interface ChapaPaymentModalProps {
 
 export function ChapaPaymentModal({ isOpen, onClose, student, feeId, onSuccess }: ChapaPaymentModalProps) {
   const t = useTranslations('guardianPortal.dashboard.chapa');
-  const { user } = useAuthStore();
-  const guardianId = user?.id ?? '';
   const [amount, setAmount] = useState<string>('');
-  const [email, setEmail] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [txRef, setTxRef] = useState<string | null>(null);
   const [status, setStatus] = useState<'form' | 'processing' | 'success' | 'error'>('form');
@@ -62,38 +55,26 @@ export function ChapaPaymentModal({ isOpen, onClose, student, feeId, onSuccess }
       return;
     }
 
-    if (!email || !firstName || !lastName) {
-      toast.error(t('fillRequiredFields'));
-      return;
-    }
-
-    const reference = `SCHFEE-${Date.now()}-${guardianId.slice(0, 6)}`;
-    setTxRef(reference);
     setStatus('processing');
 
     try {
-      const payload = {
-        amount: String(numAmount),
-        currency: 'ETB',
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        tx_ref: reference,
-        callback_url: `${window.location.origin}/api/payments/chapa/callback`,
-        return_url: `${window.location.origin}/dashboard/payments/success?ref=${reference}`,
-        customization: {
-          title: t('schoolFeePayment'),
-          description: t('paymentFor', { name: student.name, fee: fee?.fee_type || '' }),
-        },
+      const response = await initiatePayment.mutateAsync({
         fee_id: feeId,
-      };
+        amount: String(numAmount),
+      });
 
-      const response = await initiatePayment.mutateAsync(payload);
-      
-      if (response.data?.checkout_url) {
-        setPaymentUrl(response.data.checkout_url);
-        // Open Chapa in new window
-        window.open(response.data.checkout_url, '_blank');
+      // Backend returns { checkout_url, tx_ref, ... } directly
+      const checkoutUrl: string | undefined = response?.checkout_url;
+      const ref: string | undefined = response?.tx_ref;
+
+      if (ref) setTxRef(ref);
+
+      if (checkoutUrl) {
+        setPaymentUrl(checkoutUrl);
+        window.open(checkoutUrl, '_blank');
+      } else {
+        setStatus('error');
+        toast.error(t('initiateFailed'));
       }
     } catch {
       setStatus('error');
@@ -159,36 +140,6 @@ export function ChapaPaymentModal({ isOpen, onClose, student, feeId, onSuccess }
               <p className="text-xs text-muted-foreground">
                 {t('partialPaymentNote')}
               </p>
-            </div>
-
-            {/* Personal Info */}
-            <div className="space-y-2">
-              <Label>{t('email')}</Label>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={t('emailPlaceholder')}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t('firstName')}</Label>
-                <Input
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder={t('firstName')}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('lastName')}</Label>
-                <Input
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder={t('lastName')}
-                />
-              </div>
             </div>
 
             {/* Security Notice */}
@@ -318,13 +269,7 @@ export function ChapaPaymentModal({ isOpen, onClose, student, feeId, onSuccess }
             </Button>
             <Button
               onClick={handleInitiatePayment}
-              disabled={
-                initiatePayment.isPending ||
-                !amount ||
-                !email ||
-                !firstName ||
-                !lastName
-              }
+              disabled={initiatePayment.isPending || !amount}
               className="gap-2"
             >
               {initiatePayment.isPending ? (

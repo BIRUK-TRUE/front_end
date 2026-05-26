@@ -9,7 +9,7 @@ import type { ChildFeeBalance, PaymentRecord } from "../types";
 
 /**
  * Get fee balance summary for a student.
- * Backend: GET /payments/students/{student_id}/summary
+ * Backend: GET /payments/students/{student_id}/summary + GET /payments/schedules?student_id=...
  */
 export function useFeeBalance(studentId: string) {
   const authReady = useAuthReady();
@@ -17,35 +17,33 @@ export function useFeeBalance(studentId: string) {
   return useQuery({
     queryKey: queryKeys.guardianPortal.fees(studentId),
     queryFn: async (): Promise<ChildFeeBalance> => {
-      try {
-        const { data } = await api.get(
-          `/payments/students/${studentId}/summary`,
-        );
-        return {
-          studentId,
-          total: data?.total_amount ?? data?.total ?? 0,
-          paid: data?.paid_amount ?? data?.paid ?? 0,
-          outstanding: data?.balance ?? data?.outstanding ?? 0,
-          dueDate: data?.next_due_date ?? '',
-          breakdown: (data?.items ?? []).map((item: Record<string, unknown>) => ({
-            id: (item.id ?? '') as string,
-            type: (item.fee_type ?? item.name ?? '') as string,
-            amount: (item.total_amount ?? item.amount ?? 0) as number,
-            paid: (item.paid_amount ?? 0) as number,
-            balance: (item.balance ?? 0) as number,
-            dueDate: (item.due_date ?? '') as string,
-          })),
-        };
-      } catch {
-        return {
-          studentId,
-          total: 0,
-          paid: 0,
-          outstanding: 0,
-          dueDate: '',
-          breakdown: [],
-        };
-      }
+      const [summaryRes, schedulesRes] = await Promise.all([
+        api.get(`/payments/students/${studentId}/summary`).catch(() => ({ data: null })),
+        api.get(`/payments/schedules`, { params: { student_id: studentId, size: 50 } }).catch(() => ({ data: null })),
+      ]);
+
+      const summary = summaryRes.data;
+      const scheduleItems: Record<string, unknown>[] = schedulesRes.data?.items ?? [];
+
+      const firstDue = scheduleItems
+        .filter((s) => s.status === 'pending' && s.due_date)
+        .sort((a, b) => String(a.due_date).localeCompare(String(b.due_date)))[0];
+
+      return {
+        studentId,
+        total: Number(summary?.total_due ?? summary?.total_amount ?? summary?.total ?? 0),
+        paid: Number(summary?.total_paid ?? summary?.paid_amount ?? summary?.paid ?? 0),
+        outstanding: Number(summary?.total_balance ?? summary?.balance ?? summary?.outstanding ?? 0),
+        dueDate: String(firstDue?.due_date ?? ''),
+        breakdown: scheduleItems.map((item) => ({
+          id: (item.id ?? '') as string,
+          type: (item.fee_type ?? item.name ?? 'Fee') as string,
+          amount: Number(item.total_amount ?? item.amount ?? 0),
+          paid: Number(item.paid_amount ?? 0),
+          balance: Number(item.balance ?? item.remaining_amount ?? 0),
+          dueDate: (item.due_date ?? '') as string,
+        })),
+      };
     },
     enabled: authReady && !!studentId,
   });

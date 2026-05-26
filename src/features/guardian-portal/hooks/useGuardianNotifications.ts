@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance as api } from "@/lib/api/axios";
 import { queryKeys } from "@/lib/api/query-keys";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useAuthReady } from "@/hooks/use-auth-ready";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/utils/formatApiError";
 import type { GuardianNotification } from "../types";
@@ -34,15 +35,34 @@ export function useGuardianNotifications(filters: NotificationFilters) {
         page: filters.page ?? 1,
         size: filters.size ?? 20,
       };
-      if (filters.type) {
-        params.status = filters.type;
-      }
+      // Backend status filter accepts: unread | read | archived (not type names)
+      if (filters.is_read === false) params.status = 'unread';
+      else if (filters.is_read === true) params.status = 'read';
+      // type filter maps to notification_type on backend
+      if (filters.type) params.notification_type = filters.type;
 
-      const { data } = await api.get<PaginatedResponse<GuardianNotification>>(
-        `/notifications/me`,
-        { params },
+      const { data } = await api.get(`/notifications/me`, { params });
+
+      // Normalize backend snake_case fields → frontend camelCase
+      const items: GuardianNotification[] = (data?.items ?? []).map(
+        (n: Record<string, unknown>) => ({
+          id: String(n.id ?? ''),
+          title: String(n.title ?? ''),
+          message: String(n.message ?? n.body ?? ''),
+          type: (n.notification_type ?? n.type ?? 'general') as GuardianNotification['type'],
+          studentName: String(n.student_name ?? n.related_name ?? ''),
+          createdAt: String(n.created_at ?? n.createdAt ?? ''),
+          isRead: n.status === 'read' || n.status === 'archived' || Boolean(n.is_read),
+        })
       );
-      return data;
+
+      return {
+        items,
+        total: data?.total ?? items.length,
+        page: data?.page ?? 1,
+        size: data?.size ?? items.length,
+        pages: data?.pages ?? 1,
+      } as PaginatedResponse<GuardianNotification>;
     },
     enabled: authReady && !!guardianId,
   });

@@ -470,6 +470,7 @@
     "core": "Core",
     "elective": "Elective",
     "vocational": "Vocational",
+    "extracurricular": "Extracurricular",
     "addNewClass": "Add New Class",
     "editClass": "Edit Class",
     "addNewTerm": "Add New Term",
@@ -916,6 +917,7 @@
       "captureSuccess": "Face captured successfully",
       "saveEnrollment": "Save Enrollment",
       "cancelEnrollment": "Cancel",
+      "deleteConfirm": "Are you sure you want to delete the face enrollment for {name}? This action cannot be undone.",
       "loadModelsFailed": "Failed to load face recognition models",
       "cameraAccessFailed": "Could not access camera"
     },

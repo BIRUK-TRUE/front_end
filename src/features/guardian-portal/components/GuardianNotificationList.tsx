@@ -51,8 +51,8 @@ export function GuardianNotificationList() {
   const getIcon = (type: string) => {
     switch (type) {
       case "attendance": return <Calendar className="h-4 w-4" />;
-      case "grade": return <GraduationCap className="h-4 w-4" />;
-      case "fee": return <Wallet className="h-4 w-4" />;
+      case "academic": return <GraduationCap className="h-4 w-4" />;
+      case "fee_reminder": return <Wallet className="h-4 w-4" />;
       default: return <Bell className="h-4 w-4" />;
     }
   };
@@ -60,8 +60,8 @@ export function GuardianNotificationList() {
   const getTypeLabel = (type: string) => {
     switch (type) {
       case "attendance": return t("types.attendance");
-      case "grade": return t("types.grades");
-      case "fee": return t("types.fees");
+      case "academic": return t("types.grades");
+      case "fee_reminder": return t("types.fees");
       default: return t("types.general");
     }
   };
@@ -76,7 +76,7 @@ export function GuardianNotificationList() {
         <Button 
           variant="outline" 
           onClick={() => markAllRead.mutate()} 
-          disabled={notifications.every(n => n.isRead) || markAllRead.isPending}
+          disabled={notifications.length === 0 || notifications.every(n => n.isRead) || markAllRead.isPending}
           className="gap-2"
         >
           <CheckCircle2 className="h-4 w-4" />
@@ -88,9 +88,9 @@ export function GuardianNotificationList() {
         <TabsList className="bg-muted/50 p-1 rounded-lg">
           <TabsTrigger value="all">{t("filters.all")}</TabsTrigger>
           <TabsTrigger value="attendance">{t("filters.attendance")}</TabsTrigger>
-          <TabsTrigger value="grade">{t("filters.grades")}</TabsTrigger>
-          <TabsTrigger value="fee">{t("filters.fees")}</TabsTrigger>
-          <TabsTrigger value="general">{t("filters.general")}</TabsTrigger>
+          <TabsTrigger value="academic">{t("filters.grades")}</TabsTrigger>
+          <TabsTrigger value="fee_reminder">{t("filters.fees")}</TabsTrigger>
+          <TabsTrigger value="announcement">{t("filters.general")}</TabsTrigger>
         </TabsList>
 
         <Card className="shadow-sm border-muted/60">
@@ -116,8 +116,8 @@ export function GuardianNotificationList() {
                     <div className={cn(
                       "h-10 w-10 rounded-full flex items-center justify-center shrink-0",
                       n.type === "attendance" ? "bg-red-50 text-red-600" :
-                      n.type === "grade" ? "bg-blue-50 text-blue-600" :
-                      n.type === "fee" ? "bg-orange-50 text-orange-600" :
+                      n.type === "academic" ? "bg-blue-50 text-blue-600" :
+                      n.type === "fee_reminder" ? "bg-orange-50 text-orange-600" :
                       "bg-primary/10 text-primary"
                     )}>
                       {getIcon(n.type)}

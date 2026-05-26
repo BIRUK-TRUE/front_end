@@ -44,7 +44,7 @@ export function GradeDistributionChart({ data, isLoading }: GradeDistributionCha
               <span className="text-muted-foreground">{t("noDistributionData")}</span>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            <ResponsiveContainer width="100%" height={300} minWidth={0}>
               <BarChart data={sortedData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis 
