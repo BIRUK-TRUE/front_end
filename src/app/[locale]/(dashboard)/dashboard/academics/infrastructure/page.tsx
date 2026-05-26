@@ -55,17 +55,17 @@ export default function InfrastructurePage() {
     <div className="space-y-6">
       <PageHeader
         title={ta('infrastructure') || 'Infrastructure'}
-        description="Manage school buildings and classrooms"
+        description={ta('infrastructureDescription')}
         actions={
           activeTab === 'buildings' ? (
             <Button onClick={() => setBuildingModalOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" />
-              Add Building
+              {ta('addBuilding')}
             </Button>
           ) : (
             <Button onClick={() => setClassroomModalOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" />
-              Add Classroom
+              {ta('addClassroom')}
             </Button>
           )
         }

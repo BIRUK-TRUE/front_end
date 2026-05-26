@@ -71,14 +71,19 @@ axiosInstance.interceptors.response.use(
         );
         originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
         return axiosInstance(originalRequest);
-      } catch {
-        refreshPromise = null; // Clear on error
-        useAuthStore.getState().clearAuth();
-        if (typeof window !== 'undefined') {
-          // Get current locale from localStorage or default to 'en'
-          const locale =
-            window.location.pathname.split('/').filter(Boolean)[0] || 'en';
-          window.location.href = `/${locale}/login`;
+      } catch (refreshError) {
+        refreshPromise = null;
+        // Only force logout when refresh is rejected (expired/invalid token), not on network blips
+        const refreshRejected =
+          axios.isAxiosError(refreshError) &&
+          refreshError.response?.status === 401;
+        if (refreshRejected) {
+          useAuthStore.getState().clearAuth();
+          if (typeof window !== 'undefined') {
+            const locale =
+              window.location.pathname.split('/').filter(Boolean)[0] || 'en';
+            window.location.href = `/${locale}/login`;
+          }
         }
         return Promise.reject(error);
       }

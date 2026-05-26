@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { usePathname } from '@/i18n/navigation';
 import { Link } from '@/i18n/navigation';
@@ -30,16 +31,13 @@ import {
   BarChart3,
   TrendingUp,
   ScanFace,
-  Package,
   Send,
   ShieldAlert,
-  Layers,
   Activity,
   ArrowRightLeft,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useSchoolInfo } from '@/hooks/use-settings';
 
@@ -179,12 +177,6 @@ export function Sidebar({
       show: isGuardian,
     },
     {
-      href: '/dashboard/guardian',
-      label: t('myChildren'),
-      icon: Users,
-      show: isGuardian,
-    },
-    {
       href: '/dashboard/guardian/notifications',
       label: t('notifications'),
       icon: Bell,
@@ -249,20 +241,14 @@ export function Sidebar({
       show: canManageAcademics,
     },
     {
-      href: '/dashboard/academics/bulk-assignment',
-      label: t('bulkAssignment'),
-      icon: Layers,
-      show: canManageAcademics,
-    },
-    {
       href: '/dashboard/academics/subject-assignment',
-      label: 'Subject Assignment',
+      label: t('subjectAssignment'),
       icon: BookOpen,
       show: canManageAcademics,
     },
     {
       href: '/dashboard/academics/infrastructure',
-      label: 'Infrastructure',
+      label: t('infrastructure'),
       icon: Building2,
       show: canManageAcademics,
     },
@@ -274,7 +260,7 @@ export function Sidebar({
     },
     {
       href: '/dashboard/promotions',
-      label: 'Promotions',
+      label: t('promotions'),
       icon: ArrowRightLeft,
       show: canManageAcademics,
     },
@@ -292,13 +278,13 @@ export function Sidebar({
     },
     {
       href: '/dashboard/teachers/assignments',
-      label: 'Teacher Assignments',
+      label: t('teacherAssignments'),
       icon: UserCheck,
       show: canManageTeachers,
     },
     {
       href: '/dashboard/teachers/workload',
-      label: 'Workload Dashboard',
+      label: t('workloadDashboard'),
       icon: Activity,
       show: canManageTeachers,
     },
@@ -355,7 +341,7 @@ export function Sidebar({
       href: '/dashboard/profile',
       label: t('myProfile'),
       icon: User,
-      show: true,
+      show: !isStudent && !isGuardian,
     },
     {
       href: '/dashboard/settings',
@@ -365,9 +351,47 @@ export function Sidebar({
     },
   ];
 
+  const notificationSubNavHrefs = [
+    '/dashboard/notifications/compose',
+    '/dashboard/notifications/alert-rules',
+    '/dashboard/notifications/history',
+  ];
+
+  const allNavHrefs = useMemo(() => {
+    const hrefs = [
+      ...navItems.filter((item) => item.show).map((item) => item.href),
+      ...bottomItems.filter((item) => item.show).map((item) => item.href),
+    ];
+
+    if (canManageNotifications && !isTeacher && !isStudent && !isGuardian) {
+      hrefs.push(...notificationSubNavHrefs);
+    }
+
+    return hrefs;
+  }, [
+    navItems,
+    bottomItems,
+    canManageNotifications,
+    isTeacher,
+    isStudent,
+    isGuardian,
+  ]);
+
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
-    return pathname.startsWith(href);
+    if (!pathname.startsWith(href)) return false;
+
+    const matchingHrefs = allNavHrefs.filter(
+      (navHref) => navHref !== '/dashboard' && pathname.startsWith(navHref)
+    );
+
+    if (matchingHrefs.length === 0) return true;
+
+    const bestMatch = matchingHrefs.reduce((longest, current) =>
+      current.length > longest.length ? current : longest
+    );
+
+    return bestMatch === href;
   };
 
   const NavLink = ({ item, showBadge }: { item: NavItem; showBadge?: boolean }) => {
@@ -465,7 +489,7 @@ export function Sidebar({
           <nav className="space-y-1" aria-label={t('mainNavigation')}>
             {navItems.map((item) => (
               <NavLink
-                key={item.href}
+                key={`${item.href}-${item.label}`}
                 item={item}
                 showBadge={item.href === '/dashboard/notifications'}
               />
@@ -476,11 +500,11 @@ export function Sidebar({
           {canManageNotifications && !isCollapsed && (
             <div className="mt-1 ml-3 pl-3 border-l border-border space-y-0.5">
               {[
-                { href: '/dashboard/notifications/compose', label: 'Send Message', icon: Send },
-                { href: '/dashboard/notifications/alert-rules', label: 'Alert Rules', icon: ShieldAlert },
-                { href: '/dashboard/notifications/history', label: 'History', icon: History },
+                { href: '/dashboard/notifications/compose', label: t('sendNotification'), icon: Send },
+                { href: '/dashboard/notifications/alert-rules', label: t('alertRules'), icon: ShieldAlert },
+                { href: '/dashboard/notifications/history', label: t('notificationHistory'), icon: History },
               ].map(({ href, label, icon: Icon }) => {
-                const active = pathname.startsWith(href);
+                const active = isActive(href);
                 return (
                   <Link
                     key={href}
@@ -506,7 +530,7 @@ export function Sidebar({
           {/* Bottom nav */}
           <div className="border-t px-0 py-4 space-y-1 mt-4">
             {bottomItems.map((item) => (
-              <NavLink key={item.href} item={item} />
+              <NavLink key={`${item.href}-${item.label}`} item={item} />
             ))}
           </div>
         </ScrollArea>
@@ -518,7 +542,7 @@ export function Sidebar({
             size="sm"
             className="w-full min-h-[44px] justify-center"
             onClick={onToggleCollapse}
-            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={isCollapsed ? tc('expandSidebar') : tc('collapseSidebar')}
           >
             <ChevronLeft
               className={cn(

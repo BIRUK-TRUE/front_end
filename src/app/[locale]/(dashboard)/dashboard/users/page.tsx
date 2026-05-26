@@ -77,7 +77,7 @@ export default function UsersPage() {
     },
     {
       id: 'roles',
-      header: tr('admin').split(' ')[0] + 's',
+      header: t('roles'),
       cell: ({ row }) => (
         <div className="flex flex-wrap gap-1">
           {(row.original.roles || []).map((role: string | { name: string }) => (

@@ -10,30 +10,21 @@ export const useTerms = (yearId: string) => {
   return useQuery({
     queryKey: [...academicsKeys.years.detail(yearId), "terms"],
     queryFn: async () => {
-      console.log('[useTerms] Fetching terms for year:', yearId);
       const { data } = await axiosInstance.get<
         PaginatedResponse<Term> | Term[]
       >(`/academics/years/${yearId}/terms`, {
-        params: { page: 1, size: 50 }, // Terms usually don't exceed a handful per year
+        params: { page: 1, size: 50 },
       });
-      
-      console.log('[useTerms] Raw response:', data);
-      console.log('[useTerms] Is array?', Array.isArray(data));
-      
-      // Backend returns either a plain array or a paginated response
-      // Normalize to paginated format for consistency
+
       if (Array.isArray(data)) {
-        const normalized = {
+        return {
           items: data,
           total: data.length,
           page: 1,
           size: data.length,
         } as PaginatedResponse<Term>;
-        console.log('[useTerms] Normalized response:', normalized);
-        return normalized;
       }
-      
-      console.log('[useTerms] Already paginated:', data);
+
       return data as PaginatedResponse<Term>;
     },
     enabled: !!yearId,

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useAcademicYears, useCreateAcademicYear, useUpdateAcademicYear, useDeleteAcademicYear, useSetCurrentAcademicYear } from '@/features/academics/api/useAcademicYears';
@@ -127,28 +128,30 @@ function SetupChecklist({
 // ── Status badge ──────────────────────────────────────────────────────────────
 
 function StatusBadge({ status, isCurrent }: { status: AcademicYearStatus; isCurrent: boolean }) {
+  const t = useTranslations('academicsPages');
+
   if (isCurrent) {
     return (
       <Badge className="bg-primary/15 text-primary border-primary/30 hover:bg-primary/20">
-        ✦ Current Year
+        ✦ {t('currentYearBadge')}
       </Badge>
     );
   }
   const map: Record<AcademicYearStatus, { label: string; className: string }> = {
     [AcademicYearStatus.PLANNING]: {
-      label: 'Planning',
+      label: t('planning'),
       className: 'bg-muted text-muted-foreground border-muted-foreground/30',
     },
     [AcademicYearStatus.ACTIVE]: {
-      label: 'Active',
+      label: t('active'),
       className: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30',
     },
     [AcademicYearStatus.COMPLETED]: {
-      label: 'Completed',
+      label: t('completed'),
       className: 'bg-blue-500/10 text-blue-700 border-blue-500/30',
     },
     [AcademicYearStatus.ARCHIVED]: {
-      label: 'Archived',
+      label: t('archived'),
       className: 'bg-destructive/10 text-destructive border-destructive/30',
     },
   };
@@ -163,6 +166,7 @@ function StatusBadge({ status, isCurrent }: { status: AcademicYearStatus; isCurr
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AcademicYearsPage() {
+  const t = useTranslations('academicsPages');
   const router = useRouter();
 
   const [page] = useState(1);
@@ -186,10 +190,10 @@ export default function AcademicYearsPage() {
     try {
       if (editingYear) {
         await updateYear.mutateAsync({ id: editingYear.id, data: formData });
-        toast.success("Academic year updated successfully");
+        toast.success(t('yearUpdatedSuccess'));
       } else {
         const result = await createYear.mutateAsync(formData);
-        toast.success("Academic year created successfully");
+        toast.success(t('yearCreatedSuccess'));
         // Show setup checklist after creation
         setNewlyCreated({ id: result.id, name: result.name });
       }
@@ -206,12 +210,12 @@ export default function AcademicYearsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title="Academic Years"
-        description="Manage your school's academic years, terms, and class structure."
+        title={t('academicYearsTitle')}
+        description={t('academicYearsDescription')}
         actions={
           <Button className="gap-2" onClick={openCreateModal}>
             <Plus className="h-4 w-4" />
-            New Academic Year
+            {t('newAcademicYear')}
           </Button>
         }
       />
@@ -235,12 +239,12 @@ export default function AcademicYearsPage() {
             ) : !data?.items?.length ? (
               <EmptyState
                 icon={Calendar}
-                title="No academic years yet"
-                description="Create your first academic year to start setting up terms, classes, and subjects."
+                title={t('noAcademicYearsTitle')}
+                description={t('noAcademicYearsDescription')}
                 action={
                   <Button onClick={openCreateModal} className="gap-2">
                     <Plus className="h-4 w-4" />
-                    Create Academic Year
+                    {t('createAcademicYear')}
                   </Button>
                 }
               />
@@ -248,12 +252,12 @@ export default function AcademicYearsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Year Name</TableHead>
-                    <TableHead>Timeline</TableHead>
-                    <TableHead>Terms</TableHead>
-                    <TableHead>Classes</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('yearName')}</TableHead>
+                    <TableHead>{t('timeline')}</TableHead>
+                    <TableHead>{t('terms')}</TableHead>
+                    <TableHead>{t('classes')}</TableHead>
+                    <TableHead>{t('status')}</TableHead>
+                    <TableHead className="text-right">{t('actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -266,7 +270,7 @@ export default function AcademicYearsPage() {
                       <TableCell className="font-semibold">
                         {year.name}
                         {year.is_current && (
-                          <span className="ml-2 text-[10px] font-normal text-primary">● current</span>
+                          <span className="ml-2 text-[10px] font-normal text-primary">● {t('current')}</span>
                         )}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
@@ -294,21 +298,21 @@ export default function AcademicYearsPage() {
                             className="h-8"
                             onClick={() => router.push(`/dashboard/academics/years/${year.id}`)}
                           >
-                            Manage
+                            {t('manage')}
                             <ChevronRight className="h-4 w-4 ml-1" />
                           </Button>
 
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <span className="sr-only">Open menu</span>
+                                <span className="sr-only">{t('openMenu')}</span>
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-[180px]">
                               <DropdownMenuItem onClick={() => { setEditingYear(year); setIsModalOpen(true); }}>
                                 <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
-                                Edit Details
+                                {t('editDetails')}
                               </DropdownMenuItem>
 
                               {!year.is_current &&
@@ -318,7 +322,7 @@ export default function AcademicYearsPage() {
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => handleActivate(year.id)}>
                                       <CheckCircle className="mr-2 h-4 w-4 text-emerald-600" />
-                                      Set as Current Year
+                                      {t('setAsCurrent')}
                                     </DropdownMenuItem>
                                   </>
                                 )}

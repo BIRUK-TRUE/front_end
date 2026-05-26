@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { Building2, CheckCircle, Database, Mail, Palette, Phone, Save, Shield, Upload } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
@@ -32,6 +33,9 @@ function initials(name: string) {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations("settingsPage");
+  const ts = useTranslations("settings");
+  const tg = useTranslations("settingsPage.general");
   const { data: schoolInfo, isLoading } = useSchoolInfo();
   const updateSchoolInfo = useUpdateSchoolInfo();
   const [draft, setDraft] = useState<Partial<SchoolInfo>>({});
@@ -57,14 +61,13 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Settings"
-        description="Manage school branding, communication defaults, and operational safeguards."
+        title={t("title")}
+        description={t("pageDescription")}
         icon={Shield}
-        breadcrumb={["Admin", "System", "Settings"]}
         action={
           <Button onClick={handleSave} disabled={updateSchoolInfo.isPending} className="min-h-11 gap-2">
             <Save className="h-4 w-4" aria-hidden="true" />
-            {updateSchoolInfo.isPending ? "Saving..." : "Save changes"}
+            {updateSchoolInfo.isPending ? t("saving") : tg("saveChanges")}
           </Button>
         }
       />
@@ -74,11 +77,9 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5 text-primary" aria-hidden="true" />
-              School Branding
+              {t("branding.title")}
             </CardTitle>
-            <CardDescription>
-              These values power the login page, report headers, and system-wide brand color.
-            </CardDescription>
+            <CardDescription>{t("branding.description")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             {isLoading ? (
@@ -91,32 +92,32 @@ export default function SettingsPage() {
               <>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="school-name">School Name</Label>
+                    <Label htmlFor="school-name">{tg("schoolName")}</Label>
                     <Input id="school-name" value={form.school_name} onChange={(event) => handleChange("school_name", event.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="school-color">School Primary Color</Label>
+                    <Label htmlFor="school-color">{t("branding.primaryColor")}</Label>
                     <div className="flex gap-2">
                       <Input id="school-color" type="color" value={form.primary_color || "#2563EB"} onChange={(event) => handleChange("primary_color", event.target.value)} className="w-16 p-1" />
-                      <Input value={form.primary_color || "#2563EB"} onChange={(event) => handleChange("primary_color", event.target.value)} aria-label="Primary color hex value" className="font-mono" />
+                      <Input value={form.primary_color || "#2563EB"} onChange={(event) => handleChange("primary_color", event.target.value)} aria-label={t("branding.primaryColorAria")} className="font-mono" />
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="school-logo">School Logo URL</Label>
+                  <Label htmlFor="school-logo">{t("branding.logoUrl")}</Label>
                   <div className="flex gap-2">
                     <Input id="school-logo" value={form.school_logo || ""} onChange={(event) => handleChange("school_logo", event.target.value)} />
                     <Button type="button" variant="outline" className="min-h-11 gap-2">
                       <Upload className="h-4 w-4" aria-hidden="true" />
-                      Upload
+                      {t("branding.upload")}
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">Paste an image URL now; the upload control is ready for backend storage integration.</p>
+                  <p className="text-xs text-muted-foreground">{t("branding.logoHint")}</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="school-tagline">School Tagline/Motto</Label>
+                  <Label htmlFor="school-tagline">{t("branding.tagline")}</Label>
                   <Textarea id="school-tagline" value={form.school_tagline || ""} onChange={(event) => handleChange("school_tagline", event.target.value)} rows={3} />
                 </div>
 
@@ -124,15 +125,15 @@ export default function SettingsPage() {
 
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-2">
-                    <Label htmlFor="school-address">School Address</Label>
+                    <Label htmlFor="school-address">{tg("address")}</Label>
                     <Input id="school-address" value={form.address || ""} onChange={(event) => handleChange("address", event.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="school-phone">Phone</Label>
+                    <Label htmlFor="school-phone">{tg("phone")}</Label>
                     <Input id="school-phone" value={form.phone || ""} onChange={(event) => handleChange("phone", event.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="school-email">Email</Label>
+                    <Label htmlFor="school-email">{tg("email")}</Label>
                     <Input id="school-email" type="email" value={form.email || ""} onChange={(event) => handleChange("email", event.target.value)} />
                   </div>
                 </div>
@@ -145,9 +146,9 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Palette className="h-5 w-5 text-primary" aria-hidden="true" />
-              Login Preview
+              {t("loginPreview.title")}
             </CardTitle>
-            <CardDescription>Branding updates are reflected instantly in the sign-in experience.</CardDescription>
+            <CardDescription>{t("loginPreview.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-hidden rounded-xl border bg-muted/40 p-6 flex justify-center items-center relative">
@@ -168,15 +169,15 @@ export default function SettingsPage() {
                   </Avatar>
                   <div className="space-y-1">
                     <h3 className="font-bold tracking-tight text-lg leading-tight break-words">
-                      Welcome to <br />
-                      <span style={{ color: form.primary_color || "#2563EB" }}>{form.school_name || "School Management"}</span>
+                      {t("loginPreview.welcomeTo")} <br />
+                      <span style={{ color: form.primary_color || "#2563EB" }}>{form.school_name || t("loginPreview.defaultSchoolName")}</span>
                     </h3>
                     {form.school_tagline && (
                       <p className="text-[10px] font-medium italic text-muted-foreground px-2">
                         "{form.school_tagline}"
                       </p>
                     )}
-                    <p className="text-[10px] text-muted-foreground pt-1">Sign in to your account to continue</p>
+                    <p className="text-[10px] text-muted-foreground pt-1">{t("loginPreview.signInPrompt")}</p>
                   </div>
                 </div>
 
@@ -197,13 +198,13 @@ export default function SettingsPage() {
                     <Skeleton className="h-3 w-24" />
                   </div>
                   <Button className="w-full h-9 text-xs" style={{ backgroundColor: form.primary_color || "#2563EB", color: "#fff" }}>
-                    Sign In →
+                    {t("loginPreview.signIn")}
                   </Button>
                 </div>
 
                 <div className="border-t bg-muted/20 px-4 py-3 text-center">
                   <p className="text-[9px] text-muted-foreground">
-                    Secure access · All roles auto-detected
+                    {t("loginPreview.footer")}
                   </p>
                 </div>
               </div>
@@ -215,33 +216,33 @@ export default function SettingsPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="shadow-sm">
           <CardHeader>
-            <CardTitle>System Status</CardTitle>
-            <CardDescription>Operational controls for administrators.</CardDescription>
+            <CardTitle>{ts("systemStatus")}</CardTitle>
+            <CardDescription>{ts("systemStatusDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
-                <Label htmlFor="maintenance-mode" className="text-sm font-medium">Maintenance Mode</Label>
-                <p className="text-xs text-muted-foreground">Temporarily pause regular access during planned work.</p>
+                <Label htmlFor="maintenance-mode" className="text-sm font-medium">{ts("maintenanceMode")}</Label>
+                <p className="text-xs text-muted-foreground">{t("operational.maintenancePauseDesc")}</p>
               </div>
               <Switch id="maintenance-mode" checked={maintenanceMode} onCheckedChange={setMaintenanceMode} />
             </div>
-            <StatusBadge status={maintenanceMode ? "late" : "active"} label={maintenanceMode ? "Maintenance enabled" : "System operational"} />
+            <StatusBadge status={maintenanceMode ? "late" : "active"} label={maintenanceMode ? t("operational.maintenanceEnabled") : t("operational.systemOperational")} />
           </CardContent>
         </Card>
 
         <Card className="shadow-sm">
           <CardHeader>
-            <CardTitle>Communication Defaults</CardTitle>
-            <CardDescription>Shared notification preferences for school messages.</CardDescription>
+            <CardTitle>{ts("notificationSettings")}</CardTitle>
+            <CardDescription>{ts("notificationSettingsDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-primary" aria-hidden="true" />
                 <div>
-                  <Label htmlFor="email-notifications" className="text-sm font-medium">Email Notifications</Label>
-                  <p className="text-xs text-muted-foreground">Use email for announcements and reminders.</p>
+                  <Label htmlFor="email-notifications" className="text-sm font-medium">{ts("emailNotifications")}</Label>
+                  <p className="text-xs text-muted-foreground">{ts("emailNotificationsDescription")}</p>
                 </div>
               </div>
               <Switch id="email-notifications" checked={emailNotifications} onCheckedChange={setEmailNotifications} />
@@ -249,18 +250,18 @@ export default function SettingsPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg border p-4">
                 <Phone className="mb-2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
-                <p className="font-medium">SMS</p>
-                <p className="text-xs text-muted-foreground">Ready for provider configuration.</p>
+                <p className="font-medium">{ts("smsNotifications")}</p>
+                <p className="text-xs text-muted-foreground">{t("operational.smsReady")}</p>
               </div>
               <div className="rounded-lg border p-4">
                 <Database className="mb-2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
-                <p className="font-medium">Backups</p>
-                <p className="text-xs text-muted-foreground">Last backup: pending configuration.</p>
+                <p className="font-medium">{ts("backupSettings")}</p>
+                <p className="text-xs text-muted-foreground">{t("operational.backupsPending")}</p>
               </div>
             </div>
             <p className="flex items-center gap-2 text-xs text-muted-foreground">
               <CheckCircle className="h-3.5 w-3.5 text-success" aria-hidden="true" />
-              Settings use optimistic updates and success toasts.
+              {t("operational.optimisticNote")}
             </p>
           </CardContent>
         </Card>

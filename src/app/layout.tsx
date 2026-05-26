@@ -30,7 +30,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="antialiased font-sans">
+      <body suppressHydrationWarning className="antialiased font-sans">
         <Providers>
           <a href="#main-content" className="skip-link">
             Skip to main content

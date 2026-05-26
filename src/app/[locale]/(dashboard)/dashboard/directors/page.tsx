@@ -43,7 +43,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function DirectorsPage() {
   const t = useTranslations("users");
-  const tr = useTranslations("roles");
   const tc = useTranslations("common");
   const td = useTranslations("directorsPage");
   const router = useRouter();
@@ -101,7 +100,7 @@ export default function DirectorsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title={tr("director") + "s"}
+        title={td("title")}
         description={td("description")}
         actions={
           canManageUsers && (

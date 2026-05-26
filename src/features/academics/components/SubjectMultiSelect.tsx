@@ -36,7 +36,7 @@ export function SubjectMultiSelect({
   onSubjectsChange,
   academicYearId,
 }: SubjectMultiSelectProps) {
-  const t = useTranslations('common');
+  const tb = useTranslations('bulkAssignment');
   const ta = useTranslations('academics');
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -125,8 +125,8 @@ export function SubjectMultiSelect({
           >
             <span className="text-muted-foreground">
               {selectedSubjects.length > 0
-                ? `${selectedSubjects.length} ${t('subjectsSelected')}`
-                : t('selectSubjects')}
+                ? `${selectedSubjects.length} ${tb('subjectsSelected')}`
+                : tb('selectSubjects')}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -146,7 +146,7 @@ export function SubjectMultiSelect({
                   </div>
                 ) : availableSubjects.length === 0 ? (
                   <CommandEmpty>
-                    {search ? ta('noSubjectsFound') : t('noAvailableSubjects')}
+                    {search ? ta('noSubjectsFound') : tb('noAvailableSubjects')}
                   </CommandEmpty>
                 ) : (
                   <CommandGroup>
@@ -173,7 +173,9 @@ export function SubjectMultiSelect({
                             getCategoryColor(subject.category)
                           )}
                         >
-                          {subject.category}
+                          {['core', 'elective', 'vocational'].includes(subject.category)
+                            ? ta(subject.category as 'core' | 'elective' | 'vocational')
+                            : subject.category}
                         </Badge>
                       </CommandItem>
                     ))}

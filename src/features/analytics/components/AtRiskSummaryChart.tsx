@@ -36,7 +36,7 @@ export function AtRiskSummaryChart({ data, isLoading }: AtRiskSummaryChartProps)
         <CardDescription>{ta("subtitle")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px] w-full">
+        <div className="h-[300px] w-full min-w-0">
           {isLoading ? (
             <div className="flex h-full items-center justify-center bg-muted/20 rounded-lg animate-pulse">
               <span className="text-muted-foreground">{t("loadingChartData")}</span>
@@ -46,7 +46,7 @@ export function AtRiskSummaryChart({ data, isLoading }: AtRiskSummaryChartProps)
               <span className="text-muted-foreground">{t("allStudentsOnTrack")}</span>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <PieChart>
                 <Pie
                   data={chartData}

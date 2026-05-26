@@ -1,33 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '@/lib/api/axios';
-import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, AlertTriangle, Loader2, Plus, X } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
+import { 
+  BookOpen, 
+  Save, 
+  X, 
+  AlertTriangle,
+  CheckCircle2,
+  Layers,
+} from 'lucide-react';
+import { LoadingSpinner } from '@/components/shared/loading-spinner';
+import { SubjectMultiSelect } from '@/features/academics/components/SubjectMultiSelect';
+import { GradeAssignmentsView } from '@/features/academics/components/GradeAssignmentsView';
 import { Subject } from '@/features/academics/types';
-
-interface Class {
-  id: string;
-  name: string;
-  grade_level: number;
-  stream: string | null;
-  sections: Array<{ id: string; name: string }>;
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface AcademicYear {
   id: string;
@@ -35,266 +39,293 @@ interface AcademicYear {
   is_current: boolean;
 }
 
-export default function SubjectAssignmentPage() {
-  const queryClient = useQueryClient();
-  const [selectedYear, setSelectedYear] = useState<string>('');
-  const [selectedClass, setSelectedClass] = useState<string>('');
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
-  const [isAssigning, setIsAssigning] = useState(false);
+interface AssignmentResult {
+  success: boolean;
+  message: string;
+  classes_affected: number;
+  sections_affected: number;
+  subjects_assigned: number;
+}
 
-  // Fetch academic years
-  const { data: academicYears } = useQuery({
+export default function SubjectAssignmentPage() {
+  const t = useTranslations('bulkAssignment');
+  const tc = useTranslations('common');
+  
+  const [academicYearId, setAcademicYearId] = useState<string>('');
+  const [gradeLevel, setGradeLevel] = useState<string>('');
+  const [stream, setStream] = useState<string>('');
+  const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>([]);
+  const [periodsPerWeek, setPeriodsPerWeek] = useState<number>(5);
+  const [assignmentMode, setAssignmentMode] = useState<'replace' | 'merge'>('replace');
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  const queryClient = useQueryClient();
+
+  const { data: academicYears, isLoading: isLoadingYears } = useQuery({
     queryKey: ['academic-years'],
     queryFn: async () => {
-      const { data } = await axiosInstance.get('/academics/academic-years');
-      return data.items || [];
+      const { data } = await axiosInstance.get('/academics/years', { params: { size: 100 } });
+      return data.items as AcademicYear[];
     },
   });
 
-  // Fetch classes for selected year
-  const { data: classes } = useQuery({
-    queryKey: ['classes', selectedYear],
-    queryFn: async () => {
-      if (!selectedYear) return [];
-      const { data } = await axiosInstance.get(`/academics/classes?academic_year_id=${selectedYear}`);
-      return data.items || [];
-    },
-    enabled: !!selectedYear,
-  });
+  useEffect(() => {
+    if (academicYears && !academicYearId) {
+      const currentYear = academicYears.find((year: AcademicYear) => year.is_current);
+      if (currentYear) {
+        setAcademicYearId(currentYear.id);
+      }
+    }
+  }, [academicYears, academicYearId]);
 
-  // Fetch available subjects
-  const { data: subjects } = useQuery({
-    queryKey: ['subjects'],
-    queryFn: async () => {
-      const { data } = await axiosInstance.get('/academics/subjects');
-      return data.items || [];
+  const bulkAssignMutation = useMutation({
+    mutationFn: async (payload: {
+      academic_year_id: string;
+      grade_level: number;
+      stream?: string;
+      subject_ids: string[];
+      periods_per_week: number;
+      is_mandatory: boolean;
+      mode: string;
+    }) => {
+      const { data } = await axiosInstance.post('/academics/bulk-assign-subjects', payload);
+      return data as AssignmentResult;
     },
-  });
-
-  // Get current class details
-  const currentClass = classes?.find((c: Class) => c.id === selectedClass);
-
-  // Assign subjects mutation
-  const assignSubjectsMutation = useMutation({
-    mutationFn: async ({ classId, subjectIds }: { classId: string; subjectIds: string[] }) => {
-      const promises = subjectIds.map((subjectId) =>
-        axiosInstance.post('/academics/class-subjects', {
-          class_id: classId,
-          subject_id: subjectId,
-        })
-      );
-      return Promise.all(promises);
-    },
-    onSuccess: () => {
-      toast.success(`Successfully assigned ${selectedSubjects.length} subjects`);
+    onSuccess: (result) => {
+      toast.success(result.message);
+      queryClient.invalidateQueries({ queryKey: ['grade-assignments'] });
       setSelectedSubjects([]);
-      queryClient.invalidateQueries({ queryKey: ['class-subjects'] });
+      setShowConfirmDialog(false);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to assign subjects');
+      toast.error(error?.response?.data?.detail || t('assignmentFailed'));
+      setShowConfirmDialog(false);
     },
   });
 
   const handleAssign = () => {
-    if (!selectedClass || selectedSubjects.length === 0) {
-      toast.error('Please select a class and at least one subject');
+    if (!academicYearId || !gradeLevel || selectedSubjects.length === 0) {
+      toast.error(t('fillRequiredFields'));
       return;
     }
 
-    setIsAssigning(true);
-    assignSubjectsMutation.mutate(
-      { classId: selectedClass, subjectIds: selectedSubjects },
-      {
-        onSettled: () => setIsAssigning(false),
-      }
-    );
+    setShowConfirmDialog(true);
   };
 
-  const toggleSubject = (subjectId: string) => {
-    setSelectedSubjects((prev) =>
-      prev.includes(subjectId) ? prev.filter((id) => id !== subjectId) : [...prev, subjectId]
-    );
+  const confirmAssignment = () => {
+    bulkAssignMutation.mutate({
+      academic_year_id: academicYearId,
+      grade_level: parseInt(gradeLevel),
+      stream: stream || undefined,
+      subject_ids: selectedSubjects.map(s => s.id),
+      periods_per_week: periodsPerWeek,
+      is_mandatory: true,
+      mode: assignmentMode,
+    });
   };
 
-  const selectedClassInfo = classes?.find((c: Class) => c.id === selectedClass);
+  const removeSubject = (subjectId: string) => {
+    setSelectedSubjects(prev => prev.filter(s => s.id !== subjectId));
+  };
+
+  const showStreamSelector = gradeLevel === '11' || gradeLevel === '12';
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Subject Assignment</h1>
-        <p className="text-muted-foreground">
-          Assign subjects to grades and apply them to all sections automatically
-        </p>
-      </div>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+      />
 
-      {/* Selection Controls */}
       <Card>
         <CardHeader>
-          <CardTitle>Select Grade and Subjects</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Layers className="h-5 w-5" />
+            {t('assignSubjectsToGrade')}
+          </CardTitle>
           <CardDescription>
-            Choose an academic year, grade level, and subjects to assign
+            {t('assignSubjectsDescription')}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Academic Year */}
-          <div className="grid gap-2">
-            <Label>Academic Year *</Label>
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select academic year" />
-              </SelectTrigger>
-              <SelectContent>
-                {academicYears?.map((year: AcademicYear) => (
-                  <SelectItem key={year.id} value={year.id}>
-                    {year.name} {year.is_current && '(Current)'}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Class/Grade */}
-          <div className="grid gap-2">
-            <Label>Grade/Class *</Label>
-            <Select value={selectedClass} onValueChange={setSelectedClass}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select grade/class" />
-              </SelectTrigger>
-              <SelectContent>
-                {classes?.map((cls: Class) => (
-                  <SelectItem key={cls.id} value={cls.id}>
-                    Grade {cls.grade_level} - {cls.name}
-                    {cls.stream && ` (${cls.stream.replace('_', ' ')})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Selected Class Info */}
-          {selectedClassInfo && (
-            <Alert>
-              <CheckCircle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Selected:</strong> Grade {selectedClassInfo.grade_level} -{' '}
-                {selectedClassInfo.name}
-                {selectedClassInfo.stream && ` (${selectedClassInfo.stream.replace('_', ' ')})`}
-                <br />
-                <strong>Sections:</strong> {selectedClassInfo.sections?.length || 0} sections will
-                receive these subjects
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <Separator />
-
-          {/* Subject Selection */}
-          <div className="space-y-3">
-            <Label>Subjects to Assign *</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto p-2 border rounded-lg">
-              {subjects?.map((subject: Subject) => (
-                <div
-                  key={subject.id}
-                  className={`flex items-center space-x-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                    selectedSubjects.includes(subject.id)
-                      ? 'bg-primary/10 border-primary'
-                      : 'hover:bg-muted'
-                  }`}
-                  onClick={() => toggleSubject(subject.id)}
-                >
-                  <Checkbox
-                    checked={selectedSubjects.includes(subject.id)}
-                    onCheckedChange={() => toggleSubject(subject.id)}
-                    id={subject.id}
-                  />
-                  <Label htmlFor={subject.id} className="cursor-pointer flex-1">
-                    <span className="font-medium">{subject.code}</span> - {subject.name}
-                  </Label>
-                </div>
-              ))}
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="academic-year">{t('academicYear')}</Label>
+              <Select value={academicYearId} onValueChange={setAcademicYearId}>
+                <SelectTrigger id="academic-year">
+                  <SelectValue placeholder={t('selectAcademicYear')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingYears ? (
+                    <div className="flex items-center justify-center p-4">
+                      <LoadingSpinner size="sm" />
+                    </div>
+                  ) : (
+                    academicYears?.map((year: AcademicYear) => (
+                      <SelectItem key={year.id} value={year.id}>
+                        {year.name} {year.is_current && `(${t('current')})`}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="grade-level">{t('gradeLevel')}</Label>
+              <Select value={gradeLevel} onValueChange={setGradeLevel}>
+                <SelectTrigger id="grade-level">
+                  <SelectValue placeholder={t('selectGrade')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="9">Grade 9</SelectItem>
+                  <SelectItem value="10">Grade 10</SelectItem>
+                  <SelectItem value="11">Grade 11</SelectItem>
+                  <SelectItem value="12">Grade 12</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {showStreamSelector && (
+              <div className="space-y-2">
+                <Label htmlFor="stream">{t('stream')}</Label>
+                <Select value={stream} onValueChange={setStream}>
+                  <SelectTrigger id="stream">
+                    <SelectValue placeholder={t('selectStream')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="natural_science">{t('naturalScience')}</SelectItem>
+                    <SelectItem value="social_science">{t('socialScience')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
-          {/* Selected Count */}
+          <div className="space-y-2">
+            <Label>{t('selectSubjects')}</Label>
+            <SubjectMultiSelect
+              selectedSubjects={selectedSubjects}
+              onSubjectsChange={setSelectedSubjects}
+              academicYearId={academicYearId}
+            />
+          </div>
+
           {selectedSubjects.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="secondary">
-                {selectedSubjects.length} subject(s) selected
-              </Badge>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedSubjects([])}
-                className="h-6 px-2"
-              >
-                <X className="h-3 w-3 mr-1" />
-                Clear
-              </Button>
+            <div className="space-y-2">
+              <Label>{t('selectedSubjects')} ({selectedSubjects.length})</Label>
+              <div className="flex flex-wrap gap-2 p-4 border rounded-lg bg-muted/30 min-h-[80px]">
+                {selectedSubjects.map((subject) => (
+                  <Badge
+                    key={subject.id}
+                    variant="secondary"
+                    className="flex items-center gap-1 px-3 py-1 text-sm"
+                  >
+                    <BookOpen className="h-3 w-3" />
+                    {subject.code} - {subject.name}
+                    <button
+                      onClick={() => removeSubject(subject.id)}
+                      className="ml-1 hover:text-destructive"
+                      aria-label={`Remove ${subject.name}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Action Button */}
-          <div className="pt-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="periods">{t('periodsPerWeek')}</Label>
+              <Input
+                id="periods"
+                type="number"
+                min={1}
+                max={10}
+                value={periodsPerWeek}
+                onChange={(e) => setPeriodsPerWeek(parseInt(e.target.value))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mode">{t('assignmentMode')}</Label>
+              <Select value={assignmentMode} onValueChange={(v: 'replace' | 'merge') => setAssignmentMode(v)}>
+                <SelectTrigger id="mode">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="replace">{t('replaceExisting')}</SelectItem>
+                  <SelectItem value="merge">{t('mergeWithExisting')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {assignmentMode === 'replace' ? t('replaceDescription') : t('mergeDescription')}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-4">
             <Button
               onClick={handleAssign}
-              disabled={
-                !selectedClass ||
-                selectedSubjects.length === 0 ||
-                isAssigning ||
-                assignSubjectsMutation.isPending
-              }
-              className="w-full sm:w-auto"
+              disabled={!academicYearId || !gradeLevel || selectedSubjects.length === 0 || bulkAssignMutation.isPending}
+              className="gap-2"
             >
-              {(isAssigning || assignSubjectsMutation.isPending) && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {bulkAssignMutation.isPending ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                <Save className="h-4 w-4" />
               )}
-              <Plus className="mr-2 h-4 w-4" />
-              Assign {selectedSubjects.length} Subject(s) to All Sections
+              {t('assignSubjects')}
             </Button>
           </div>
-
-          {/* Warning */}
-          {selectedSubjects.length > 0 && selectedClassInfo && (
-            <Alert variant="default" className="bg-yellow-50 border-yellow-200">
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
-              <AlertDescription className="text-yellow-800">
-                This will assign the selected subjects to all {selectedClassInfo.sections?.length || 0}{' '}
-                sections under this grade. You can then assign teachers to each subject-section
-                combination.
-              </AlertDescription>
-            </Alert>
-          )}
         </CardContent>
       </Card>
 
-      {/* Instructions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>How It Works</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <p>
-            <strong>Step 1:</strong> Select an academic year and grade/class
-          </p>
-          <p>
-            <strong>Step 2:</strong> Choose the subjects to assign to this grade
-          </p>
-          <p>
-            <strong>Step 3:</strong> Click "Assign" to apply subjects to all sections
-          </p>
-          <p>
-            <strong>Step 4:</strong> Go to Teacher Assignment to assign teachers to each
-            subject-section combination
-          </p>
-          <Separator className="my-2" />
-          <p className="text-muted-foreground">
-            <strong>Note:</strong> Subjects are assigned at the class level and automatically apply
-            to all sections. For example, assigning Math to Grade 9 will make Math available in
-            Grade 9A, 9B, 9C, etc.
-          </p>
-        </CardContent>
-      </Card>
+      {academicYearId && gradeLevel && (
+        <GradeAssignmentsView
+          academicYearId={academicYearId}
+          gradeLevel={parseInt(gradeLevel)}
+        />
+      )}
+
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              {t('confirmAssignment')}
+            </DialogTitle>
+            <DialogDescription>
+              {assignmentMode === 'replace' ? (
+                <span className="text-destructive font-medium">
+                  {t('replaceWarning')}
+                </span>
+              ) : (
+                t('mergeWarning')
+              )}
+              <div className="mt-4 space-y-2">
+                <p><strong>{t('gradeLevel')}:</strong> Grade {gradeLevel}</p>
+                {showStreamSelector && stream && (
+                  <p><strong>{t('stream')}:</strong> {stream === 'natural_science' ? t('naturalScience') : t('socialScience')}</p>
+                )}
+                <p><strong>{t('subjectsCount')}:</strong> {selectedSubjects.length}</p>
+                <p><strong>{t('periodsPerWeek')}:</strong> {periodsPerWeek}</p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
+              {tc('cancel')}
+            </Button>
+            <Button onClick={confirmAssignment} className="gap-2">
+              <CheckCircle2 className="h-4 w-4" />
+              {tc('confirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

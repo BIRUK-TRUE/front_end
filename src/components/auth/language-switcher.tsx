@@ -15,10 +15,6 @@ export function LanguageSwitcher() {
   const localeFromPathname = pathname.split('/')[1];
   const locale = localeFromParams || (localeFromPathname === 'am' || localeFromPathname === 'en' ? localeFromPathname : 'en');
 
-  console.log('[LanguageSwitcher] Locale from params:', localeFromParams);
-  console.log('[LanguageSwitcher] Locale from pathname:', localeFromPathname);
-  console.log('[LanguageSwitcher] Final locale:', locale);
-
   const toggleLocale = () => {
     const newLocale = locale === 'en' ? 'am' : 'en';
 
@@ -26,20 +22,10 @@ export function LanguageSwitcher() {
     // More robust regex that handles various pathname formats
     const pathnameWithoutLocale = pathname.replace(/^\/(en|am)(\/|$)/, '$2') || '/';
 
-    console.log('[LanguageSwitcher] Current locale:', locale);
-    console.log('[LanguageSwitcher] New locale:', newLocale);
-    console.log('[LanguageSwitcher] Current pathname:', pathname);
-    console.log('[LanguageSwitcher] Pathname without locale:', pathnameWithoutLocale);
-
-    // Navigate to the new locale
     try {
-      // Use next-intl's router.push with locale option
       router.push(pathnameWithoutLocale, { locale: newLocale });
-    } catch (error) {
-      console.error('[LanguageSwitcher] Error with router.push:', error);
-      // Fallback: manually construct the URL and navigate
+    } catch {
       const newPath = `/${newLocale}${pathnameWithoutLocale === '/' ? '' : pathnameWithoutLocale}`;
-      console.log('[LanguageSwitcher] Falling back to window.location:', newPath);
       window.location.href = newPath;
     }
   };
@@ -50,7 +36,6 @@ export function LanguageSwitcher() {
       size="sm"
       onClick={(e) => {
         e.preventDefault();
-        console.log('[LanguageSwitcher] Button clicked');
         toggleLocale();
       }}
       className="gap-2 min-h-[44px] min-w-[44px]"

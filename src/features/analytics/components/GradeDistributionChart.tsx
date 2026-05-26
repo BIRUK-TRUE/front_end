@@ -34,7 +34,7 @@ export function GradeDistributionChart({ data, isLoading }: GradeDistributionCha
         <CardDescription>{t("gradeDistributionSubtitle")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px] w-full">
+        <div className="h-[300px] w-full min-w-0">
           {isLoading ? (
             <div className="flex h-full items-center justify-center bg-muted/20 rounded-lg animate-pulse">
               <span className="text-muted-foreground">{t("loadingChartData")}</span>
@@ -44,7 +44,7 @@ export function GradeDistributionChart({ data, isLoading }: GradeDistributionCha
               <span className="text-muted-foreground">{t("noDistributionData")}</span>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={sortedData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis 

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useAcademicYears } from '@/features/academics/api/useAcademicYears';
@@ -40,6 +41,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 
 export default function AttendancePage() {
+  const tap = useTranslations('attendancePage');
+  const t = useTranslations('attendance');
   const today = format(new Date(), 'yyyy-MM-dd');
 
   const [selectedYearId, setSelectedYearId] = useState('');
@@ -144,22 +147,22 @@ export default function AttendancePage() {
 
   const statusConfig: Record<AttendanceStatus, { label: string; color: string; icon: React.ReactNode }> = {
     [AttendanceStatus.PRESENT]: {
-      label: 'Present',
+      label: t('statuses.present'),
       color: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30 hover:bg-emerald-500/20',
       icon: <CheckCircle2 className="h-3.5 w-3.5" />,
     },
     [AttendanceStatus.ABSENT]: {
-      label: 'Absent',
+      label: t('statuses.absent'),
       color: 'bg-red-500/10 text-red-700 border-red-500/30 hover:bg-red-500/20',
       icon: <UserX className="h-3.5 w-3.5" />,
     },
     [AttendanceStatus.LATE]: {
-      label: 'Late',
+      label: t('statuses.late'),
       color: 'bg-amber-500/10 text-amber-700 border-amber-500/30 hover:bg-amber-500/20',
       icon: <Clock className="h-3.5 w-3.5" />,
     },
     [AttendanceStatus.EXCUSED]: {
-      label: 'Excused',
+      label: t('statuses.excused'),
       color: 'bg-blue-500/10 text-blue-700 border-blue-500/30 hover:bg-blue-500/20',
       icon: <ShieldCheck className="h-3.5 w-3.5" />,
     },
@@ -171,13 +174,13 @@ export default function AttendancePage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title="Take Attendance"
-        description="Mark attendance for a class section. Today's date is pre-selected."
+        title={t('takeAttendance')}
+        description={tap('takeAttendanceDescription')}
         actions={
           <Link href="/dashboard/attendance/face-scan">
             <Button variant="outline" className="gap-2 min-h-[44px]">
               <ScanFace className="h-4 w-4" />
-              Use Face Scan
+              {tap('useFaceScan')}
             </Button>
           </Link>
         }
@@ -190,18 +193,18 @@ export default function AttendancePage() {
             {/* Academic Year */}
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Academic Year
+                {tap('academicYear')}
               </Label>
               <Select value={selectedYearId} onValueChange={handleYearChange}>
                 <SelectTrigger className="h-11">
-                  <SelectValue placeholder="Select year…" />
+                  <SelectValue placeholder={tap('selectYear')} />
                 </SelectTrigger>
                 <SelectContent>
                   {yearsData?.items?.map((year: { id: string; name: string; is_current?: boolean }) => (
                     <SelectItem key={year.id} value={year.id}>
                       {year.name}
                       {year.is_current && (
-                        <Badge variant="secondary" className="ml-2 text-[10px] h-4">Current</Badge>
+                        <Badge variant="secondary" className="ml-2 text-[10px] h-4">{tap('current')}</Badge>
                       )}
                     </SelectItem>
                   ))}
@@ -212,7 +215,7 @@ export default function AttendancePage() {
             {/* Class */}
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Class
+                {tap('selectClass')}
               </Label>
               <Select
                 value={selectedClassId}
@@ -221,13 +224,13 @@ export default function AttendancePage() {
               >
                 <SelectTrigger className="h-11">
                   <SelectValue
-                    placeholder={!selectedYearId ? 'Select year first' : 'Select class…'}
+                    placeholder={!selectedYearId ? tap('selectYearFirst') : tap('selectClass')}
                   />
                 </SelectTrigger>
                 <SelectContent>
                   {classesData?.items?.map((cls: { id: string; name: string; grade_level: number }) => (
                     <SelectItem key={cls.id} value={cls.id}>
-                      {cls.name} — Grade {cls.grade_level}
+                      {cls.name} — {tap('gradeLabel', { level: cls.grade_level })}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -237,7 +240,7 @@ export default function AttendancePage() {
             {/* Section */}
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Section
+                {tap('selectSection')}
               </Label>
               <Select
                 value={selectedSectionId}
@@ -246,7 +249,7 @@ export default function AttendancePage() {
               >
                 <SelectTrigger className="h-11">
                   <SelectValue
-                    placeholder={!selectedClassId ? 'Select class first' : 'Select section…'}
+                    placeholder={!selectedClassId ? tap('selectClassFirst') : tap('selectSection')}
                   />
                 </SelectTrigger>
                 <SelectContent>
@@ -262,7 +265,7 @@ export default function AttendancePage() {
             {/* Date */}
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Date
+                {tap('date')}
               </Label>
               <Input
                 type="date"
@@ -280,11 +283,11 @@ export default function AttendancePage() {
       {!isReady ? (
         <EmptyState
           icon={ClipboardCheck}
-          title="Select a class section to begin"
-          description="Choose the academic year, class, and section above. Today's date is already set."
+          title={tap('selectSectionTitle')}
+          description={tap('selectSectionPrompt')}
         />
       ) : isLoadingRecords ? (
-        <LoadingSpinner fullPage text="Loading students…" />
+        <LoadingSpinner fullPage text={tap('loadingStudents')} />
       ) : (
         <>
           {/* ── Default-to-present tip ── */}
@@ -300,10 +303,10 @@ export default function AttendancePage() {
           {/* ── Stats row ── */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'Present', count: presentCount, color: 'emerald', icon: <CheckCircle2 className="h-5 w-5 text-emerald-600" /> },
-              { label: 'Absent', count: absentCount, color: 'red', icon: <UserX className="h-5 w-5 text-red-600" /> },
-              { label: 'Late', count: lateCount, color: 'amber', icon: <Clock className="h-5 w-5 text-amber-600" /> },
-              { label: 'Excused', count: excusedCount, color: 'blue', icon: <ShieldCheck className="h-5 w-5 text-blue-600" /> },
+              { label: t('statuses.present'), count: presentCount, color: 'emerald', icon: <CheckCircle2 className="h-5 w-5 text-emerald-600" /> },
+              { label: t('statuses.absent'), count: absentCount, color: 'red', icon: <UserX className="h-5 w-5 text-red-600" /> },
+              { label: t('statuses.late'), count: lateCount, color: 'amber', icon: <Clock className="h-5 w-5 text-amber-600" /> },
+              { label: t('statuses.excused'), count: excusedCount, color: 'blue', icon: <ShieldCheck className="h-5 w-5 text-blue-600" /> },
             ].map(({ label, count, color, icon }) => (
               <Card key={label} className={`border-${color}-500/30 bg-${color}-500/5`}>
                 <CardContent className="p-4 flex items-center gap-3">
@@ -325,10 +328,10 @@ export default function AttendancePage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <CardTitle className="text-base">
-                    Student Attendance
+                    {tap('studentAttendance')}
                     {notPresentCount > 0 && (
                       <Badge variant="outline" className="ml-2 text-red-600 border-red-500/30 bg-red-500/10">
-                        {notPresentCount} not present
+                        {tap('notPresentCount', { count: notPresentCount })}
                       </Badge>
                     )}
                   </CardTitle>
@@ -343,7 +346,7 @@ export default function AttendancePage() {
                     className="gap-1.5 text-emerald-700 border-emerald-500/30 hover:bg-emerald-500/10"
                   >
                     <Check className="h-3.5 w-3.5" />
-                    Mark All Present
+                    {t('markAllPresent')}
                   </Button>
                   <Button
                     size="sm"
@@ -356,7 +359,7 @@ export default function AttendancePage() {
                     ) : submitted ? (
                       <CheckCircle2 className="h-3.5 w-3.5" />
                     ) : null}
-                    {submitted ? 'Saved ✓' : 'Save Attendance'}
+                    {submitted ? tap('saved') : tap('saveAttendance')}
                   </Button>
                 </div>
               </div>
@@ -434,7 +437,7 @@ export default function AttendancePage() {
                   {/* Bottom save bar */}
                   <div className="flex justify-between items-center pt-3 border-t mt-4">
                     <p className="text-sm text-muted-foreground">
-                      {presentCount} present · {notPresentCount > 0 ? `${notPresentCount} not present` : 'all present'}
+                      {tap('presentSummary', { count: presentCount })} · {notPresentCount > 0 ? tap('notPresentCount', { count: notPresentCount }) : tap('allPresent')}
                     </p>
                     <Button
                       onClick={handleSubmit}
@@ -442,15 +445,15 @@ export default function AttendancePage() {
                       className="gap-2"
                     >
                       {submitAttendance.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                      {submitted ? 'Attendance Saved ✓' : 'Save Attendance'}
+                      {submitted ? tap('attendanceSaved') : tap('saveAttendance')}
                     </Button>
                   </div>
                 </div>
               ) : (
                 <EmptyState
                   icon={Users}
-                  title="No students found"
-                  description="This section has no enrolled students, or the roster hasn't been set up yet."
+                  title={tap('noStudentsFound')}
+                  description={tap('noStudentsDesc')}
                 />
               )}
             </CardContent>

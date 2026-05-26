@@ -30,7 +30,8 @@ interface AuthState {
   setHydrated: () => void;
 }
 
-const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24;
+// Align with backend REFRESH_TOKEN_EXPIRE_DAYS (default 7) so middleware and client stay in sync
+const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 
 function writeAuthCookie(name: string, value: string, maxAge = AUTH_COOKIE_MAX_AGE) {
   if (typeof document === 'undefined') return;
@@ -92,7 +93,8 @@ export const useAuthStore = create<AuthState>()(
       name: 'auth-storage',
       storage: createJSONStorage(() => {
         if (typeof window !== 'undefined') {
-          return sessionStorage;
+          // localStorage survives tab close/reopen; sessionStorage was logging users out unexpectedly
+          return localStorage;
         }
         return {
           getItem: () => null,
@@ -100,7 +102,15 @@ export const useAuthStore = create<AuthState>()(
           removeItem: () => {},
         };
       }),
+      partialize: (state) => ({
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+      }),
       onRehydrateStorage: () => (state) => {
+        if (state?.user && state.accessToken) {
+          syncAuthCookies(state.user, state.accessToken);
+        }
         state?.setHydrated();
       },
     }
