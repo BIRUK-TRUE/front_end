@@ -41,6 +41,8 @@ import { TransferModal } from '@/features/enrollments/components/TransferModal';
 import { WithdrawModal } from '@/features/enrollments/components/WithdrawModal';
 import { EditEnrollmentModal } from '@/features/enrollments/components/EditEnrollmentModal';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 
 export default function EnrollmentsPage() {
   const t = useTranslations('enrollments');
@@ -77,7 +79,7 @@ export default function EnrollmentsPage() {
     status: statusFilter !== 'all' ? statusFilter : undefined,
   };
 
-  const { data: enrollmentsData, isLoading } = useEnrollments(enrollmentFilters);
+  const { data: enrollmentsData, isLoading, isError } = useEnrollments(enrollmentFilters);
   
   const [selectedEnrollment, setSelectedEnrollment] = useState<Enrollment | null>(null);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
@@ -106,10 +108,10 @@ export default function EnrollmentsPage() {
       cell: ({ row }) => (
         <div className="flex flex-col">
           <span className="font-semibold text-foreground text-base">
-            {row.original.full_name}
+            {row.original.student_name}
           </span>
           <span className="text-xs text-muted-foreground font-mono">
-            ID: {row.original.id.split('-')[0].toUpperCase()}
+            {row.original.student_registration_number}
           </span>
         </div>
       ),
@@ -154,7 +156,7 @@ export default function EnrollmentsPage() {
             'secondary'
           }
         >
-          {row.original.status}
+          {t(`status${row.original.status.charAt(0).toUpperCase() + row.original.status.slice(1)}` as any) || row.original.status}
         </Badge>
       ),
     },
@@ -278,7 +280,8 @@ export default function EnrollmentsPage() {
               <SelectItem value="active">{t('statusActive')}</SelectItem>
               <SelectItem value="withdrawn">{t('statusWithdrawn')}</SelectItem>
               <SelectItem value="transferred">{t('statusTransferred')}</SelectItem>
-              <SelectItem value="completed">{t('statusCompleted')}</SelectItem>
+              <SelectItem value="graduated">{t('statusGraduated')}</SelectItem>
+              <SelectItem value="promoted">{t('statusPromoted')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -294,6 +297,13 @@ export default function EnrollmentsPage() {
           </Button>
         )}
       </div>
+
+      {isError && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>{tc('errorOccurred')}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         <DataTable
@@ -352,7 +362,7 @@ export default function EnrollmentsPage() {
         open={isEditModalOpen}
         onOpenChange={setIsEditModalOpen}
         enrollment={selectedEnrollment}
-        onSubmit={async (data) => {
+        onSubmit={async (data: { remarks?: string }) => {
           await updateEnrollment.mutateAsync({ id: selectedEnrollment?.id || '', data });
           setIsEditModalOpen(false);
         }}

@@ -59,7 +59,7 @@ export function TransferModal({
     defaultValues: {
       new_section_id: '',
       transfer_date: format(new Date(), 'yyyy-MM-dd'),
-      reason: '',
+      remarks: '',
     },
   });
 
@@ -70,7 +70,7 @@ export function TransferModal({
       form.reset({
         new_section_id: '',
         transfer_date: format(new Date(), 'yyyy-MM-dd'),
-        reason: '',
+        remarks: '',
       });
     }
   }, [open, form]);
@@ -85,7 +85,7 @@ export function TransferModal({
         <DialogHeader>
           <DialogTitle>Transfer Section</DialogTitle>
           <DialogDescription>
-            Move student from <strong>{enrollment?.section_name}</strong> to a different section in <strong>{enrollment?.class_name}</strong>.
+            Move <strong>{enrollment?.student_name}</strong> from <strong>{enrollment?.section_name}</strong> to a different section in <strong>{enrollment?.class_name}</strong>.
           </DialogDescription>
         </DialogHeader>
 
@@ -147,7 +147,7 @@ export function TransferModal({
 
             <FormField
               control={form.control}
-              name="reason"
+              name="remarks"
               render={({ field }: { field: any }) => (
                 <FormItem>
                   <FormLabel>{t('reasonOptional')}</FormLabel>

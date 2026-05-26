@@ -40,10 +40,15 @@ export function useFaceEnrollment(sectionId?: string) {
       );
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["attendance", "enrollment-status"],
-      });
+    onSuccess: (_, variables) => {
+      if (sectionId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.faceRecognition.enrollmentStatus(sectionId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.faceRecognition.descriptors(sectionId),
+        });
+      }
       toast.success(t("enrollSuccess"));
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
@@ -56,9 +61,14 @@ export function useFaceEnrollment(sectionId?: string) {
       await axiosInstance.delete(`/face-recognition/enroll/${studentId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["attendance", "enrollment-status"],
-      });
+      if (sectionId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.faceRecognition.enrollmentStatus(sectionId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.faceRecognition.descriptors(sectionId),
+        });
+      }
       toast.success(t("deleteEnrollmentSuccess"));
     },
   });

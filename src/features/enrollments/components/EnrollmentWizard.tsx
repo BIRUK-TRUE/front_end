@@ -54,8 +54,8 @@ export function EnrollmentWizard({
     },
   });
 
-  const academicYearId = form.watch('academic_year_id');
-  const classId = form.watch('class_id');
+  const academicYearId = form.watch('academic_year_id') ?? '';
+  const classId = form.watch('class_id') ?? '';
 
   const { data: yearsData, isLoading: isLoadingYears } = useAcademicYears(1, 50);
   const { data: classesData, isLoading: isLoadingClasses } = useClasses(academicYearId, 1, 100);

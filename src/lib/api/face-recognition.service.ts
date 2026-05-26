@@ -1,4 +1,4 @@
-import { axiosInstance } from './axios';
+import { axiosInstance } from "./axios";
 
 export interface FaceEnrollmentResponse {
   student_id: string;
@@ -15,41 +15,38 @@ export interface EnrollmentStatusResponse {
   photo_count: number;
 }
 
-/**
- * Face Recognition Service
- * 
- * TODO: Face recognition module not yet implemented in backend.
- * All methods return stub/mock data until /face-recognition/* endpoints are created.
- */
 export const faceRecognitionService = {
-  enrollFace: async (studentId: string, photo: File): Promise<FaceEnrollmentResponse> => {
-    // TODO: Backend endpoint /face-recognition/enroll/{studentId} not yet implemented
-    return {
-      student_id: studentId,
-      enrollment_status: 'pending',
-      message: 'Face recognition not yet available',
-    };
+  enrollFace: async (
+    studentId: string,
+    descriptors: number[][],
+  ): Promise<FaceEnrollmentResponse> => {
+    const { data } = await axiosInstance.post("/face-recognition/enroll", {
+      studentId,
+      descriptors,
+    });
+    return data;
   },
 
-  getEnrollmentStatus: async (studentId: string): Promise<EnrollmentStatusResponse> => {
-    // TODO: Backend endpoint /face-recognition/enrollment-status/{studentId} not yet implemented
-    return {
-      student_id: studentId,
-      student_name: '',
-      is_enrolled: false,
-      photo_count: 0,
-    };
+  getEnrollmentStatus: async (
+    studentId: string,
+  ): Promise<EnrollmentStatusResponse> => {
+    const { data } = await axiosInstance.get(
+      `/face-recognition/enrollment-status/${studentId}`,
+    );
+    return data;
   },
 
   deleteEnrollment: async (studentId: string): Promise<{ message: string }> => {
-    // TODO: Backend endpoint DELETE /face-recognition/enroll/{studentId} not yet implemented
-    return {
-      message: 'Face recognition not yet available',
-    };
+    const { data } = await axiosInstance.delete(
+      `/face-recognition/enroll/${studentId}`,
+    );
+    return data;
   },
 
-  recognizeInSection: async (sectionId: string, photo: File): Promise<{ recognized_student_ids: string[]; count: number }> => {
-    // TODO: Backend endpoint /face-recognition/recognize/section/{sectionId} not yet implemented
+  recognizeInSection: async (
+    _sectionId: string,
+    _photo: File,
+  ): Promise<{ recognized_student_ids: string[]; count: number }> => {
     return {
       recognized_student_ids: [],
       count: 0,

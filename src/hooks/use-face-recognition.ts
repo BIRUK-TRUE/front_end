@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { faceRecognitionService } from "@/lib/api/face-recognition.service";
+import { extractFaceDescriptorsFromFile } from "@/lib/face/extract-descriptors";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/utils/formatApiError";
+import { queryKeys } from "@/lib/api/query-keys";
 
 export function useFaceEnrollmentStatus(studentId: string) {
   return useQuery({
@@ -14,15 +16,32 @@ export function useFaceEnrollmentStatus(studentId: string) {
 export function useEnrollFace() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ studentId, photo }: { studentId: string; photo: File }) =>
-      faceRecognitionService.enrollFace(studentId, photo),
+    mutationFn: async ({
+      studentId,
+      photo,
+      descriptors,
+    }: {
+      studentId: string;
+      photo?: File;
+      descriptors?: number[][];
+    }) => {
+      const payload =
+        descriptors ??
+        (photo ? await extractFaceDescriptorsFromFile(photo) : undefined);
+
+      if (!payload?.length) {
+        throw new Error("No face descriptors provided");
+      }
+
+      return faceRecognitionService.enrollFace(studentId, payload);
+    },
     onSuccess: (data) => {
       toast.success(data.message);
       queryClient.invalidateQueries({
         queryKey: ["face-recognition", "status", data.student_id],
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error(formatApiError(error, "Failed to enroll face"));
     },
   });

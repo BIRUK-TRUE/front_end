@@ -90,7 +90,7 @@ export function FaceAttendanceStation({
 }: FaceAttendanceStationProps) {
   const t = useTranslations("faceAttendance.station");
   const tc = useTranslations("common");
-  const { descriptors, markAttendance } = useFaceAttendance(sectionId);
+  const { descriptors, markAttendance, logUnknownFace } = useFaceAttendance(sectionId);
   const { data: academicSettings } = useAcademicSettings();
 
   const getDetectionStatusLabel = (status: DetectionStatus) => {
@@ -111,6 +111,7 @@ export function FaceAttendanceStation({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastUnknownLogRef = useRef<number>(0);
 
   const [faceApi, setFaceApi] = useState<typeof import("face-api.js") | null>(
     null,
@@ -359,7 +360,15 @@ export function FaceAttendanceStation({
           }
         } else if (bestMatch.distance > 0.7) {
           setDetectionStatus("unknown");
-          // Handle unknown face logging if needed
+          const nowMs = Date.now();
+          if (nowMs - lastUnknownLogRef.current > 10000 && canvasRef.current) {
+            lastUnknownLogRef.current = nowMs;
+            logUnknownFace.mutate({
+              sectionId,
+              capturedImage: canvasRef.current.toDataURL("image/jpeg", 0.6),
+              confidence,
+            });
+          }
         }
 
         // Custom Visual Overlay (Modern Box)
@@ -420,6 +429,8 @@ export function FaceAttendanceStation({
     academicSettings?.confidence_threshold,
     detectionStatus,
     handleMarkAttendance,
+    logUnknownFace,
+    sectionId,
   ]);
 
   if (isModelLoading) {

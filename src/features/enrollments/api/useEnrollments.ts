@@ -5,6 +5,7 @@ import {
   type EnrollmentForm,
   type TransferForm,
   type WithdrawalForm,
+  type EnrollmentRemarks,
 } from "../types/schemas";
 import { type PaginatedResponse } from "@/features/academics/types";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ import { formatApiError } from "@/lib/utils/formatApiError";
 interface EnrollmentFilters {
   page?: number;
   size?: number;
+  search?: string;
   studentId?: string;
   classId?: string;
   sectionId?: string;
@@ -72,7 +74,7 @@ export const useEnrollments = (filters: EnrollmentFilters = {}) => {
       if (filters.yearId) {
         const { data } = await axiosInstance.get<PaginatedResponse<Enrollment>>(
           `/enrollments/year/${filters.yearId}`,
-          { params: { page, size, status } },
+          { params: { page, size, status, search: filters.search || undefined } },
         );
         return data;
       }
@@ -238,7 +240,7 @@ export const useUpdateEnrollment = () => {
       data: enrollmentData,
     }: {
       id: string;
-      data: Partial<EnrollmentForm>;
+      data: EnrollmentRemarks;
     }) => {
       const { data } = await axiosInstance.patch(
         `/enrollments/${id}`,
@@ -271,7 +273,7 @@ export const useDeleteEnrollment = () => {
     mutationFn: async (id: string) => {
       const { data } = await axiosInstance.post(
         `/enrollments/${id}/withdraw`,
-        { reason: "Removed by administrator" },
+        { remarks: "Removed by administrator" },
       );
       return data;
     },

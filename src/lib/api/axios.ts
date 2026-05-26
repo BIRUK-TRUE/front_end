@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
 import { useAuthStore } from '@/lib/store/auth-store';
+import {
+  waitForAuthHydration,
+  refreshAccessTokenIfNeeded,
+  redirectToLogin,
+} from '@/lib/auth/session';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
@@ -15,9 +20,12 @@ export const axiosInstance = axios.create({
 // Concurrency control for token refresh
 let refreshPromise: Promise<any> | null = null;
 
-// Request interceptor: attach access token
+// Request interceptor: wait for persisted auth, refresh if needed, attach token
 axiosInstance.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    await waitForAuthHydration();
+    await refreshAccessTokenIfNeeded();
+
     const token = useAuthStore.getState().accessToken;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -41,14 +49,16 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
+      await waitForAuthHydration();
+
       const refreshToken = useAuthStore.getState().refreshToken;
+      const isHydrated = useAuthStore.getState().isHydrated;
+
+      // Never wipe session while auth is still loading from localStorage (common on HMR/navigation)
       if (!refreshToken) {
-        useAuthStore.getState().clearAuth();
-        if (typeof window !== 'undefined') {
-          // Get current locale from localStorage or default to 'en'
-          const locale =
-            window.location.pathname.split('/').filter(Boolean)[0] || 'en';
-          window.location.href = `/${locale}/login`;
+        if (isHydrated) {
+          useAuthStore.getState().clearAuth();
+          redirectToLogin();
         }
         return Promise.reject(error);
       }
@@ -62,7 +72,7 @@ axiosInstance.interceptors.response.use(
         }
 
         const { data } = await refreshPromise;
-        refreshPromise = null; // Clear after successful refresh
+        refreshPromise = null;
 
         const store = useAuthStore.getState();
         store.updateTokens(
@@ -73,17 +83,12 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         refreshPromise = null;
-        // Only force logout when refresh is rejected (expired/invalid token), not on network blips
         const refreshRejected =
           axios.isAxiosError(refreshError) &&
           refreshError.response?.status === 401;
-        if (refreshRejected) {
+        if (refreshRejected && useAuthStore.getState().isHydrated) {
           useAuthStore.getState().clearAuth();
-          if (typeof window !== 'undefined') {
-            const locale =
-              window.location.pathname.split('/').filter(Boolean)[0] || 'en';
-            window.location.href = `/${locale}/login`;
-          }
+          redirectToLogin();
         }
         return Promise.reject(error);
       }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookOpen, Upload, History } from 'lucide-react';
@@ -9,7 +8,6 @@ import { PromotionWizard } from '@/features/promotions/components/PromotionWizar
 import { BulkImportWizard } from '@/features/promotions/components/BulkImportWizard';
 
 export default function PromotionsPage() {
-  const t = useTranslations('promotions');
   const [activeTab, setActiveTab] = useState('yearly');
 
   return (

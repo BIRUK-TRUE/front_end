@@ -44,7 +44,7 @@ function clearAuthCookie(name: string) {
   document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=Lax`;
 }
 
-function syncAuthCookies(user: User | null, accessToken: string | null) {
+export function syncAuthCookies(user: User | null, accessToken: string | null) {
   if (!user || !accessToken) {
     clearAuthCookie('auth-token');
     clearAuthCookie('auth-roles');
@@ -107,11 +107,12 @@ export const useAuthStore = create<AuthState>()(
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
       }),
-      onRehydrateStorage: () => (state) => {
-        if (state?.user && state.accessToken) {
+      onRehydrateStorage: () => () => {
+        const state = useAuthStore.getState();
+        if (state.user && state.accessToken) {
           syncAuthCookies(state.user, state.accessToken);
         }
-        state?.setHydrated();
+        state.setHydrated();
       },
     }
   )

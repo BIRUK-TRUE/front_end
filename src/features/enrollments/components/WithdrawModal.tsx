@@ -49,7 +49,7 @@ export function WithdrawModal({
     resolver: zodResolver(withdrawalSchema) as any,
     defaultValues: {
       withdrawal_date: format(new Date(), 'yyyy-MM-dd'),
-      reason: '',
+      remarks: '',
     },
   });
 
@@ -57,7 +57,7 @@ export function WithdrawModal({
     if (open) {
       form.reset({
         withdrawal_date: format(new Date(), 'yyyy-MM-dd'),
-        reason: '',
+        remarks: '',
       });
     }
   }, [open, form]);
@@ -75,7 +75,7 @@ export function WithdrawModal({
             Withdraw Student
           </DialogTitle>
           <DialogDescription>
-            You are about to withdraw <strong>{enrollment?.full_name}</strong> from <strong>{enrollment?.academic_year_name}</strong>. This action is significant.
+            You are about to withdraw <strong>{enrollment?.student_name}</strong> from <strong>{enrollment?.academic_year_name}</strong>. This action is significant.
           </DialogDescription>
         </DialogHeader>
 
@@ -97,7 +97,7 @@ export function WithdrawModal({
 
             <FormField
               control={form.control}
-              name="reason"
+              name="remarks"
               render={({ field }: { field: any }) => (
                 <FormItem>
                   <FormLabel>{t('reasonForWithdrawal')}</FormLabel>
