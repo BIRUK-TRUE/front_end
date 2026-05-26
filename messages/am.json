@@ -2099,6 +2099,10 @@
       "attendanceRateDesc": "የዚህ ሴሚስተር አጠቃላይ አማካይ",
       "gradeAverage": "የውጤት አማካይ",
       "gradeAverageDesc": "የትምህርት ቤቱ አጠቃላይ አማካይ ነጥብ",
+      "feeCollection": "የክፍያ ስብስብ",
+      "feeCollectionDesc": "የተከፈለ ወይም በከፊል የተከፈለ",
+      "activeTeachers": "ንቁ መምህራን",
+      "activeTeachersDesc": "በአሁኑ ጊዜ ንቁ የሆኑ መምህራን",
       "atRiskStudents": "አደጋ ላይ ያሉ ተማሪዎች",
       "atRiskStudentsDesc": "ድጋፍ የሚያስፈልጋቸው ተማሪዎች"
     },

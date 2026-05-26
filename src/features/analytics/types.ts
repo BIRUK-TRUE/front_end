@@ -29,6 +29,8 @@ export interface StudentRisk {
 
 export interface AnalyticsSummary {
   totalStudents: number;
+  totalTeachers: number;
+  feeCollectionRate: number;
   schoolAttendanceRate: number;
   schoolGradeAverage: number;
   atRiskCounts: {

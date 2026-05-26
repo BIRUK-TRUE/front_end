@@ -2198,6 +2198,10 @@
       "attendanceRateDesc": "School-wide average this term",
       "gradeAverage": "Grade Average",
       "gradeAverageDesc": "School-wide average score",
+      "feeCollection": "Fee Collection",
+      "feeCollectionDesc": "Paid or partially paid",
+      "activeTeachers": "Active Teachers",
+      "activeTeachersDesc": "Currently active teaching staff",
       "atRiskStudents": "At-Risk Students",
       "atRiskStudentsDesc": "Students requiring intervention"
     },

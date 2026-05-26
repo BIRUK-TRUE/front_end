@@ -194,17 +194,17 @@ export function AnalyticsOverview() {
           description={t("metrics.gradeAverageDesc")}
         />
         <MetricCard
-          title="Fee Collection"
-          value="87%"
+          title={t("metrics.feeCollection")}
+          value={`${summary?.feeCollectionRate?.toFixed(1) || 0}%`}
           icon={Wallet}
-          trend={{ value: 5, isUp: true }}
-          description="Paid or partially paid"
+          trend={{ value: summary?.feeCollectionRate && summary.feeCollectionRate > 80 ? 5 : -2, isUp: summary?.feeCollectionRate ? summary.feeCollectionRate > 80 : false }}
+          description={t("metrics.feeCollectionDesc")}
         />
         <MetricCard
-          title="Active Teachers"
-          value="48"
+          title={t("metrics.activeTeachers")}
+          value={summary?.totalTeachers || 0}
           icon={UserCheck}
-          description="Stable roster"
+          description={t("metrics.activeTeachersDesc")}
         />
         <MetricCard
           title={t("metrics.atRiskStudents")}

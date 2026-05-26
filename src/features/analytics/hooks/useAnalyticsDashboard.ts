@@ -46,18 +46,55 @@ export function useAnalyticsSummary(filters?: AnalyticsFilters) {
   return useQuery({
     queryKey: analyticsKeys.summary(filters),
     queryFn: async (): Promise<AnalyticsSummary> => {
-      // TODO: Backend endpoint /analytics/summary not yet implemented
-      // Returning stub data
+      const [summaryRes, atRiskRes] = await Promise.all([
+        axiosInstance.get<{
+          total_students: number;
+          total_teachers: number;
+          total_guardians: number;
+          total_classes: number;
+          active_enrollments: number;
+          attendance_rate: number;
+          average_grade: number;
+          pending_payments: number;
+          fee_collection_rate: number;
+        }>('/analytics/summary', { params: filters }),
+        axiosInstance.get<{
+          data: Array<{
+            student_id: string;
+            risk_factors: string[];
+          }>;
+        }>('/analytics/at-risk-students', { params: filters }).catch(() => ({ data: { data: [] } })),
+      ]);
+
+      const summaryData = summaryRes.data;
+      const atRiskList = atRiskRes.data?.data || [];
+      const atRiskCounts = {
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+      };
+
+      atRiskList.forEach(item => {
+        const factorCount = (item.risk_factors || []).length;
+        if (factorCount >= 3) {
+          atRiskCounts.critical++;
+        } else if (factorCount === 2) {
+          atRiskCounts.high++;
+        } else if (factorCount === 1) {
+          atRiskCounts.medium++;
+        } else {
+          atRiskCounts.low++;
+        }
+      });
+
       return {
-        totalStudents: 0,
-        schoolAttendanceRate: 0,
-        schoolGradeAverage: 0,
-        atRiskCounts: {
-          critical: 0,
-          high: 0,
-          medium: 0,
-          low: 0,
-        },
+        totalStudents: summaryData.total_students,
+        totalTeachers: summaryData.total_teachers,
+        feeCollectionRate: summaryData.fee_collection_rate,
+        schoolAttendanceRate: summaryData.attendance_rate,
+        schoolGradeAverage: summaryData.average_grade,
+        atRiskCounts,
       };
     },
     enabled: true,

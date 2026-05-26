@@ -26,7 +26,8 @@ import {
   ArrowRightLeft, 
   UserMinus,
   Loader2,
-  FilterX
+  FilterX,
+  GraduationCap
 } from 'lucide-react';
 import { 
   DropdownMenu, 
@@ -229,12 +230,14 @@ export default function EnrollmentsPage() {
         title={t('title')}
         description={t('description')}
         actions={
-          <Button className="gap-2" asChild>
-            <Link href="/dashboard/students">
-              <Plus className="h-4 w-4" />
-              {t('enrollStudent')}
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" asChild>
+              <Link href="/dashboard/students">
+                <GraduationCap className="h-4 w-4" />
+                View Students
+              </Link>
+            </Button>
+          </div>
         }
       />
 

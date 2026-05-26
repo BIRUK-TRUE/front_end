@@ -35,6 +35,7 @@ import {
   Trash2,
   UserRoundCheck,
   UserRoundX,
+  UserPlus,
 } from 'lucide-react';
 
 type StudentRow = {
@@ -205,12 +206,20 @@ export default function StudentsPage() {
         icon={GraduationCap}
         breadcrumb={['Admin', 'People', 'Students']}
         action={canManageStudents ? (
-          <Link href="/dashboard/students/create">
-            <Button className="min-h-11 gap-2">
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              {t('createStudent')}
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/dashboard/enrollments">
+              <Button variant="outline" className="min-h-11 gap-2">
+                <UserPlus className="h-4 w-4" aria-hidden="true" />
+                Enroll Students
+              </Button>
+            </Link>
+            <Link href="/dashboard/students/create">
+              <Button className="min-h-11 gap-2">
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                {t('createStudent')}
+              </Button>
+            </Link>
+          </div>
         ) : undefined}
       />
 

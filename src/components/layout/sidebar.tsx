@@ -30,12 +30,11 @@ import {
   BarChart3,
   TrendingUp,
   ScanFace,
-  Package,
   Send,
   ShieldAlert,
-  Layers,
   Activity,
   ArrowRightLeft,
+  Calendar,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -238,25 +237,13 @@ export function Sidebar({
     },
     {
       href: '/dashboard/academics/years',
-      label: t('academics'),
-      icon: Building2,
+      label: 'Academic Years',
+      icon: Calendar,
       show: canManageAcademics,
     },
     {
       href: '/dashboard/academics/subjects',
       label: t('subjects'),
-      icon: BookOpen,
-      show: canManageAcademics,
-    },
-    {
-      href: '/dashboard/academics/bulk-assignment',
-      label: t('bulkAssignment'),
-      icon: Layers,
-      show: canManageAcademics,
-    },
-    {
-      href: '/dashboard/academics/subject-assignment',
-      label: 'Subject Assignment',
       icon: BookOpen,
       show: canManageAcademics,
     },
@@ -287,19 +274,7 @@ export function Sidebar({
     {
       href: '/dashboard/teachers',
       label: t('teachers'),
-      icon: BookOpen,
-      show: canManageTeachers,
-    },
-    {
-      href: '/dashboard/teachers/assignments',
-      label: 'Teacher Assignments',
       icon: UserCheck,
-      show: canManageTeachers,
-    },
-    {
-      href: '/dashboard/teachers/workload',
-      label: 'Workload Dashboard',
-      icon: Activity,
       show: canManageTeachers,
     },
     {
@@ -338,12 +313,6 @@ export function Sidebar({
       label: t('notifications'),
       icon: Bell,
       show: canManageNotifications,
-    },
-    {
-      href: '/dashboard/inventory',
-      label: t('inventory'),
-      icon: Package,
-      show: canManageAcademics || canViewUsers,
     },
   ];
 
