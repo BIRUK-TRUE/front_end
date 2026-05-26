@@ -63,7 +63,7 @@ export interface GuardianNotification {
   id: string;
   title: string;
   message: string;
-  type: 'attendance' | 'grade' | 'fee' | 'general';
+  type: 'attendance' | 'academic' | 'fee_reminder' | 'announcement' | 'system' | 'grade' | 'fee' | 'general';
   studentName: string;
   createdAt: string;
   isRead: boolean;

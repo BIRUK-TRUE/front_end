@@ -64,19 +64,7 @@ export enum PaymentStatus {
 }
 
 export interface ChapaPaymentPayload {
-  amount: string; // Chapa API requires amount as string
-  currency: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  tx_ref: string;
-  callback_url: string;
-  return_url: string;
-  customization?: {
-    title?: string;
-    description?: string;
-    logo?: string;
-  };
+  amount: string;
 }
 
 export interface GuardianDashboardData {
