@@ -72,7 +72,8 @@ export function ActivityFeed() {
       return data.data || [];
     },
     enabled: authReady,
-    refetchInterval: 60_000,
+    staleTime: 3 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   });
 
   // Fetch detailed activity when one is selected

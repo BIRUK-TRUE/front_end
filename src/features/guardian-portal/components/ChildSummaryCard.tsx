@@ -89,13 +89,13 @@ export function ChildSummaryCard({ child }: Props) {
 
         <div className="flex gap-3 pt-2">
           <Button asChild variant="outline" className="flex-1 text-xs gap-2 group/btn h-9">
-            <Link href={`/guardian/children/${child.id}`}>
+            <Link href={`/dashboard/guardian/children/${child.id}`}>
               {t("viewDetails")}
               <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-0.5" />
             </Link>
           </Button>
           <Button asChild className="flex-1 text-xs gap-2 h-9 shadow-sm">
-            <Link href={`/guardian/payments?studentId=${child.id}`}>
+            <Link href={`/dashboard/guardian/payments?studentId=${child.id}`}>
               <Wallet className="h-3.5 w-3.5" />
               {t("payFees")}
             </Link>

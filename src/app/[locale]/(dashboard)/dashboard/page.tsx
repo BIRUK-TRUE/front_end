@@ -3,10 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { usePermissions } from '@/hooks/use-permissions';
-import { useUserStats } from '@/hooks/use-users';
-import { useStudentStats } from '@/hooks/use-students';
-import { useTeacherStats } from '@/hooks/use-teachers';
-import { useGuardianStats } from '@/hooks/use-guardians';
+import { useDashboardStats } from '@/hooks/use-dashboard-stats';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatsCard } from '@/components/shared/stats-card';
 import { Button } from '@/components/ui/button';
@@ -30,88 +27,72 @@ export default function DashboardPage() {
   const { canViewUsers, canManageStudents, canManageTeachers, canManageGuardians } =
     usePermissions();
 
-  const { data: userStats, isPending: userLoading, isError: userError } = useUserStats();
-  const { data: studentStats, isPending: studentLoading, isError: studentError } =
-    useStudentStats();
-  const { data: teacherStats, isPending: teacherLoading, isError: teacherError } =
-    useTeacherStats();
-  const { data: guardianStats, isPending: guardianLoading, isError: guardianError } =
-    useGuardianStats();
+  const { data: stats, isPending, isError } = useDashboardStats();
 
-  const statDescription = (
-    loading: boolean,
-    error: boolean,
-    text: string
-  ) => (loading ? tc('loading') : error ? '—' : text);
+  const loading = isPending;
+  const desc = (text: string) => (loading ? tc('loading') : isError ? '—' : text);
 
   const isStaff = canViewUsers;
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
       <PageHeader
         title={`${t('welcomeBack')}, ${user?.full_name?.split(' ')[0] || ''}`}
         description={t('hereIsOverview')}
       />
 
-      {/* Stats Grid — role-based */}
       {isStaff && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {canViewUsers && (
             <StatsCard
               title={t('totalUsers')}
-              value={userStats?.total?.toString() || '0'}
+              value={stats?.users.total?.toString() || '0'}
               icon={Users}
-              description={statDescription(
-                userLoading,
-                userError,
-                `${userStats?.active || 0} ${t('activeUsers')}`
-              )}
-              trend={userStats?.growth !== undefined ? { value: userStats.growth, positive: userStats.growth >= 0 } : undefined}
+              description={desc(`${stats?.users.active || 0} ${t('activeUsers')}`)}
+              trend={
+                stats?.users.growth !== undefined
+                  ? { value: stats.users.growth, positive: stats.users.growth >= 0 }
+                  : undefined
+              }
             />
           )}
           {canManageStudents && (
             <StatsCard
               title={t('activeStudents')}
-              value={studentStats?.active?.toString() || '0'}
+              value={stats?.students.active?.toString() || '0'}
               icon={GraduationCap}
-              description={statDescription(
-                studentLoading,
-                studentError,
-                `${t('total')}: ${studentStats?.total || 0}`
-              )}
-              trend={studentStats?.growth !== undefined ? { value: studentStats.growth, positive: studentStats.growth >= 0 } : undefined}
+              description={desc(`${t('total')}: ${stats?.students.total || 0}`)}
+              trend={
+                stats?.students.growth !== undefined
+                  ? { value: stats.students.growth, positive: stats.students.growth >= 0 }
+                  : undefined
+              }
             />
           )}
           {canManageTeachers && (
             <StatsCard
               title={t('activeTeachers')}
-              value={teacherStats?.active?.toString() || '0'}
+              value={stats?.teachers.active?.toString() || '0'}
               icon={BookOpen}
-              description={statDescription(
-                teacherLoading,
-                teacherError,
-                `${t('total')}: ${teacherStats?.total || 0}`
-              )}
-              trend={teacherStats?.growth !== undefined ? { value: teacherStats.growth, positive: teacherStats.growth >= 0 } : undefined}
+              description={desc(`${t('total')}: ${stats?.teachers.total || 0}`)}
+              trend={
+                stats?.teachers.growth !== undefined
+                  ? { value: stats.teachers.growth, positive: stats.teachers.growth >= 0 }
+                  : undefined
+              }
             />
           )}
           {canManageGuardians && (
             <StatsCard
               title={t('totalGuardians')}
-              value={guardianStats?.total?.toString() || '0'}
+              value={stats?.guardians.total?.toString() || '0'}
               icon={UserCheck}
-              description={statDescription(
-                guardianLoading,
-                guardianError,
-                `${guardianStats?.active || 0} ${t('verified')}`
-              )}
+              description={desc(`${stats?.guardians.active || 0} ${t('verified')}`)}
             />
           )}
         </div>
       )}
 
-      {/* Analytics & Charts */}
       {isStaff && (
         <div className="grid min-w-0 gap-4 md:grid-cols-2 lg:grid-cols-7">
           <EnrollmentChart />
@@ -119,7 +100,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Quick Actions */}
       {isStaff && (
         <Card>
           <CardHeader>
@@ -164,7 +144,6 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* Non-staff welcome card */}
       {!isStaff && (
         <Card>
           <CardContent className="p-8 text-center">
@@ -172,9 +151,7 @@ export default function DashboardPage() {
               <GraduationCap className="h-8 w-8 text-primary" aria-hidden="true" />
             </div>
             <h2 className="text-xl font-semibold">{tc('welcome')}</h2>
-            <p className="mt-2 text-muted-foreground">
-              {t('hereIsOverview')}
-            </p>
+            <p className="mt-2 text-muted-foreground">{t('hereIsOverview')}</p>
             <Link href="/dashboard/profile">
               <Button className="mt-4 gap-2 min-h-[44px]">
                 {tc('profile')}

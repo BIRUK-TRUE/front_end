@@ -1420,6 +1420,10 @@
     },
     "profile": {
       "title": "My Profile",
+      "description": "Manage your personal information, linked children, and security settings.",
+      "errorAllFields": "Please fill in all password fields.",
+      "errorMatch": "New password and confirmation do not match.",
+      "success": "Password updated successfully.",
       "personalInfo": "Personal Information",
       "name": "Full Name",
       "phone": "Phone Number",
@@ -1436,6 +1440,7 @@
       "notProvided": "Not provided",
       "noChildrenLinked": "No children linked to your account.",
       "updatePassword": "Update Password",
+      "updating": "Updating...",
       "securityNote": "Your data is encrypted and secure. Contact the system administrator for account verification or changes to linked student records."
     },
     "alerts": {

@@ -81,6 +81,7 @@ export const queryKeys = {
   },
   analytics: {
     all: ['analytics'] as const,
+    dashboardStats: ['analytics', 'dashboard-stats'] as const,
     summary: (filters?: object) =>
       ['analytics', 'summary', filters] as const,
     atRisk: (filters?: object) =>

@@ -76,7 +76,7 @@ export default function GuardianProfilePage() {
                 <Avatar className="h-24 w-24 border-4 border-background shadow-md">
                   <AvatarImage src={user.profile_image_url ?? ""} />
                   <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary uppercase">
-                    {user.full_name.slice(0, 2)}
+                    {(user.full_name ?? "?").slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="space-y-1 text-center sm:text-left">
@@ -134,17 +134,17 @@ export default function GuardianProfilePage() {
                       className="group flex items-center gap-4 p-3 rounded-lg border hover:border-primary/50 hover:bg-primary/[0.02] transition-all"
                     >
                       <Avatar className="h-10 w-10 border shadow-sm">
-                        <AvatarImage src={child.photoUrl ?? ""} />
+                        <AvatarImage src={child.photo_url ?? ""} />
                         <AvatarFallback className="text-[10px] font-bold">
-                          {child.fullName.slice(0, 2).toUpperCase()}
+                          {(child.full_name ?? "?").slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">
-                          {child.fullName}
+                          {child.full_name}
                         </p>
                         <p className="text-xs text-muted-foreground truncate italic">
-                          {child.className} - {child.sectionName}
+                          {child.class_name} - {child.section_name}
                         </p>
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
