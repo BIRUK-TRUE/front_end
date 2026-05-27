@@ -2587,5 +2587,13 @@
       "grades": "How do I enter grades?",
       "payments": "How do guardians pay fees?"
     }
+  },
+  "teacher": {
+    "attendance": {
+      "scanFaces": "Scan Faces",
+      "stopScanning": "Stop Scanning",
+      "alreadyTaken": "Attendance Already Taken",
+      "alreadyTakenDescription": "Attendance has already been recorded for this section on the selected date. Do you want to update the existing records?"
+    }
   }
 }

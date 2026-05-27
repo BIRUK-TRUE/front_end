@@ -2605,5 +2605,13 @@
       "grades": "ውጤት እንዴት እግባ?",
       "payments": "የወላጆች ክፍያ እንዴት ይከፈላል?"
     }
+  },
+  "teacher": {
+    "attendance": {
+      "scanFaces": "ፊት ቅኝት",
+      "stopScanning": "ቅኝት አቁም",
+      "alreadyTaken": "መገኘት ቀድሞ ተመዝግቧል",
+      "alreadyTakenDescription": "ለዚህ ክፍል በተመረጠው ቀን መገኘት ቀድሞ ተመዝግቧል። ያሉትን መዝገቦች ማዘመን ይፈልጋሉ?"
+    }
   }
 }
