@@ -7,6 +7,7 @@ import { CheckCircle, XCircle, Clock, AlertTriangle, MinusCircle, Shield, Circle
 type StatusVariant =
   | 'active'
   | 'inactive'
+  | 'deleted'
   | 'graduated'
   | 'transferred'
   | 'expelled'
@@ -30,6 +31,7 @@ const statusConfig: Record<
 > = {
   active: { icon: CheckCircle, className: 'bg-success/10 text-success border-success/20' },
   inactive: { icon: XCircle, className: 'bg-muted text-muted-foreground border-muted' },
+  deleted: { icon: MinusCircle, className: 'bg-destructive/10 text-destructive border-destructive/20 line-through opacity-75' },
   graduated: { icon: CheckCircle, className: 'bg-info/10 text-info border-info/20' },
   transferred: { icon: MinusCircle, className: 'bg-warning/10 text-warning border-warning/20' },
   expelled: { icon: XCircle, className: 'bg-destructive/10 text-destructive border-destructive/20' },

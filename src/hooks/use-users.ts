@@ -10,10 +10,25 @@ import { useAuthReady } from "@/hooks/use-auth-ready";
 
 export function useUsers(filters: UserFilters = {}) {
   const authReady = useAuthReady();
+  
+  console.log('🔍 [useUsers Hook] authReady:', authReady);
+  console.log('🔍 [useUsers Hook] filters:', filters);
+  
   return useQuery({
     queryKey: queryKeys.users.list(filters),
     queryFn: () => usersService.getAll(filters),
     enabled: authReady,
+    retry: (failureCount, error) => {
+      // Don't retry on 401/403 errors (auth issues)
+      if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) {
+        return false;
+      }
+      // Retry up to 3 times for other errors
+      return failureCount < 3;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 }
 

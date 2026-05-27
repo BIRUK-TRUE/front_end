@@ -18,6 +18,7 @@ import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { DataTable } from '@/components/shared/data-table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Activity, BookOpen, Download, Eye, Pencil, Plus, RotateCcw, Trash2, UserRoundCheck, UserRoundX } from 'lucide-react';
@@ -35,7 +36,7 @@ function getInitials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'TC';
 }
 
-export default function TeachersPage() {
+function TeachersPage() {
   const t = useTranslations('teachers');
   const tc = useTranslations('common');
   const { canManageTeachers } = usePermissions();
@@ -45,7 +46,7 @@ export default function TeachersPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const filters = { page, size: 20, search: search || undefined, status: (statusFilter || undefined) as TeacherFilters['status'] } satisfies TeacherFilters;
-  const { data, isLoading } = useTeachers(filters);
+  const { data, isLoading, isFetching, error, refetch } = useTeachers(filters);
   const { data: teacherStats, isLoading: statsLoading } = useTeacherStats();
   const deleteTeacher = useDeleteTeacher();
   const restoreTeacher = useRestoreTeacher();
@@ -144,7 +145,7 @@ export default function TeachersPage() {
       <DataTable
         columns={columns}
         data={teachers}
-        isLoading={isLoading}
+        isLoading={isLoading || isFetching}
         manualPagination
         pageCount={data?.pages || 1}
         pagination={{ pageIndex: page - 1, pageSize: 20 }}
@@ -152,7 +153,27 @@ export default function TeachersPage() {
           const next = typeof updater === 'function' ? updater({ pageIndex: page - 1, pageSize: 20 }) : updater;
           setPage(next.pageIndex + 1);
         }}
-        emptyState={<EmptyState icon={BookOpen} title={t('noTeachers')} />}
+        emptyState={
+          !isLoading && !isFetching && !error && (!data || data.items.length === 0) ? (
+            <EmptyState icon={BookOpen} title={t('noTeachers')} />
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-900/20 mb-4">
+                <BookOpen className="h-8 w-8 text-red-600 dark:text-red-400" aria-hidden="true" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Failed to load teachers</h3>
+              <p className="text-muted-foreground mb-4 max-w-md">
+                {(error as any)?.response?.data?.message || (error as any).message || 'There was an error loading the teachers list. Please try again.'}
+              </p>
+              <div className="flex gap-2">
+                <Button onClick={() => refetch()} variant="outline" className="gap-2">
+                  <RotateCcw className="h-4 w-4" />
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          ) : undefined
+        }
       />
 
       <ConfirmDialog
@@ -162,5 +183,13 @@ export default function TeachersPage() {
         isLoading={deleteTeacher.isPending}
       />
     </div>
+  );
+}
+
+export default function TeachersPageWithAuth() {
+  return (
+    <ProtectedRoute requireRoles={['admin', 'director', 'registrar']}>
+      <TeachersPage />
+    </ProtectedRoute>
   );
 }

@@ -71,16 +71,48 @@ export function FaceRecognitionScanner({
 
   // Initialize registered faces from student data
   useEffect(() => {
-    // In production, these descriptors would come from the backend
-    // For demo, we'll use a mock descriptor generation
-    const mockDescriptors: StudentFace[] = students.map((s) => ({
-      id: s.id,
-      name: s.name,
-      registrationNumber: s.registration_number,
-      descriptor: new Float32Array(128).map(() => Math.random()), // Mock descriptor
-    }));
-    setRegisteredFaces(mockDescriptors);
-  }, [students]);
+    const loadEnrolledFaces = async () => {
+      try {
+        // Fetch enrolled faces from backend for each student
+        const enrolledFaces: StudentFace[] = [];
+        
+        for (const student of students) {
+          try {
+            // Check if student has enrolled face data
+            const response = await fetch(`/api/v1/face-recognition/enrollment-status/${student.id}`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.is_enrolled && data.descriptor) {
+                enrolledFaces.push({
+                  id: student.id,
+                  name: student.name,
+                  registrationNumber: student.registration_number,
+                  descriptor: new Float32Array(data.descriptor),
+                });
+              }
+            }
+          } catch (error) {
+            console.warn(`Failed to load face data for student ${student.id}:`, error);
+          }
+        }
+        
+        setRegisteredFaces(enrolledFaces);
+        
+        if (enrolledFaces.length === 0) {
+          toast.info(t('noEnrolledFaces') || 'No students have enrolled faces. Please enroll faces first.');
+        } else {
+          toast.success(`${enrolledFaces.length} enrolled faces loaded`);
+        }
+      } catch (error) {
+        console.error('Failed to load enrolled faces:', error);
+        toast.error(t('loadFacesFailed') || 'Failed to load enrolled faces');
+      }
+    };
+
+    if (students.length > 0) {
+      loadEnrolledFaces();
+    }
+  }, [students, t]);
 
   // Start camera
   const startCamera = useCallback(async () => {

@@ -35,6 +35,9 @@ interface ActivityItem {
   title?: string;
   status?: string;
   channel?: string;
+  source?: "notification" | "admin_log";
+  action?: string;
+  resource_type?: string;
   metadata?: any;
 }
 
@@ -50,6 +53,7 @@ interface ActivityDetail {
   timestamp: string;
   read_at?: string;
   sent_at?: string;
+  source?: "notification" | "admin_log";
   metadata?: any;
 }
 
@@ -94,7 +98,20 @@ export function ActivityFeed() {
     },
   });
 
-  const getIconForType = (type: string) => {
+  const getIconForType = (type: string, source?: string) => {
+    // Admin log specific icons
+    if (source === "admin_log") {
+      switch (type?.toLowerCase()) {
+        case "user":
+          return <Pencil className="h-4 w-4 text-purple-500" />;
+        case "system":
+          return <Bell className="h-4 w-4 text-pink-500" />;
+        default:
+          return <History className="h-4 w-4 text-blue-500" />;
+      }
+    }
+    
+    // Notification specific icons
     switch (type?.toLowerCase()) {
       case "enrollment":
         return <UserPlus className="h-4 w-4 text-green-500" />;
@@ -103,7 +120,6 @@ export function ActivityFeed() {
         return <GraduationCap className="h-4 w-4 text-blue-500" />;
       case "attendance":
         return <History className="h-4 w-4 text-amber-500" />;
-      case "user":
       case "payment":
         return <Pencil className="h-4 w-4 text-purple-500" />;
       case "system":
@@ -178,7 +194,7 @@ export function ActivityFeed() {
                     key={activity.id}
                     onClick={() => {
                       setSelectedActivity(activity.id);
-                      if (isUnread) {
+                      if (isUnread && activity.source === "notification") {
                         markAsRead(activity.id);
                       }
                     }}
@@ -188,7 +204,7 @@ export function ActivityFeed() {
                     )}
                   >
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-background shadow-sm relative">
-                      {getIconForType(activity.type)}
+                      {getIconForType(activity.type, activity.source)}
                       {isUnread && (
                         <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background animate-pulse" />
                       )}
@@ -205,9 +221,14 @@ export function ActivityFeed() {
                           {safeFormatDistance(activity.timestamp)}
                         </span>
                       </div>
-                      <p className="text-xs font-mono text-muted-foreground/80 mt-1">
-                        By {activity.user_name || "System"}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-mono text-muted-foreground/80 mt-1">
+                          By {activity.user_name || "System"}
+                        </p>
+                        {activity.source === "admin_log" && (
+                          <Badge variant="outline" className="text-[10px] h-4 px-1">Admin Action</Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -222,7 +243,7 @@ export function ActivityFeed() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {activityDetail && getIconForType(activityDetail.notification_type)}
+              {activityDetail && getIconForType(activityDetail.notification_type, activityDetail.source)}
               Activity Details
             </DialogTitle>
             <DialogDescription>
@@ -245,6 +266,9 @@ export function ActivityFeed() {
                   </Badge>
                   <Badge variant="outline">{activityDetail.channel}</Badge>
                   <Badge variant="secondary">{activityDetail.notification_type}</Badge>
+                  {activityDetail.source === "admin_log" && (
+                    <Badge variant="default" className="bg-purple-500">Admin Log</Badge>
+                  )}
                 </div>
               </div>
 

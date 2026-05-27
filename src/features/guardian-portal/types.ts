@@ -2,27 +2,27 @@ import type { AttendanceRecord } from "../student-portal/types";
 
 export interface ChildSummary {
   id: string;
-  fullName: string;
-  studentId: string;
-  photoUrl: string | null;
-  className: string;
-  sectionName: string;
-  attendanceRate: number;
-  gradeAverage: number;
-  feeStatus: 'paid' | 'unpaid' | 'partial';
+  full_name: string;
+  student_id: string;
+  photo_url: string | null;
+  class_name: string;
+  section_name: string;
+  attendance_rate: number;
+  grade_average: number;
+  fee_status: 'paid' | 'unpaid' | 'partial';
 }
 
 export interface GuardianDashboardData {
   children: ChildSummary[];
-  recentAlerts: GuardianAlert[];
+  recent_alerts: GuardianAlert[];
 }
 
 export interface GuardianAlert {
   id: string;
   type: 'attendance' | 'grade' | 'fee' | 'general';
   message: string;
-  studentName: string;
-  createdAt: string;
+  student_name: string;
+  created_at: string;
 }
 
 export interface ChildDetails extends ChildSummary {

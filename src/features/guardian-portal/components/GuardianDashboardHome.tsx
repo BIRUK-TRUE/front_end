@@ -101,24 +101,24 @@ export function GuardianDashboardHome({ guardianId }: Props) {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-4 px-0">
-              {data.recentAlerts.length === 0 ? (
+              {data.recent_alerts.length === 0 ? (
                 <p className="text-sm text-center py-6 text-muted-foreground italic">
                   {t("noAlerts")}
                 </p>
               ) : (
                 <div className="divide-y">
-                  {data.recentAlerts.map((alert) => (
+                  {data.recent_alerts.map((alert) => (
                     <div key={alert.id} className="px-4 py-3 hover:bg-muted/30 transition-colors">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
                           {alert.type}
                         </span>
                         <span className="text-[10px] text-muted-foreground">
-                          {format(new Date(alert.createdAt), "MMM d")}
+                          {format(new Date(alert.created_at), "MMM d")}
                         </span>
                       </div>
                       <p className="text-sm font-medium leading-tight mb-1">{alert.message}</p>
-                      <p className="text-[10px] text-muted-foreground italic">Student: {alert.studentName}</p>
+                      <p className="text-[10px] text-muted-foreground italic">Student: {alert.student_name}</p>
                     </div>
                   ))}
                 </div>

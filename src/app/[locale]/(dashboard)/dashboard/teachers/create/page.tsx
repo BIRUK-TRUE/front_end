@@ -39,7 +39,16 @@ function CreateTeacherForm() {
   const teacherSchema = z.object({
     email: z.string().min(1, tv('required')).email(tv('invalidEmail')),
     full_name: z.string().min(2, tv('nameMinLength')),
-    phone_number: z.string().regex(/^\+251\d{9}$/, { message: t('phoneInvalid') }),
+    phone_number: z.string()
+      .optional()
+      .or(z.literal(''))
+      .refine((val) => {
+        if (!val || val.trim() === '') return true; // Optional field
+        // Remove spaces, dashes, parentheses for validation
+        const cleaned = val.replace(/[\s\-\(\)]/g, '');
+        // Allow + for country code, then 9-15 digits
+        return /^\+?\d{9,15}$/.test(cleaned);
+      }, { message: 'Invalid phone number format. Use format like: +251912345678 or 0912345678' }),
     address: z.string().optional(),
     password: z.string().optional(),
     hire_date: z.string().refine((val) => {
@@ -79,7 +88,29 @@ function CreateTeacherForm() {
   };
 
   const onSubmit = (data: TeacherForm) => {
-    createTeacher.mutate(data as any, { onSuccess: (result) => router.push(`/dashboard/teachers/${result.id}`) });
+    // Clean up the data - convert empty strings to undefined for optional fields
+    const payload = {
+      ...data,
+      phone_number: data.phone_number?.trim() || undefined,
+      address: data.address?.trim() || undefined,
+      password: data.password?.trim() || undefined,
+      emergency_contact_name: data.emergency_contact_name?.trim() || undefined,
+      emergency_contact_phone: data.emergency_contact_phone?.trim() || undefined,
+      office_location: data.office_location?.trim() || undefined,
+      qualification: data.qualification?.trim() || undefined,
+      specialization: data.specialization?.trim() || undefined,
+    };
+    
+    console.log('Submitting teacher data:', payload);
+    
+    createTeacher.mutate(payload as any, { 
+      onSuccess: (result) => router.push(`/dashboard/teachers/${result.id}`),
+      onError: (error: any) => {
+        console.error('Teacher creation error:', error);
+        console.error('Error response:', error.response?.data);
+        console.error('Error details:', JSON.stringify(error.response?.data, null, 2));
+      }
+    });
   };
 
   return (
@@ -137,8 +168,9 @@ function CreateTeacherForm() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="phone_number">{tc('phone')} *</Label>
-                <Input id="phone_number" placeholder="+2519XXXXXXXX" {...register('phone_number')} aria-invalid={!!errors.phone_number} className="h-11" />
+                <Label htmlFor="phone_number">{tc('phone')}</Label>
+                <Input id="phone_number" placeholder="+251912345678 or 0912345678" {...register('phone_number')} aria-invalid={!!errors.phone_number} className="h-11" />
+                <p className="text-xs text-muted-foreground">Optional. Format: +251XXXXXXXXX or 09XXXXXXXX</p>
                 {errors.phone_number && <p className="text-sm text-destructive flex items-center gap-1.5" role="alert"><AlertCircle className="h-3.5 w-3.5" />{errors.phone_number.message}</p>}
               </div>
               <div className="space-y-2"><Label htmlFor="address">{tc('address')}</Label><Input id="address" {...register('address')} className="h-11" /></div>
@@ -162,16 +194,17 @@ function CreateTeacherForm() {
 
             <div className="space-y-3">
               <Label>{ts('sex')} *</Label>
-              <RadioGroup value={sex} onValueChange={(v) => setValue('sex', v as 'M' | 'F', { shouldValidate: true })} className="flex gap-4">
+              <RadioGroup value={sex || ''} onValueChange={(v) => setValue('sex', v as 'M' | 'F', { shouldValidate: true })} className="flex gap-4">
                 <label className="flex items-center gap-2 rounded-lg border p-3 cursor-pointer hover:bg-accent transition-colors min-h-[44px] flex-1"><RadioGroupItem value="M" /><span className="text-sm font-medium">{ts('male')}</span></label>
                 <label className="flex items-center gap-2 rounded-lg border p-3 cursor-pointer hover:bg-accent transition-colors min-h-[44px] flex-1"><RadioGroupItem value="F" /><span className="text-sm font-medium">{ts('female')}</span></label>
               </RadioGroup>
+              {errors.sex && <p className="text-sm text-destructive flex items-center gap-1.5" role="alert"><AlertCircle className="h-3.5 w-3.5" />{errors.sex.message}</p>}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="qualification">{t('qualification')} *</Label>
-                <Select onValueChange={(v) => setValue('qualification', v)}>
+                <Select onValueChange={(v) => setValue('qualification', v, { shouldValidate: true })} value={watch('qualification')}>
                   <SelectTrigger className="h-11"><SelectValue placeholder={t('selectQualification')} /></SelectTrigger>
                   <SelectContent>
                     {QUALIFICATION_OPTIONS.map((q) => (
@@ -183,7 +216,7 @@ function CreateTeacherForm() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="specialization">{t('specialization')} *</Label>
-                <Select onValueChange={(v) => setValue('specialization', v)}>
+                <Select onValueChange={(v) => setValue('specialization', v, { shouldValidate: true })} value={watch('specialization')}>
                   <SelectTrigger className="h-11"><SelectValue placeholder={t('selectSpecialization')} /></SelectTrigger>
                   <SelectContent>
                     {SPECIALIZATION_OPTIONS.map((s) => (

@@ -27,21 +27,56 @@ export function useAtRiskStudents(filters?: {
       });
       const raw = data?.students ?? data?.items ?? [];
       const mapped = (Array.isArray(raw) ? raw : []).map(
-        (s: Record<string, unknown>): StudentRisk => ({
-          studentId: String(s.student_id ?? s.studentId ?? ''),
-          studentName: String(s.student_name ?? s.studentName ?? ''),
-          registrationNumber: String(s.registration_number ?? s.registrationNumber ?? ''),
-          className: String(s.class_name ?? s.className ?? ''),
-          sectionName: String(s.section_name ?? s.sectionName ?? ''),
-          level: (s.risk_level ?? s.level ?? 'low') as StudentRisk['level'],
-          factors: (s.factors as StudentRisk['factors']) ?? [],
-          score: Number(s.risk_score ?? s.score ?? 0),
-          attendanceRate: Number(s.attendance_rate ?? s.attendanceRate ?? 0),
-          gradeAverage: Number(s.grade_average ?? s.gradeAverage ?? 0),
-          lastAbsenceDate: s.last_absence_date as string | undefined,
-          consecutiveAbsences: Number(s.consecutive_absences ?? s.consecutiveAbsences ?? 0),
-          guardianInfo: s.guardian_info as StudentRisk['guardianInfo'],
-        }),
+        (s: Record<string, unknown>): StudentRisk => {
+          // Map risk factors from backend format
+          const riskFactorsRaw = (s.risk_factors as string[]) || [];
+          const factors: StudentRisk['factors'] = riskFactorsRaw.map((factor: string) => {
+            const factorMap: Record<string, { type: StudentRisk['factors'][number]['type']; message: string }> = {
+              low_attendance: { 
+                type: 'attendance', 
+                message: 'Attendance rate below 75%' 
+              },
+              poor_grades: { 
+                type: 'grade', 
+                message: 'Average grade below 60%' 
+              },
+              outstanding_fees: { 
+                type: 'financial', 
+                message: 'Outstanding payment balance' 
+              },
+            };
+            const mapped = factorMap[factor] || { type: 'attendance' as const, message: factor };
+            return {
+              type: mapped.type,
+              value: 0,
+              threshold: 0,
+              message: mapped.message,
+            };
+          });
+          
+          // Calculate risk level based on number of factors
+          const numFactors = factors.length;
+          let level: StudentRisk['level'] = 'low';
+          if (numFactors >= 3) level = 'critical';
+          else if (numFactors === 2) level = 'high';
+          else if (numFactors === 1) level = 'medium';
+          
+          return {
+            studentId: String(s.student_id ?? s.studentId ?? ''),
+            studentName: String(s.student_name ?? s.studentName ?? ''),
+            registrationNumber: String(s.registration_number ?? s.registrationNumber ?? ''),
+            className: String(s.class_name ?? s.className ?? ''),
+            sectionName: String(s.section_name ?? s.sectionName ?? ''),
+            level,
+            factors,
+            score: Number(s.risk_score ?? s.score ?? numFactors * 25),
+            attendanceRate: Number(s.attendance_percentage ?? s.attendance_rate ?? s.attendanceRate ?? 0),
+            gradeAverage: Number(s.average_grade ?? s.grade_average ?? s.gradeAverage ?? 0),
+            lastAbsenceDate: s.last_absence_date as string | undefined,
+            consecutiveAbsences: Number(s.consecutive_absences ?? s.consecutiveAbsences ?? 0),
+            guardianInfo: s.guardian_info as StudentRisk['guardianInfo'],
+          };
+        },
       );
       // Deduplicate by studentId — keep the entry with the most risk factors
       const seen = new Map<string, StudentRisk>();

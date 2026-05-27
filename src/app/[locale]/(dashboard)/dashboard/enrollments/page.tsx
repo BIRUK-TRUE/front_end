@@ -18,6 +18,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { 
   Search, 
   Plus, 
@@ -44,7 +45,7 @@ import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 
-export default function EnrollmentsPage() {
+function EnrollmentsPage() {
   const t = useTranslations('enrollments');
   const tc = useTranslations('common');
   
@@ -383,5 +384,13 @@ export default function EnrollmentsPage() {
         isLoading={deleteEnrollment.isPending}
       />
     </div>
+  );
+}
+
+export default function EnrollmentsPageWithAuth() {
+  return (
+    <ProtectedRoute requireRoles={['admin', 'director', 'registrar']}>
+      <EnrollmentsPage />
+    </ProtectedRoute>
   );
 }

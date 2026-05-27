@@ -29,8 +29,13 @@ export interface StudentRisk {
 
 export interface AnalyticsSummary {
   totalStudents: number;
+  totalTeachers: number;
+  totalGuardians: number;
+  totalClasses: number;
+  activeEnrollments: number;
   schoolAttendanceRate: number;
   schoolGradeAverage: number;
+  pendingPayments: number;
   atRiskCounts: {
     critical: number;
     high: number;

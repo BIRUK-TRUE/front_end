@@ -15,6 +15,21 @@ export interface EnrollmentStatusResponse {
   photo_count: number;
 }
 
+export interface FaceMatchResult {
+  studentId: string;
+  studentName: string;
+  confidence: number;
+  distance: number;
+  enrollmentId: string;
+}
+
+export interface FaceRecognitionResponse {
+  matches: FaceMatchResult[];
+  recognizedCount: number;
+  message: string;
+  sectionId: string;
+}
+
 export const faceRecognitionService = {
   enrollFace: async (
     studentId: string,
@@ -43,13 +58,16 @@ export const faceRecognitionService = {
     return data;
   },
 
-  recognizeInSection: async (
-    _sectionId: string,
-    _photo: File,
-  ): Promise<{ recognized_student_ids: string[]; count: number }> => {
-    return {
-      recognized_student_ids: [],
-      count: 0,
-    };
+  recognizeFace: async (
+    sectionId: string,
+    descriptors: number[][],
+    threshold?: number,
+  ): Promise<FaceRecognitionResponse> => {
+    const { data } = await axiosInstance.post("/face-recognition/recognize", {
+      sectionId,
+      descriptors,
+      threshold: threshold ?? 0.6,
+    });
+    return data;
   },
 };

@@ -21,13 +21,46 @@ export const usersService = {
     }
     delete params.role;
 
-    const { data } = await axiosInstance.get('/users', { params });
+    console.log('🔍 [Users Service] Fetching users with filters:', params);
+    console.log('🔍 [Users Service] API URL:', '/users');
+    console.log('🔍 [Users Service] Base URL:', axiosInstance.defaults.baseURL);
+    
+    try {
+      const { data } = await axiosInstance.get('/users', { params });
+      
+      console.log('✅ [Users Service] API Response received');
+      console.log('✅ [Users Service] Data:', data);
+      console.log('✅ [Users Service] Items:', data?.items);
+      console.log('✅ [Users Service] Total:', data?.total);
+      console.log('✅ [Users Service] Is array?', Array.isArray(data?.items));
+      console.log('✅ [Users Service] Items length:', data?.items?.length);
 
-    if (!data || !Array.isArray(data.items)) {
-      return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+      if (!data || !Array.isArray(data.items)) {
+        console.warn('⚠️ [Users Service] Invalid response format, returning empty');
+        return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('❌ [Users Service] Error fetching users:', error);
+      console.error('❌ [Users Service] Error response:', error.response);
+      console.error('❌ [Users Service] Error status:', error.response?.status);
+      console.error('❌ [Users Service] Error data:', error.response?.data);
+      
+      // Add more specific error information
+      if (error.code === 'ECONNREFUSED') {
+        console.error('❌ [Users Service] Connection refused - backend server may be down');
+      }
+      if (error.code === 'NETWORK_ERROR') {
+        console.error('❌ [Users Service] Network error - check internet connection');
+      }
+      
+      throw error;
+      console.error('❌ [Users Service] Error status:', error.response?.status);
+      console.error('❌ [Users Service] Error data:', error.response?.data);
+      console.error('❌ [Users Service] Error message:', error.message);
+      throw error;
     }
-
-    return data;
   },
 
   async getById(id: string) {

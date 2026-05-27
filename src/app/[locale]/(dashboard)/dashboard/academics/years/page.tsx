@@ -24,6 +24,7 @@ import {
   X,
   ArrowRight,
 } from 'lucide-react';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { EmptyState } from '@/components/shared/empty-state';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
@@ -165,7 +166,7 @@ function StatusBadge({ status, isCurrent }: { status: AcademicYearStatus; isCurr
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function AcademicYearsPage() {
+function AcademicYearsPage() {
   const t = useTranslations('academicsPages');
   const router = useRouter();
 
@@ -375,5 +376,13 @@ export default function AcademicYearsPage() {
         isLoading={deleteYear.isPending}
       />
     </div>
+  );
+}
+
+export default function AcademicYearsPageWithAuth() {
+  return (
+    <ProtectedRoute requireRoles={['admin', 'director']}>
+      <AcademicYearsPage />
+    </ProtectedRoute>
   );
 }

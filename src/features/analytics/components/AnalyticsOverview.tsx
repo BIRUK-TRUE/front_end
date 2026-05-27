@@ -197,14 +197,14 @@ export function AnalyticsOverview() {
         />
         <MetricCard
           title="Fee Collection"
-          value="87%"
+          value={`${summary?.pendingPayments ? Math.max(0, 100 - (summary.pendingPayments / Math.max(summary.totalStudents, 1)) * 100).toFixed(0) : 0}%`}
           icon={Wallet}
           trend={{ value: 5, isUp: true }}
           description="Paid or partially paid"
         />
         <MetricCard
           title="Active Teachers"
-          value="48"
+          value={summary?.totalTeachers || 0}
           icon={UserCheck}
           description="Stable roster"
         />

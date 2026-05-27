@@ -14,17 +14,32 @@ export interface StudentFilters {
 
 export const studentsService = {
   async getAll(filters: StudentFilters = {}) {
-    const { data } = await axiosInstance.get('/students', { params: filters });
+    console.log('🔍 [Students Service] Fetching students with filters:', filters);
+    
+    try {
+      const { data } = await axiosInstance.get('/students', { params: filters });
+      
+      console.log('✅ [Students Service] API Response received');
+      console.log('✅ [Students Service] Data:', data);
+      console.log('✅ [Students Service] Items:', data?.items);
+      console.log('✅ [Students Service] Items length:', data?.items?.length);
 
-    if (!data) {
-      return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+      if (!data) {
+        console.warn('⚠️ [Students Service] No data received, returning empty');
+        return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+      }
+
+      if (!Array.isArray(data.items)) {
+        console.warn('⚠️ [Students Service] Invalid response format, returning empty');
+        return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('❌ [Students Service] Error fetching students:', error);
+      console.error('❌ [Students Service] Error response:', error.response);
+      throw error;
     }
-
-    if (!Array.isArray(data.items)) {
-      return { items: [], total: 0, page: 1, size: 20, pages: 0 };
-    }
-
-    return data;
   },
 
   async getById(id: string) {

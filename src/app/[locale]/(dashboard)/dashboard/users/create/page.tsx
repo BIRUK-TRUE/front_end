@@ -33,13 +33,19 @@ function CreateUserForm() {
     .object({
       email: z.string().min(1, tv('emailRequired')).email(tv('invalidEmail')),
       full_name: z.string().min(2, tv('nameMinLength')),
-      phone_number: z.string().optional(),
-      address: z.string().optional(),
-      password: z.string().min(8, tv('passwordMinLength')),
-      confirm_password: z.string(),
+      phone_number: z.string().optional().or(z.literal('')),
+      address: z.string().optional().or(z.literal('')),
+      password: z.string().min(8, tv('passwordMinLength')).optional().or(z.literal('')),
+      confirm_password: z.string().optional().or(z.literal('')),
       role_names: z.array(z.string()).min(1, tv('atLeastOneRole')),
     })
-    .refine((data) => data.password === data.confirm_password, {
+    .refine((data) => {
+      // Only validate password match if password is provided
+      if (data.password && data.password.length > 0) {
+        return data.password === data.confirm_password;
+      }
+      return true;
+    }, {
       message: tv('passwordsDoNotMatch'),
       path: ['confirm_password'],
     });
@@ -77,8 +83,24 @@ function CreateUserForm() {
 
   const onSubmit = (data: CreateUserForm) => {
     const { confirm_password, ...payload } = data;
-    createUser.mutate(payload, {
+    
+    // Clean up the data - convert empty strings to undefined for optional fields
+    const cleanedPayload = {
+      ...payload,
+      phone_number: payload.phone_number?.trim() || undefined,
+      address: payload.address?.trim() || undefined,
+      password: payload.password?.trim() || undefined,
+    };
+    
+    console.log('Submitting user data:', cleanedPayload);
+    
+    createUser.mutate(cleanedPayload, {
       onSuccess: () => router.push('/dashboard/users'),
+      onError: (error: any) => {
+        console.error('User creation error:', error);
+        console.error('Error response:', error.response?.data);
+        console.error('Error details:', JSON.stringify(error.response?.data, null, 2));
+      }
     });
   };
 
@@ -140,7 +162,13 @@ function CreateUserForm() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="phone_number">{tc('phone')}</Label>
-                <Input id="phone_number" {...register('phone_number')} className="h-11" />
+                <Input 
+                  id="phone_number" 
+                  {...register('phone_number')} 
+                  placeholder="+251912345678 or 0912345678"
+                  className="h-11" 
+                />
+                <p className="text-xs text-muted-foreground">Optional. Format: +251XXXXXXXXX</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="address">{tc('address')}</Label>
@@ -150,13 +178,14 @@ function CreateUserForm() {
 
             {/* Password */}
             <div className="space-y-2">
-              <Label htmlFor="password">{t('password')} *</Label>
+              <Label htmlFor="password">{t('password')} <span className="text-xs text-muted-foreground">(Optional - auto-generated if empty)</span></Label>
               <Input
                 id="password"
                 type="password"
                 {...register('password')}
                 aria-invalid={!!errors.password}
                 aria-describedby={errors.password ? 'password-err' : undefined}
+                placeholder="Leave empty for auto-generated password"
                 className="h-11"
               />
               {errors.password && (

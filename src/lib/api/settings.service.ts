@@ -1,3 +1,5 @@
+import { axiosInstance } from './axios';
+
 export interface SchoolInfo {
   school_name: string;
   address: string;
@@ -19,6 +21,7 @@ export interface AcademicSettings {
   passing_mark: number;
   attendance_warning_threshold: number;
   confidence_threshold: number;
+  late_arrival_time: string; // HH:MM format
 }
 
 export interface NotificationSettings {
@@ -26,100 +29,41 @@ export interface NotificationSettings {
   low_grade_alert: boolean;
   fee_reminder: boolean;
   consecutive_absence_threshold: number;
-}
-
-const SCHOOL_INFO_STORAGE_KEY = "sms.schoolInfo";
-
-const defaultSchoolInfo: SchoolInfo = {
-  school_name: "School Management System",
-  address: "",
-  phone: "",
-  email: "",
-  logo_url: null,
-  school_logo: null,
-  school_tagline: "",
-  primary_color: "#2563EB",
-  school_code: null,
-  website: null,
-  region: null,
-  zone: null,
-  woreda: null,
-};
-
-function readLocalSchoolInfo(): Partial<SchoolInfo> {
-  if (typeof window === "undefined") return {};
-
-  try {
-    return JSON.parse(window.localStorage.getItem(SCHOOL_INFO_STORAGE_KEY) || "{}");
-  } catch {
-    return {};
-  }
-}
-
-function writeLocalSchoolInfo(data: SchoolInfo) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(SCHOOL_INFO_STORAGE_KEY, JSON.stringify(data));
+  email_notifications_enabled?: boolean;
 }
 
 export const settingsService = {
   getSchoolInfo: async (): Promise<SchoolInfo> => {
-    return {
-      ...defaultSchoolInfo,
-      ...readLocalSchoolInfo(),
-    };
+    const response = await axiosInstance.get('/settings/system/school-info');
+    return response.data;
   },
 
   updateSchoolInfo: async (data: Partial<SchoolInfo>) => {
-    const next = {
-      ...defaultSchoolInfo,
-      ...readLocalSchoolInfo(),
-      ...data,
-      logo_url: data.school_logo ?? data.logo_url ?? readLocalSchoolInfo().logo_url ?? null,
-      school_logo: data.school_logo ?? data.logo_url ?? readLocalSchoolInfo().school_logo ?? null,
-    };
-    writeLocalSchoolInfo(next);
-    return next;
+    const response = await axiosInstance.patch('/settings/system/school-info', data);
+    return response.data;
   },
 
-  /**
-   * Get academic settings.
-   * TODO: Backend endpoint /settings/academic not yet implemented.
-   */
   getAcademicSettings: async (): Promise<AcademicSettings> => {
-    return {
-      grading_scale: { A: 90, B: 80, C: 70, D: 60, F: 0 },
-      passing_mark: 50,
-      attendance_warning_threshold: 80,
-      confidence_threshold: 75,
-    };
+    const response = await axiosInstance.get('/settings/academic');
+    return response.data;
   },
 
-  updateAcademicSettings: async (_data: Partial<AcademicSettings>) => {
-    // TODO: PATCH /settings/academic
-    return _data;
+  updateAcademicSettings: async (data: Partial<AcademicSettings>) => {
+    const response = await axiosInstance.patch('/settings/academic', data);
+    return response.data;
   },
 
-  /**
-   * Get notification settings.
-   * TODO: Backend endpoint /settings/notifications not yet implemented.
-   */
   getNotificationSettings: async (): Promise<NotificationSettings> => {
-    return {
-      absence_alert: true,
-      low_grade_alert: true,
-      fee_reminder: true,
-      consecutive_absence_threshold: 3,
-    };
+    const response = await axiosInstance.get('/settings/notifications');
+    return response.data;
   },
 
-  updateNotificationSettings: async (_data: Partial<NotificationSettings>) => {
-    // TODO: PATCH /settings/notifications
-    return _data;
+  updateNotificationSettings: async (data: Partial<NotificationSettings>) => {
+    const response = await axiosInstance.patch('/settings/notifications', data);
+    return response.data;
   },
-
-  /**
-   * SMS providers — stubbed.
-   */
+  
+  // SMS providers — stubbed for future implementation
   getSmsProviders: async () => {
     return [];
   },

@@ -14,7 +14,14 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { useSchoolInfo, useUpdateSchoolInfo } from "@/hooks/use-settings";
+import { 
+  useSchoolInfo, 
+  useUpdateSchoolInfo,
+  useMaintenanceMode,
+  useSetMaintenanceMode,
+  useNotificationSettings,
+  useUpdateNotificationSettings
+} from "@/hooks/use-settings";
 import type { SchoolInfo } from "@/lib/api/settings.service";
 
 const defaultSchoolForm: SchoolInfo = {
@@ -38,9 +45,14 @@ export default function SettingsPage() {
   const tg = useTranslations("settingsPage.general");
   const { data: schoolInfo, isLoading } = useSchoolInfo();
   const updateSchoolInfo = useUpdateSchoolInfo();
+  const { data: maintenanceData } = useMaintenanceMode();
+  const setMaintenance = useSetMaintenanceMode();
+  const { data: notificationSettings } = useNotificationSettings();
+  const updateNotifications = useUpdateNotificationSettings();
   const [draft, setDraft] = useState<Partial<SchoolInfo>>({});
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [emailNotifications, setEmailNotifications] = useState(true);
+
+  const maintenanceMode = maintenanceData?.maintenance_mode ?? false;
+  const emailNotifications = notificationSettings?.email_notifications_enabled ?? true;
 
   const form = useMemo<SchoolInfo>(() => ({
     ...defaultSchoolForm,
@@ -225,7 +237,12 @@ export default function SettingsPage() {
                 <Label htmlFor="maintenance-mode" className="text-sm font-medium">{ts("maintenanceMode")}</Label>
                 <p className="text-xs text-muted-foreground">{t("operational.maintenancePauseDesc")}</p>
               </div>
-              <Switch id="maintenance-mode" checked={maintenanceMode} onCheckedChange={setMaintenanceMode} />
+              <Switch 
+                id="maintenance-mode" 
+                checked={maintenanceMode} 
+                onCheckedChange={(checked) => setMaintenance.mutate(checked)}
+                disabled={setMaintenance.isPending}
+              />
             </div>
             <StatusBadge status={maintenanceMode ? "late" : "active"} label={maintenanceMode ? t("operational.maintenanceEnabled") : t("operational.systemOperational")} />
           </CardContent>
@@ -245,7 +262,12 @@ export default function SettingsPage() {
                   <p className="text-xs text-muted-foreground">{ts("emailNotificationsDescription")}</p>
                 </div>
               </div>
-              <Switch id="email-notifications" checked={emailNotifications} onCheckedChange={setEmailNotifications} />
+              <Switch 
+                id="email-notifications" 
+                checked={emailNotifications} 
+                onCheckedChange={(checked) => updateNotifications.mutate({ email_notifications_enabled: checked })}
+                disabled={updateNotifications.isPending}
+              />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg border p-4">

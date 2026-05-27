@@ -13,13 +13,27 @@ export interface TeacherFilters {
 
 export const teachersService = {
   async getAll(filters: TeacherFilters = {}) {
-    const { data } = await axiosInstance.get('/teachers', { params: filters });
+    console.log('🔍 [Teachers Service] Fetching teachers with filters:', filters);
+    
+    try {
+      const { data } = await axiosInstance.get('/teachers', { params: filters });
+      
+      console.log('✅ [Teachers Service] API Response received');
+      console.log('✅ [Teachers Service] Data:', data);
+      console.log('✅ [Teachers Service] Items:', data?.items);
+      console.log('✅ [Teachers Service] Items length:', data?.items?.length);
 
-    if (!data || !Array.isArray(data.items)) {
-      return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+      if (!data || !Array.isArray(data.items)) {
+        console.warn('⚠️ [Teachers Service] Invalid response format, returning empty');
+        return { items: [], total: 0, page: 1, size: 20, pages: 0 };
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('❌ [Teachers Service] Error fetching teachers:', error);
+      console.error('❌ [Teachers Service] Error response:', error.response);
+      throw error;
     }
-
-    return data;
   },
 
   async getById(id: string) {

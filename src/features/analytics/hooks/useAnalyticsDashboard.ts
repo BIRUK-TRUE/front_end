@@ -34,15 +34,24 @@ export function useAnalyticsSummary(filters?: AnalyticsFilters) {
           classId: filters?.classId,
         },
       });
+      
+      // Map at-risk counts from backend
+      const atRiskCounts = data.at_risk_counts || {};
+      
       return {
         totalStudents: data.total_students ?? 0,
+        totalTeachers: data.total_teachers ?? 0,
+        totalGuardians: data.total_guardians ?? 0,
+        totalClasses: data.total_classes ?? 0,
+        activeEnrollments: data.active_enrollments ?? 0,
         schoolAttendanceRate: data.attendance_rate ?? 0,
         schoolGradeAverage: data.average_grade ?? 0,
+        pendingPayments: data.pending_payments ?? 0,
         atRiskCounts: {
-          critical: 0,
-          high: 0,
-          medium: 0,
-          low: 0,
+          critical: atRiskCounts.critical ?? 0,
+          high: atRiskCounts.high ?? 0,
+          medium: atRiskCounts.medium ?? 0,
+          low: atRiskCounts.low ?? 0,
         },
       };
     },

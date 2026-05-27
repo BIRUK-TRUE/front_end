@@ -39,7 +39,16 @@ function CreateGuardianForm() {
   const guardianSchema = z.object({
     email: z.string().min(1, tv('required')).email(tv('invalidEmail')),
     full_name: z.string().min(2, tv('nameMinLength')),
-    phone_number: z.string().regex(/^\+251\d{9}$/, { message: t('phoneInvalid') }),
+    phone_number: z.string()
+      .optional()
+      .or(z.literal(''))
+      .refine((val) => {
+        if (!val || val.trim() === '') return true; // Optional field
+        // Remove spaces, dashes, parentheses for validation
+        const cleaned = val.replace(/[\s\-\(\)]/g, '');
+        // Allow + for country code, then 9-15 digits
+        return /^\+?\d{9,15}$/.test(cleaned);
+      }, { message: 'Invalid phone number format. Use format like: +251912345678 or 0912345678' }),
     address: z.string().optional(),
     password: z.string().optional(),
     occupation: z.string().optional(),
@@ -58,9 +67,26 @@ function CreateGuardianForm() {
   const isPrimary = watch('is_primary');
 
   const onSubmit = (data: GuardianForm) => {
-    createGuardian.mutate(data as any, {
+    // Clean up the data - convert empty strings to undefined for optional fields
+    const payload = {
+      ...data,
+      phone_number: data.phone_number?.trim() || undefined,
+      address: data.address?.trim() || undefined,
+      password: data.password?.trim() || undefined,
+      occupation: data.occupation?.trim() || undefined,
+      workplace: data.workplace?.trim() || undefined,
+    };
+    
+    console.log('Submitting guardian data:', payload);
+    
+    createGuardian.mutate(payload as any, {
       onSuccess: (result) => {
         setCreatedGuardianId(result.id);
+      },
+      onError: (error: any) => {
+        console.error('Guardian creation error:', error);
+        console.error('Error response:', error.response?.data);
+        console.error('Error details:', JSON.stringify(error.response?.data, null, 2));
       }
     });
   };
@@ -170,8 +196,9 @@ function CreateGuardianForm() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="phone_number">{tc('phone')} *</Label>
-                <Input id="phone_number" placeholder="+2519XXXXXXXX" {...register('phone_number')} aria-invalid={!!errors.phone_number} className="h-11" />
+                <Label htmlFor="phone_number">{tc('phone')}</Label>
+                <Input id="phone_number" placeholder="+251912345678 or 0912345678" {...register('phone_number')} aria-invalid={!!errors.phone_number} className="h-11" />
+                <p className="text-xs text-muted-foreground">Optional. Format: +251XXXXXXXXX or 09XXXXXXXX</p>
                 {errors.phone_number && <p className="text-sm text-destructive flex items-center gap-1.5" role="alert"><AlertCircle className="h-3.5 w-3.5" />{errors.phone_number.message}</p>}
               </div>
               <div className="space-y-2">

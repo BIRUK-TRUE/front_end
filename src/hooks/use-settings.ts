@@ -11,6 +11,7 @@ import { queryKeys } from "@/lib/api/query-keys";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/utils/formatApiError";
 import { useTranslations } from "next-intl";
+import { axiosInstance } from "@/lib/api/axios";
 
 export function useSchoolInfo() {
   return useQuery({
@@ -139,6 +140,33 @@ export function useTestSms() {
     },
     onError: (error: unknown) => {
       toast.error(formatApiError(error, "Failed to send test SMS"));
+    },
+  });
+}
+
+export function useMaintenanceMode() {
+  return useQuery({
+    queryKey: ['settings', 'maintenance-mode'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/settings/system/maintenance-mode');
+      return response.data;
+    },
+  });
+}
+
+export function useSetMaintenanceMode() {
+  const queryClient = useQueryClient();
+  const t = useTranslations("common");
+  
+  return useMutation({
+    mutationFn: (enabled: boolean) => 
+      axiosInstance.post('/settings/system/maintenance-mode', { enabled }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['settings', 'maintenance-mode'] });
+      toast.success('Maintenance mode updated');
+    },
+    onError: () => {
+      toast.error(t("saveFailed"));
     },
   });
 }

@@ -40,8 +40,9 @@ import {
 } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProtectedRoute } from '@/components/auth/protected-route';
 
-export default function DirectorsPage() {
+function DirectorsPage() {
   const t = useTranslations("users");
   const tc = useTranslations("common");
   const td = useTranslations("directorsPage");
@@ -384,5 +385,13 @@ export default function DirectorsPage() {
         isLoading={deleteUser.isPending}
       />
     </div>
+  );
+}
+
+export default function DirectorsPageWithAuth() {
+  return (
+    <ProtectedRoute requireRoles={['admin', 'director']}>
+      <DirectorsPage />
+    </ProtectedRoute>
   );
 }

@@ -504,7 +504,10 @@
     "classroomNumber": "Classroom Number",
     "classroomType": "Classroom Type",
     "noBuildings": "No buildings found",
-    "noClassrooms": "No classrooms found"
+    "noClassrooms": "No classrooms found",
+    "searchClasses": "Search classes...",
+    "allGrades": "All Grades",
+    "termTimeline": "Term Timeline"
   },
   "attendancePage": {
     "title": "Attendance",

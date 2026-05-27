@@ -567,7 +567,10 @@
     "termModalDesc": "ለዚህ የትምህርት ዓመት አዲስ የውጤት ሴሚስተር ይፍጠሩ።",
     "termModalEditDesc": "የዚህ ሴሚስተር ዝርዝሮችን ያዘምኑ።",
     "vocational": "ሙያ",
-    "extracurricular": "ከመደበኛ ትምህርት ውጭ"
+    "extracurricular": "ከመደበኛ ትምህርት ውጭ",
+    "searchClasses": "ክፍሎችን ይፈልጉ...",
+    "allGrades": "ሁሉም ክፍሎች",
+    "termTimeline": "የሴሚስተር መርሃ ግብር"
   },
   "attendancePage": {
     "title": "ተገኝነት",

@@ -239,9 +239,12 @@ export function FaceAttendanceStation({
       const now = new Date();
       const time = format(now, "HH:mm:ss");
 
-      // Check for late arrival based on current time vs threshold (hardcoded 8:30 for demo)
+      // Check for late arrival based on current time vs threshold from settings
+      const lateArrivalTime = academicSettings?.late_arrival_time || "08:30";
+      const [lateHour, lateMinute] = lateArrivalTime.split(":").map(Number);
       const isLate =
-        now.getHours() > 8 || (now.getHours() === 8 && now.getMinutes() > 30);
+        now.getHours() > lateHour || 
+        (now.getHours() === lateHour && now.getMinutes() > lateMinute);
       const status =
         statusOverride ??
         (isLate ? AttendanceStatus.LATE : AttendanceStatus.PRESENT);
@@ -273,7 +276,7 @@ export function FaceAttendanceStation({
         });
       }
     },
-    [markAttendance, sectionId, t],
+    [markAttendance, sectionId, t, academicSettings],
   );
 
   // Main Detection Loop

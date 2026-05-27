@@ -24,7 +24,7 @@ export function ChildSummaryCard({ child }: Props) {
     return "text-red-600 bg-red-50 border-red-200";
   };
 
-  const getFeeStatusBadge = (status: ChildSummary["feeStatus"]) => {
+  const getFeeStatusBadge = (status: ChildSummary["fee_status"]) => {
     switch (status) {
       case "paid":
         return <Badge className="bg-green-500 hover:bg-green-600">{t("feeStatuses.paid")}</Badge>;
@@ -41,21 +41,21 @@ export function ChildSummaryCard({ child }: Props) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Avatar className="h-14 w-14 border-2 border-background shadow-sm">
-              <AvatarImage src={child.photoUrl ?? ""} />
+              <AvatarImage src={child.photo_url ?? ""} />
               <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                {child.fullName.slice(0, 2).toUpperCase()}
+                {child.full_name.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div>
               <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                {child.fullName}
+                {child.full_name}
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {child.className} - {child.sectionName} • {child.studentId}
+                {child.class_name} - {child.section_name} • {child.student_id}
               </p>
             </div>
           </div>
-          {getFeeStatusBadge(child.feeStatus)}
+          {getFeeStatusBadge(child.fee_status)}
         </div>
       </CardHeader>
       <CardContent className="pt-6 space-y-6">
@@ -66,11 +66,11 @@ export function ChildSummaryCard({ child }: Props) {
                 <Calendar className="h-3.5 w-3.5" />
                 {t("stats.attendanceRate")}
               </div>
-              <span className={cn("px-2 py-0.5 rounded-full border", getAttendanceColor(child.attendanceRate))}>
-                {child.attendanceRate}%
+              <span className={cn("px-2 py-0.5 rounded-full border", getAttendanceColor(child.attendance_rate))}>
+                {child.attendance_rate}%
               </span>
             </div>
-            <Progress value={child.attendanceRate} className="h-1.5" />
+            <Progress value={child.attendance_rate} className="h-1.5" />
           </div>
 
           <div className="space-y-2">
@@ -80,10 +80,10 @@ export function ChildSummaryCard({ child }: Props) {
                 {t("stats.gradeAverage")}
               </div>
               <span className="font-bold text-foreground">
-                {child.gradeAverage}%
+                {child.grade_average}%
               </span>
             </div>
-            <Progress value={child.gradeAverage} className="h-1.5 bg-primary/10" />
+            <Progress value={child.grade_average} className="h-1.5 bg-primary/10" />
           </div>
         </div>
 

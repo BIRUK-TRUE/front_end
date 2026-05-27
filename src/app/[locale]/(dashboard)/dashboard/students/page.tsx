@@ -20,6 +20,7 @@ import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { DataTable } from '@/components/shared/data-table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -55,7 +56,7 @@ function getInitials(name: string) {
     .join('') || 'ST';
 }
 
-export default function StudentsPage() {
+function StudentsPage() {
   const t = useTranslations('students');
   const tc = useTranslations('common');
   const { canManageStudents } = usePermissions();
@@ -73,7 +74,7 @@ export default function StudentsPage() {
     sex: (sexFilter || undefined) as StudentFilters['sex'],
   } satisfies StudentFilters;
 
-  const { data, isLoading } = useStudents(filters);
+  const { data, isLoading, isFetching, error, refetch } = useStudents(filters);
   const { data: studentStats, isLoading: statsLoading } = useStudentStats();
   const deleteStudent = useDeleteStudent();
   const restoreStudent = useRestoreStudent();
@@ -247,7 +248,7 @@ export default function StudentsPage() {
       <DataTable
         columns={columns}
         data={students}
-        isLoading={isLoading}
+        isLoading={isLoading || isFetching}
         manualPagination
         pageCount={data?.pages || 1}
         pagination={{ pageIndex: page - 1, pageSize: 20 }}
@@ -257,7 +258,27 @@ export default function StudentsPage() {
             : updater;
           setPage(next.pageIndex + 1);
         }}
-        emptyState={<EmptyState icon={GraduationCap} title={t('noStudents')} />}
+        emptyState={
+          !isLoading && !isFetching && !error && (!data || data.items.length === 0) ? (
+            <EmptyState icon={GraduationCap} title={t('noStudents')} />
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-900/20 mb-4">
+                <GraduationCap className="h-8 w-8 text-red-600 dark:text-red-400" aria-hidden="true" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Failed to load students</h3>
+              <p className="text-muted-foreground mb-4 max-w-md">
+                {(error as any)?.response?.data?.message || (error as any).message || 'There was an error loading the students list. Please try again.'}
+              </p>
+              <div className="flex gap-2">
+                <Button onClick={() => refetch()} variant="outline" className="gap-2">
+                  <RotateCcw className="h-4 w-4" />
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          ) : undefined
+        }
       />
 
       <ConfirmDialog
@@ -267,5 +288,13 @@ export default function StudentsPage() {
         isLoading={deleteStudent.isPending}
       />
     </div>
+  );
+}
+
+export default function StudentsPageWithAuth() {
+  return (
+    <ProtectedRoute requireRoles={['admin', 'director', 'registrar']}>
+      <StudentsPage />
+    </ProtectedRoute>
   );
 }

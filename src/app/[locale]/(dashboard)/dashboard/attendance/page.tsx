@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { EmptyState } from '@/components/shared/empty-state';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { Link } from '@/i18n/navigation';
@@ -40,7 +41,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-export default function AttendancePage() {
+function AttendancePage() {
   const tap = useTranslations('attendancePage');
   const t = useTranslations('attendance');
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -461,5 +462,13 @@ export default function AttendancePage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function AttendancePageWithAuth() {
+  return (
+    <ProtectedRoute requireRoles={['admin', 'director', 'registrar', 'teacher']}>
+      <AttendancePage />
+    </ProtectedRoute>
   );
 }

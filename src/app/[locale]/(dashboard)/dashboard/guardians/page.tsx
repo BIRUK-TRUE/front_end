@@ -18,8 +18,9 @@ import { DataTable } from '@/components/shared/data-table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Activity, Download, Eye, Pencil, Plus, Trash2, UserCheck, UserRoundCheck, UserRoundX, Users } from 'lucide-react';
+import { Activity, Download, Eye, Pencil, Plus, Trash2, UserCheck, UserRoundCheck, UserRoundX, Users, RotateCcw } from 'lucide-react';
 
 type GuardianRow = {
   id: string;
@@ -35,7 +36,7 @@ function getInitials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'GU';
 }
 
-export default function GuardiansPage() {
+function GuardiansPage() {
   const t = useTranslations('guardians');
   const tc = useTranslations('common');
   const { canManageGuardians } = usePermissions();
@@ -50,7 +51,7 @@ export default function GuardiansPage() {
     search: search || undefined,
     is_active: statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined,
   };
-  const { data, isLoading } = useGuardians(filters satisfies GuardianFilters);
+  const { data, isLoading, isFetching, error, refetch } = useGuardians(filters satisfies GuardianFilters);
   const { data: guardianStats, isLoading: statsLoading } = useGuardianStats();
   const deleteGuardian = useDeleteGuardian();
   const guardians = useMemo<GuardianRow[]>(() => data?.items || [], [data?.items]);
@@ -143,7 +144,7 @@ export default function GuardiansPage() {
       <DataTable
         columns={columns}
         data={guardians}
-        isLoading={isLoading}
+        isLoading={isLoading || isFetching}
         manualPagination
         pageCount={data?.pages || 1}
         pagination={{ pageIndex: page - 1, pageSize: 20 }}
@@ -151,7 +152,27 @@ export default function GuardiansPage() {
           const next = typeof updater === 'function' ? updater({ pageIndex: page - 1, pageSize: 20 }) : updater;
           setPage(next.pageIndex + 1);
         }}
-        emptyState={<EmptyState icon={UserCheck} title={t('noGuardians')} />}
+        emptyState={
+          !isLoading && !isFetching && !error && (!data || data.items.length === 0) ? (
+            <EmptyState icon={UserCheck} title={t('noGuardians')} />
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-900/20 mb-4">
+                <UserCheck className="h-8 w-8 text-red-600 dark:text-red-400" aria-hidden="true" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Failed to load guardians</h3>
+              <p className="text-muted-foreground mb-4 max-w-md">
+                {(error as any)?.response?.data?.message || (error as any).message || 'There was an error loading the guardians list. Please try again.'}
+              </p>
+              <div className="flex gap-2">
+                <Button onClick={() => refetch()} variant="outline" className="gap-2">
+                  <RotateCcw className="h-4 w-4" />
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          ) : undefined
+        }
       />
 
       <ConfirmDialog
@@ -161,5 +182,13 @@ export default function GuardiansPage() {
         isLoading={deleteGuardian.isPending}
       />
     </div>
+  );
+}
+
+export default function GuardiansPageWithAuth() {
+  return (
+    <ProtectedRoute requireRoles={['admin', 'director', 'registrar']}>
+      <GuardiansPage />
+    </ProtectedRoute>
   );
 }

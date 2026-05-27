@@ -47,9 +47,14 @@ const studentSchema = z.object({
   phone_number: z
     .string()
     .optional()
-    .refine((val) => !val || /^\+251\d{9}$/.test(val), {
-      message: 'Phone must be in format +2519XXXXXXXX',
-    }),
+    .or(z.literal(''))
+    .refine((val) => {
+      if (!val || val.trim() === '') return true; // Optional field
+      // Remove spaces, dashes, parentheses for validation
+      const cleaned = val.replace(/[\s\-\(\)]/g, '');
+      // Allow + for country code, then 9-15 digits
+      return /^\+?\d{9,15}$/.test(cleaned);
+    }, { message: 'Invalid phone number format. Use format like: +251912345678 or 0912345678' }),
   address: z.string().optional(),
   password: z.string().optional(),
 
@@ -210,8 +215,28 @@ function CreateStudentForm() {
 
   // ── Submit ──
   const onSubmit = (data: StudentForm) => {
-    createStudent.mutate(data as any, {
+    // Clean up the data - convert empty strings to undefined for optional fields
+    const payload = {
+      ...data,
+      phone_number: data.phone_number?.trim() || undefined,
+      address: data.address?.trim() || undefined,
+      password: data.password?.trim() || undefined,
+      nationality: data.nationality?.trim() || undefined,
+      previous_school: data.previous_school?.trim() || undefined,
+      guardian_id: data.guardian_id || undefined,
+      relationship_type: data.relationship_type?.trim() || undefined,
+      profile_image_url: data.profile_image_url?.trim() || undefined,
+    };
+    
+    console.log('Submitting student data:', payload);
+    
+    createStudent.mutate(payload as any, {
       onSuccess: (result) => router.push(`/dashboard/students/${result.id}`),
+      onError: (error: any) => {
+        console.error('Student creation error:', error);
+        console.error('Error response:', error.response?.data);
+        console.error('Error details:', JSON.stringify(error.response?.data, null, 2));
+      }
     });
   };
 

@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Download, 
   Users, 
@@ -14,49 +16,70 @@ import {
   Calendar,
   BookOpen,
   GraduationCap,
-  FileText
+  FileText,
+  Loader2
 } from "lucide-react";
 import { useAcademicYears } from "@/features/academics/api/useAcademicYears";
+import { reportsService } from "@/lib/api/reports.service";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ReportsPage() {
   const t = useTranslations("reports");
+  const { toast } = useToast();
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [reportType, setReportType] = useState<string>("overview");
+  const [isExporting, setIsExporting] = useState<string | null>(null);
   
   const { data: academicYearsData } = useAcademicYears(1, 100);
   const academicYears = academicYearsData?.items || [];
 
-  // Mock data - replace with actual API calls
-  const stats = {
-    totalStudents: 1250,
-    activeTeachers: 85,
-    totalRevenue: 450000,
-    pendingPayments: 32000,
-    attendanceRate: 94.5,
-    averageGrade: 82.3,
-  };
+  // Fetch real stats from backend
+  const { data: stats, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['reports', 'summary', selectedYear],
+    queryFn: () => reportsService.getSummary({ 
+      ...(selectedYear && { classId: selectedYear })
+    }),
+  });
+
+  // Fetch grade distribution
+  const { data: gradeDistribution } = useQuery({
+    queryKey: ['reports', 'grade-distribution', selectedYear],
+    queryFn: () => reportsService.getGradeDistribution({
+      ...(selectedYear && { classId: selectedYear })
+    }),
+  });
+
+  // Fetch attendance trend (last 30 days)
+  const { data: attendanceTrend } = useQuery({
+    queryKey: ['reports', 'attendance-trend', selectedYear],
+    queryFn: () => reportsService.getAttendanceTrend({
+      days: 30,
+      ...(selectedYear && { classId: selectedYear })
+    }),
+  });
 
   const handleExport = async (type: string) => {
+    setIsExporting(type);
     try {
-      let url = "";
+      let blob: Blob;
+      
       switch (type) {
         case "students":
-          url = "/api/v1/students/export/csv";
+          blob = await reportsService.exportStudents();
+          break;
+        case "teachers":
+          blob = await reportsService.exportTeachers();
           break;
         case "users":
-          url = "/api/v1/users/export/csv";
+          blob = await reportsService.exportUsers();
           break;
-        case "payments":
-          url = "/api/v1/payments/export/csv";
+        case "guardians":
+          blob = await reportsService.exportGuardians();
           break;
         default:
           return;
       }
       
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Export failed");
-      
-      const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = downloadUrl;
@@ -65,8 +88,20 @@ export default function ReportsPage() {
       a.click();
       window.URL.revokeObjectURL(downloadUrl);
       document.body.removeChild(a);
+      
+      toast({
+        title: "Export successful",
+        description: `${type} data has been exported successfully.`,
+      });
     } catch (error) {
       console.error("Export error:", error);
+      toast({
+        title: "Export failed",
+        description: `Failed to export ${type} data. Please try again.`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(null);
     }
   };
 
@@ -102,8 +137,16 @@ export default function ReportsPage() {
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalStudents.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">+12% from last year</p>
+            {isLoadingStats ? (
+              <Skeleton className="h-8 w-24" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{stats?.total_students?.toLocaleString() || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  {stats?.active_enrollments || 0} active enrollments
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
         
@@ -113,19 +156,33 @@ export default function ReportsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.activeTeachers}</div>
-            <p className="text-xs text-muted-foreground">+5 new this semester</p>
+            {isLoadingStats ? (
+              <Skeleton className="h-8 w-24" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{stats?.total_teachers || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  {stats?.total_classes || 0} classes
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("totalRevenue")}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("pendingPayments")}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">+8% from last month</p>
+            {isLoadingStats ? (
+              <Skeleton className="h-8 w-24" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{stats?.pending_payments || 0}</div>
+                <p className="text-xs text-muted-foreground">Pending fee payments</p>
+              </>
+            )}
           </CardContent>
         </Card>
         
@@ -135,8 +192,16 @@ export default function ReportsPage() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.attendanceRate}%</div>
-            <p className="text-xs text-muted-foreground">Above target (90%)</p>
+            {isLoadingStats ? (
+              <Skeleton className="h-8 w-24" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{stats?.attendance_rate?.toFixed(1) || 0}%</div>
+                <p className="text-xs text-muted-foreground">
+                  {(stats?.attendance_rate || 0) >= 90 ? 'Above target (90%)' : 'Below target (90%)'}
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -181,12 +246,27 @@ export default function ReportsPage() {
               </div>
               
               <div className="flex gap-2 pt-4">
-                <Button onClick={() => handleExport("students")}>
-                  <Download className="mr-2 h-4 w-4" />
+                <Button 
+                  onClick={() => handleExport("students")}
+                  disabled={isExporting === "students"}
+                >
+                  {isExporting === "students" ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="mr-2 h-4 w-4" />
+                  )}
                   {t("exportStudents")}
                 </Button>
-                <Button onClick={() => handleExport("users")} variant="outline">
-                  <FileText className="mr-2 h-4 w-4" />
+                <Button 
+                  onClick={() => handleExport("users")} 
+                  variant="outline"
+                  disabled={isExporting === "users"}
+                >
+                  {isExporting === "users" ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileText className="mr-2 h-4 w-4" />
+                  )}
                   {t("exportStaff")}
                 </Button>
               </div>
@@ -206,27 +286,47 @@ export default function ReportsPage() {
                 <div className="rounded-lg border p-4">
                   <div className="text-sm font-medium text-muted-foreground">{t("collected")}</div>
                   <div className="mt-2 text-2xl font-bold text-green-600">
-                    ${(stats.totalRevenue - stats.pendingPayments).toLocaleString()}
+                    {isLoadingStats ? (
+                      <Skeleton className="h-8 w-24" />
+                    ) : (
+                      `${stats?.total_students || 0} students`
+                    )}
                   </div>
                 </div>
                 
                 <div className="rounded-lg border p-4">
                   <div className="text-sm font-medium text-muted-foreground">{t("pending")}</div>
                   <div className="mt-2 text-2xl font-bold text-orange-600">
-                    ${stats.pendingPayments.toLocaleString()}
+                    {isLoadingStats ? (
+                      <Skeleton className="h-8 w-24" />
+                    ) : (
+                      `${stats?.pending_payments || 0}`
+                    )}
                   </div>
                 </div>
                 
                 <div className="rounded-lg border p-4">
                   <div className="text-sm font-medium text-muted-foreground">{t("collectionRate")}</div>
                   <div className="mt-2 text-2xl font-bold text-blue-600">
-                    {((stats.totalRevenue - stats.pendingPayments) / stats.totalRevenue * 100).toFixed(1)}%
+                    {isLoadingStats ? (
+                      <Skeleton className="h-8 w-24" />
+                    ) : (
+                      `${stats?.attendance_rate?.toFixed(1) || 0}%`
+                    )}
                   </div>
                 </div>
               </div>
               
-              <Button onClick={() => handleExport("payments")} className="w-full sm:w-auto">
-                <Download className="mr-2 h-4 w-4" />
+              <Button 
+                onClick={() => handleExport("guardians")} 
+                className="w-full sm:w-auto"
+                disabled={isExporting === "guardians"}
+              >
+                {isExporting === "guardians" ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="mr-2 h-4 w-4" />
+                )}
                 {t("exportPayments")}
               </Button>
             </CardContent>
@@ -250,33 +350,52 @@ export default function ReportsPage() {
                       <div className="text-sm text-muted-foreground">{t("allSubjects")}</div>
                     </div>
                   </div>
-                  <div className="text-2xl font-bold">{stats.averageGrade}%</div>
+                  {isLoadingStats ? (
+                    <Skeleton className="h-8 w-16" />
+                  ) : (
+                    <div className="text-2xl font-bold">{stats?.average_grade?.toFixed(1) || 0}%</div>
+                  )}
                 </div>
                 
                 <div className="rounded-lg border p-4">
                   <div className="mb-2 text-sm font-medium">{t("gradeDistribution")}</div>
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-8 text-sm">A</span>
-                      <div className="flex-1 h-2 rounded-full bg-muted">
-                        <div className="h-2 w-1/4 rounded-full bg-green-500" />
+                    {gradeDistribution?.data?.map((item) => (
+                      <div key={item.grade} className="flex items-center gap-2">
+                        <span className="w-8 text-sm">{item.grade}</span>
+                        <div className="flex-1 h-2 rounded-full bg-muted">
+                          <div 
+                            className="h-2 rounded-full bg-primary" 
+                            style={{ width: `${item.percentage}%` }}
+                          />
+                        </div>
+                        <span className="w-12 text-sm text-right">{item.percentage.toFixed(0)}%</span>
                       </div>
-                      <span className="w-12 text-sm text-right">25%</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-8 text-sm">B</span>
-                      <div className="flex-1 h-2 rounded-full bg-muted">
-                        <div className="h-2 w-1/3 rounded-full bg-blue-500" />
-                      </div>
-                      <span className="w-12 text-sm text-right">35%</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-8 text-sm">C</span>
-                      <div className="flex-1 h-2 rounded-full bg-muted">
-                        <div className="h-2 w-1/5 rounded-full bg-yellow-500" />
-                      </div>
-                      <span className="w-12 text-sm text-right">28%</span>
-                    </div>
+                    )) || (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="w-8 text-sm">A</span>
+                          <div className="flex-1 h-2 rounded-full bg-muted">
+                            <Skeleton className="h-2 w-1/4" />
+                          </div>
+                          <Skeleton className="w-12 h-4" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-8 text-sm">B</span>
+                          <div className="flex-1 h-2 rounded-full bg-muted">
+                            <Skeleton className="h-2 w-1/3" />
+                          </div>
+                          <Skeleton className="w-12 h-4" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-8 text-sm">C</span>
+                          <div className="flex-1 h-2 rounded-full bg-muted">
+                            <Skeleton className="h-2 w-1/5" />
+                          </div>
+                          <Skeleton className="w-12 h-4" />
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -296,38 +415,63 @@ export default function ReportsPage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="rounded-lg border p-4">
                     <div className="text-sm font-medium text-muted-foreground">{t("overallAttendance")}</div>
-                    <div className="mt-2 text-3xl font-bold">{stats.attendanceRate}%</div>
-                    <div className="mt-1 text-xs text-green-600">↑ 2.3% from last month</div>
+                    {isLoadingStats ? (
+                      <Skeleton className="h-10 w-24 mt-2" />
+                    ) : (
+                      <>
+                        <div className="mt-2 text-3xl font-bold">{stats?.attendance_rate?.toFixed(1) || 0}%</div>
+                        <div className="mt-1 text-xs text-green-600">Last 30 days</div>
+                      </>
+                    )}
                   </div>
                   
                   <div className="rounded-lg border p-4">
                     <div className="text-sm font-medium text-muted-foreground">{t("presentToday")}</div>
-                    <div className="mt-2 text-3xl font-bold">1,180</div>
-                    <div className="mt-1 text-xs text-muted-foreground">of 1,250 students</div>
+                    {isLoadingStats ? (
+                      <Skeleton className="h-10 w-24 mt-2" />
+                    ) : (
+                      <>
+                        <div className="mt-2 text-3xl font-bold">
+                          {Math.round((stats?.total_students || 0) * (stats?.attendance_rate || 0) / 100)}
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          of {stats?.total_students || 0} students
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
                 
                 <div className="rounded-lg border p-4">
                   <div className="mb-3 text-sm font-medium">{t("attendanceByGrade")}</div>
-                  <div className="space-y-3">
-                    {[
-                      { grade: "Grade 9", rate: 96 },
-                      { grade: "Grade 10", rate: 94 },
-                      { grade: "Grade 11", rate: 92 },
-                      { grade: "Grade 12", rate: 95 },
-                    ].map((item) => (
-                      <div key={item.grade} className="flex items-center gap-3">
-                        <span className="w-20 text-sm">{item.grade}</span>
-                        <div className="flex-1 h-2 rounded-full bg-muted">
-                          <div 
-                            className="h-2 rounded-full bg-primary" 
-                            style={{ width: `${item.rate}%` }}
-                          />
+                  {attendanceTrend?.data && attendanceTrend.data.length > 0 ? (
+                    <div className="space-y-3">
+                      {attendanceTrend.data.slice(-4).map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-3">
+                          <span className="w-20 text-sm">{item.date}</span>
+                          <div className="flex-1 h-2 rounded-full bg-muted">
+                            <div 
+                              className="h-2 rounded-full bg-primary" 
+                              style={{ width: `${item.attendance_percentage}%` }}
+                            />
+                          </div>
+                          <span className="w-12 text-sm text-right">{item.attendance_percentage.toFixed(0)}%</span>
                         </div>
-                        <span className="w-12 text-sm text-right">{item.rate}%</span>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="flex items-center gap-3">
+                          <Skeleton className="w-20 h-4" />
+                          <div className="flex-1 h-2 rounded-full bg-muted">
+                            <Skeleton className="h-2 w-3/4" />
+                          </div>
+                          <Skeleton className="w-12 h-4" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>

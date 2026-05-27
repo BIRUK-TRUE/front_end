@@ -63,7 +63,15 @@ export function useDeleteFaceEnrollment() {
 
 export function useRecognizeFaces() {
   return useMutation({
-    mutationFn: ({ sectionId, photo }: { sectionId: string; photo: File }) =>
-      faceRecognitionService.recognizeInSection(sectionId, photo),
+    mutationFn: async ({ 
+      sectionId, 
+      descriptors,
+      threshold 
+    }: { 
+      sectionId: string; 
+      descriptors: number[][];
+      threshold?: number;
+    }) =>
+      faceRecognitionService.recognizeFace(sectionId, descriptors, threshold),
   });
 }

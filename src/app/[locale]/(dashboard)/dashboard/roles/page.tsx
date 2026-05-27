@@ -1,159 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Shield, 
   Users, 
-  Lock, 
-  Unlock,
+  Lock,
   CheckCircle,
   XCircle
 } from "lucide-react";
+import { useRoles, useAvailablePermissions, useUpdateRolePermissions } from "@/hooks/use-roles";
 
-// Define available permissions
-const AVAILABLE_PERMISSIONS = [
-  { id: "users:view", name: "View Users", category: "User Management" },
-  { id: "users:create", name: "Create Users", category: "User Management" },
-  { id: "users:edit", name: "Edit Users", category: "User Management" },
-  { id: "users:delete", name: "Delete Users", category: "User Management" },
-  { id: "students:view", name: "View Students", category: "Student Management" },
-  { id: "students:create", name: "Create Students", category: "Student Management" },
-  { id: "students:edit", name: "Edit Students", category: "Student Management" },
-  { id: "students:delete", name: "Delete Students", category: "Student Management" },
-  { id: "teachers:view", name: "View Teachers", category: "Teacher Management" },
-  { id: "teachers:create", name: "Create Teachers", category: "Teacher Management" },
-  { id: "teachers:edit", name: "Edit Teachers", category: "Teacher Management" },
-  { id: "payments:view", name: "View Payments", category: "Financial" },
-  { id: "payments:create", name: "Create Payments", category: "Financial" },
-  { id: "payments:export", name: "Export Payments", category: "Financial" },
-  { id: "reports:view", name: "View Reports", category: "Reports" },
-  { id: "reports:export", name: "Export Reports", category: "Reports" },
-  { id: "settings:manage", name: "Manage Settings", category: "System" },
-  { id: "logs:view", name: "View Admin Logs", category: "System" },
-];
 
-// Default role configurations
-const DEFAULT_ROLES = [
-  {
-    id: "admin",
-    name: "Administrator",
-    description: "Full system access with all permissions",
-    icon: Shield,
-    color: "bg-red-100 text-red-800",
-    permissions: AVAILABLE_PERMISSIONS.map(p => p.id),
-    userCount: 2,
-  },
-  {
-    id: "director",
-    name: "Director",
-    description: "School director with broad management access",
-    icon: Users,
-    color: "bg-blue-100 text-blue-800",
-    permissions: [
-      "users:view", "users:create", "users:edit",
-      "students:view", "students:create", "students:edit", "students:delete",
-      "teachers:view", "teachers:create", "teachers:edit",
-      "payments:view", "payments:create", "payments:export",
-      "reports:view", "reports:export",
-      "logs:view",
-    ],
-    userCount: 5,
-  },
-  {
-    id: "registrar",
-    name: "Registrar",
-    description: "Manages student enrollment and records",
-    icon: Users,
-    color: "bg-green-100 text-green-800",
-    permissions: [
-      "users:view",
-      "students:view", "students:create", "students:edit",
-      "teachers:view",
-      "payments:view", "payments:create",
-      "reports:view",
-    ],
-    userCount: 8,
-  },
-  {
-    id: "teacher",
-    name: "Teacher",
-    description: "Teaching staff with classroom access",
-    icon: Users,
-    color: "bg-purple-100 text-purple-800",
-    permissions: [
-      "students:view",
-      "teachers:view",
-      "reports:view",
-    ],
-    userCount: 85,
-  },
-  {
-    id: "student",
-    name: "Student",
-    description: "Student portal access",
-    icon: Users,
-    color: "bg-yellow-100 text-yellow-800",
-    permissions: [
-      "students:view",
-    ],
-    userCount: 1250,
-  },
-  {
-    id: "guardian",
-    name: "Guardian",
-    description: "Parent/guardian access to child information",
-    icon: Users,
-    color: "bg-orange-100 text-orange-800",
-    permissions: [
-      "students:view",
-      "payments:view",
-    ],
-    userCount: 980,
-  },
-];
 
 export default function RolesPage() {
   const t = useTranslations("roles");
   const tc = useTranslations("common");
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  const [roles, setRoles] = useState(DEFAULT_ROLES);
+  
+  // Fetch data from API
+  const { data: roles, isLoading: rolesLoading } = useRoles();
+  const { data: availablePermissions, isLoading: permissionsLoading } = useAvailablePermissions();
+  const updatePermissions = useUpdateRolePermissions();
 
-  const selectedRoleData = roles.find(r => r.id === selectedRole);
+  const selectedRoleData = roles?.find(r => r.id === selectedRole);
 
   const togglePermission = (roleId: string, permissionId: string) => {
-    setRoles(roles.map(role => {
+    if (!selectedRoleData) return;
+    
+    const hasPermission = selectedRoleData.permissions.includes(permissionId);
+    const newPermissions = hasPermission
+      ? selectedRoleData.permissions.filter(p => p !== permissionId)
+      : [...selectedRoleData.permissions, permissionId];
+    
+    // Optimistic update - update UI immediately
+    const updatedRoles = roles?.map(role => {
       if (role.id === roleId) {
-        const hasPermission = role.permissions.includes(permissionId);
-        return {
-          ...role,
-          permissions: hasPermission
-            ? role.permissions.filter(p => p !== permissionId)
-            : [...role.permissions, permissionId],
-        };
+        return { ...role, permissions: newPermissions };
       }
       return role;
-    }));
+    });
+    
+    // Call API to persist changes
+    updatePermissions.mutate({ roleId, permissions: newPermissions });
   };
 
   const hasPermission = (roleId: string, permissionId: string) => {
-    const role = roles.find(r => r.id === roleId);
+    const role = roles?.find(r => r.id === roleId);
     return role?.permissions.includes(permissionId) || false;
   };
 
   // Group permissions by category
-  const permissionsByCategory = AVAILABLE_PERMISSIONS.reduce((acc, perm) => {
-    if (!acc[perm.category]) {
-      acc[perm.category] = [];
-    }
-    acc[perm.category].push(perm);
-    return acc;
-  }, {} as Record<string, typeof AVAILABLE_PERMISSIONS>);
+  const permissionsByCategory = useMemo(() => {
+    if (!availablePermissions) return {};
+    
+    return availablePermissions.reduce((acc, perm) => {
+      if (!acc[perm.category]) {
+        acc[perm.category] = [];
+      }
+      acc[perm.category].push(perm);
+      return acc;
+    }, {} as Record<string, typeof availablePermissions>);
+  }, [availablePermissions]);
 
   return (
     <div className="space-y-6">
@@ -172,9 +86,16 @@ export default function RolesPage() {
               <CardDescription>{t("rolesDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              {roles.map((role) => {
-                const Icon = role.icon;
-                return (
+              {rolesLoading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                  ))}
+                </div>
+              ) : (
+                roles?.map((role) => {
+                  const Icon = Shield; // Use Shield as default icon for all roles
+                  return (
                   <button
                     key={role.id}
                     onClick={() => setSelectedRole(role.id)}
@@ -196,8 +117,9 @@ export default function RolesPage() {
                     </div>
                   </button>
                 );
-              })}
-            </CardContent>
+              })
+            )}
+          </CardContent>
           </Card>
         </div>
 
@@ -216,13 +138,28 @@ export default function RolesPage() {
                     </CardTitle>
                     <CardDescription>{selectedRoleData.description}</CardDescription>
                   </div>
-                  <Button variant="outline" size="sm">
-                    {tc("save")}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => updatePermissions.mutate({ 
+                      roleId: selectedRoleData.id, 
+                      permissions: selectedRoleData.permissions 
+                    })}
+                    disabled={updatePermissions.isPending}
+                  >
+                    {updatePermissions.isPending ? tc("saving") : tc("save")}
                   </Button>
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                {Object.entries(permissionsByCategory).map(([category, perms]) => (
+                {permissionsLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-32 w-full" />
+                    ))}
+                  </div>
+                ) : (
+                  Object.entries(permissionsByCategory).map(([category, perms]) => (
                   <div key={category} className="space-y-3">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold">{category}</h3>
@@ -255,7 +192,8 @@ export default function RolesPage() {
                       })}
                     </div>
                   </div>
-                ))}
+                ))
+                )}
 
                 <div className="rounded-lg bg-muted p-4">
                   <div className="flex items-start gap-3">
