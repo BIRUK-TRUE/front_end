@@ -79,10 +79,13 @@ export function TeacherQualifications({ teacherId }: TeacherQualificationsProps)
   });
 
   // Fetch subjects for dropdown
-  const { data: subjects } = useQuery({
+  const { data: subjects, isLoading: subjectsLoading, error: subjectsError } = useQuery({
     queryKey: ['subjects-list'],
     queryFn: async () => {
+      console.log('Fetching subjects...');
       const { data } = await axiosInstance.get('/academics/subjects?page=1&size=100');
+      console.log('Subjects response:', data);
+      console.log('Subjects items:', data.items);
       return data.items as Subject[];
     },
   });
@@ -348,18 +351,35 @@ export function TeacherQualifications({ teacherId }: TeacherQualificationsProps)
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Subject *</Label>
-              <Select value={subjectId} onValueChange={setSubjectId}>
+              <Select value={subjectId} onValueChange={setSubjectId} disabled={subjectsLoading}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a subject" />
+                  <SelectValue placeholder={
+                    subjectsLoading 
+                      ? "Loading subjects..." 
+                      : subjectsError 
+                        ? "Error loading subjects" 
+                        : "Select a subject"
+                  } />
                 </SelectTrigger>
                 <SelectContent>
-                  {subjects?.map((subj) => (
-                    <SelectItem key={subj.id} value={subj.id}>
-                      {subj.code} - {subj.name}
-                    </SelectItem>
-                  ))}
+                  {subjects && subjects.length > 0 ? (
+                    subjects.map((subj) => (
+                      <SelectItem key={subj.id} value={subj.id}>
+                        {subj.code} - {subj.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    !subjectsLoading && !subjectsError && (
+                      <SelectItem value="no-subjects" disabled>
+                        No subjects available
+                      </SelectItem>
+                    )
+                  )}
                 </SelectContent>
               </Select>
+              {subjectsError && (
+                <p className="text-sm text-destructive">Failed to load subjects</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
