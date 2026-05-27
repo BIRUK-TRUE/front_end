@@ -2,7 +2,10 @@ import createMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
 import { routing } from './src/i18n/routing';
 
-const intlMiddleware = createMiddleware(routing);
+const intlMiddleware = createMiddleware({
+  ...routing,
+  localeDetection: true,
+});
 
 const PUBLIC_ROUTE_PATTERNS = [
   /^\/[a-z]{2}\/?$/i,
@@ -36,8 +39,22 @@ function parseRoles(rawRoles: string | undefined) {
 }
 
 export default function middleware(request: NextRequest) {
-  const response = intlMiddleware(request);
   const { pathname } = request.nextUrl;
+
+  // Handle root path - redirect to default locale
+  if (pathname === '/') {
+    return NextResponse.redirect(new URL(`/${routing.defaultLocale}`, request.url));
+  }
+
+  const response = intlMiddleware(request);
+  
+  // Check if user is accessing just the locale root (e.g., /en or /am)
+  const localeMatch = pathname.match(/^\/([a-z]{2})\/?$/i);
+  if (localeMatch) {
+    const locale = localeMatch[1];
+    // Redirect to login page for the locale
+    return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
+  }
 
   if (PUBLIC_ROUTE_PATTERNS.some((pattern) => pattern.test(pathname))) {
     return response;

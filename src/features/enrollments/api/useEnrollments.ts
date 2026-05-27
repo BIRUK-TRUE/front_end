@@ -262,27 +262,26 @@ export const useUpdateEnrollment = () => {
 };
 
 /**
- * Delete / withdraw an enrollment.
- * Backend does not have DELETE /enrollments/{id}.
- * Uses POST /enrollments/{id}/withdraw as a proxy.
+ * Delete an enrollment permanently.
+ * Backend: DELETE /enrollments/{id}
+ * 
+ * WARNING: This permanently removes the enrollment record.
+ * Only admins and directors can perform this action.
  */
 export const useDeleteEnrollment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { data } = await axiosInstance.post(
-        `/enrollments/${id}/withdraw`,
-        { remarks: "Removed by administrator" },
-      );
+      const { data } = await axiosInstance.delete(`/enrollments/${id}`);
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.all });
-      toast.success("Enrollment removed successfully");
+      toast.success("Enrollment deleted successfully");
     },
     onError: (error: { response?: { data?: { detail?: string } } }) => {
-      toast.error(formatApiError(error, "Failed to remove enrollment"));
+      toast.error(formatApiError(error, "Failed to delete enrollment"));
     },
   });
 };

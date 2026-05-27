@@ -33,7 +33,7 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages} locale={locale}>
-      <div lang={locale} className={locale === 'am' ? 'font-amharic' : ''}>
+      <div lang={locale} dir={locale === 'am' ? 'ltr' : 'ltr'} className={locale === 'am' ? 'font-amharic' : ''}>
         {children}
       </div>
     </NextIntlClientProvider>

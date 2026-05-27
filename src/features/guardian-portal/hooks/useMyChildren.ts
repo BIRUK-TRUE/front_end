@@ -1,4 +1,4 @@
-import { useQuery } from '@tantml:react-query';
+import { useQuery } from '@tanstack/react-query';
 import { axiosInstance as api } from '@/lib/api/axios';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/lib/store/auth-store';
