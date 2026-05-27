@@ -2544,6 +2544,7 @@
     "mergeWarning": "This will ADD the selected subjects to existing assignments without removing any current subjects.",
     "subjectsCount": "Number of Subjects",
     "current": "Current",
+    "assignmentSuccess": "Subjects assigned successfully",
     "assignmentFailed": "Failed to assign subjects",
     "existingAssignments": "Existing Assignments",
     "existingAssignmentsDescription": "Current subject assignments for Grade {grade}",

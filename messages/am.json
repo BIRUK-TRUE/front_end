@@ -2433,6 +2433,7 @@
     "mergeWarning": "ይህ የተመረጡትን ትምህርቶች ወዳሉ መመደቦች ያለ ማንኛውንም አሁን ያሉ ትምህርቶች ማስወገድ ይጨምራል።",
     "subjectsCount": "የትምህርቶች ብዛት",
     "current": "አሁን ያለ",
+    "assignmentSuccess": "ትምህርቶች በተሳካ ሁኔታ ተመድበዋል",
     "assignmentFailed": "ትምህርቶችን መመደብ አልተሳካም",
     "existingAssignments": "ያሉ መመደቦች",
     "existingAssignmentsDescription": "ለደረጃ {grade} ያሉ አሁን ያሉ የትምህርት መመደቦች",

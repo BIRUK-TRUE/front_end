@@ -47,6 +47,11 @@ interface AssignmentResult {
   subjects_assigned: number;
 }
 
+interface SubjectWithPeriods extends Subject {
+  periods_per_week: number;
+  is_mandatory: boolean;
+}
+
 export default function SubjectAssignmentPage() {
   const t = useTranslations('bulkAssignment');
   const tc = useTranslations('common');
@@ -54,8 +59,7 @@ export default function SubjectAssignmentPage() {
   const [academicYearId, setAcademicYearId] = useState<string>('');
   const [gradeLevel, setGradeLevel] = useState<string>('');
   const [stream, setStream] = useState<string>('');
-  const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>([]);
-  const [periodsPerWeek, setPeriodsPerWeek] = useState<number>(5);
+  const [selectedSubjects, setSelectedSubjects] = useState<SubjectWithPeriods[]>([]);
   const [assignmentMode, setAssignmentMode] = useState<'replace' | 'merge'>('replace');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
@@ -83,23 +87,45 @@ export default function SubjectAssignmentPage() {
       academic_year_id: string;
       grade_level: number;
       stream?: string;
-      subject_ids: string[];
-      periods_per_week: number;
-      is_mandatory: boolean;
+      subjects: Array<{
+        subject_id: string;
+        periods_per_week: number;
+        is_mandatory: boolean;
+      }>;
       mode: string;
     }) => {
+      console.log('Sending bulk assignment payload:', JSON.stringify(payload, null, 2));
+      console.log('Making API request...');
       const { data } = await axiosInstance.post('/academics/bulk-assign-subjects', payload);
+      console.log('API request completed, response:', data);
       return data as AssignmentResult;
     },
     onSuccess: (result) => {
-      toast.success(result.message);
+      console.log('onSuccess callback triggered:', result);
+      toast.success(result.message || t('assignmentSuccess'));
       queryClient.invalidateQueries({ queryKey: ['grade-assignments'] });
       setSelectedSubjects([]);
       setShowConfirmDialog(false);
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.detail || t('assignmentFailed'));
+      console.error('onError callback triggered');
+      console.error('Bulk assignment error:', error);
+      console.error('Error response:', error?.response);
+      console.error('Error data:', error?.response?.data);
+      console.error('Error status:', error?.response?.status);
+      console.error('Error message:', error?.message);
+      console.error('Error code:', error?.code);
+      const errorMessage = error?.response?.data?.detail || error?.message || t('assignmentFailed');
+      toast.error(errorMessage);
       setShowConfirmDialog(false);
+    },
+    onMutate: () => {
+      console.log('onMutate callback - mutation starting');
+    },
+    onSettled: (data, error) => {
+      console.log('onSettled callback - mutation finished');
+      console.log('Data:', data);
+      console.log('Error:', error);
     },
   });
 
@@ -113,15 +139,33 @@ export default function SubjectAssignmentPage() {
   };
 
   const confirmAssignment = () => {
+    console.log('confirmAssignment called');
+    console.log('Current mutation status:', {
+      isPending: bulkAssignMutation.isPending,
+      isError: bulkAssignMutation.isError,
+      isSuccess: bulkAssignMutation.isSuccess,
+    });
+    
     bulkAssignMutation.mutate({
       academic_year_id: academicYearId,
       grade_level: parseInt(gradeLevel),
       stream: stream || undefined,
-      subject_ids: selectedSubjects.map(s => s.id),
-      periods_per_week: periodsPerWeek,
-      is_mandatory: true,
+      subjects: selectedSubjects.map(s => ({
+        subject_id: s.id,
+        periods_per_week: s.periods_per_week,
+        is_mandatory: s.is_mandatory,
+      })),
       mode: assignmentMode,
     });
+    console.log('mutate() called successfully');
+  };
+
+  const updateSubjectPeriods = (subjectId: string, periods: number) => {
+    setSelectedSubjects(prev => 
+      prev.map(s => 
+        s.id === subjectId ? { ...s, periods_per_week: Math.max(1, Math.min(10, periods)) } : s
+      )
+    );
   };
 
   const removeSubject = (subjectId: string) => {
@@ -205,65 +249,81 @@ export default function SubjectAssignmentPage() {
           <div className="space-y-2">
             <Label>{t('selectSubjects')}</Label>
             <SubjectMultiSelect
-              selectedSubjects={selectedSubjects}
-              onSubjectsChange={setSelectedSubjects}
+              selectedSubjects={selectedSubjects as Subject[]}
+              onSubjectsChange={(subjects: Subject[]) => {
+                // Add default periods when subjects are selected
+                const subjectsWithDefaults = subjects.map(s => ({
+                  ...s,
+                  periods_per_week: 5,
+                  is_mandatory: true,
+                }));
+                setSelectedSubjects(subjectsWithDefaults);
+              }}
               academicYearId={academicYearId}
             />
           </div>
 
           {selectedSubjects.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>{t('selectedSubjects')} ({selectedSubjects.length})</Label>
-              <div className="flex flex-wrap gap-2 p-4 border rounded-lg bg-muted/30 min-h-[80px]">
+              <div className="border rounded-lg divide-y">
                 {selectedSubjects.map((subject) => (
-                  <Badge
+                  <div
                     key={subject.id}
-                    variant="secondary"
-                    className="flex items-center gap-1 px-3 py-1 text-sm"
+                    className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors"
                   >
-                    <BookOpen className="h-3 w-3" />
-                    {subject.code} - {subject.name}
-                    <button
-                      onClick={() => removeSubject(subject.id)}
-                      className="ml-1 hover:text-destructive"
-                      aria-label={`Remove ${subject.name}`}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium flex items-center gap-2">
+                        <BookOpen className="h-4 w-4 text-primary" />
+                        {subject.code} - {subject.name}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor={`periods-${subject.id}`} className="text-sm whitespace-nowrap">
+                          {t('periodsPerWeek')}:
+                        </Label>
+                        <Input
+                          id={`periods-${subject.id}`}
+                          type="number"
+                          min={1}
+                          max={10}
+                          value={subject.periods_per_week}
+                          onChange={(e) => updateSubjectPeriods(subject.id, parseInt(e.target.value) || 1)}
+                          className="w-20 h-8"
+                        />
+                      </div>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeSubject(subject.id)}
+                        className="h-8 w-8 p-0 hover:text-destructive"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
           )}
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="periods">{t('periodsPerWeek')}</Label>
-              <Input
-                id="periods"
-                type="number"
-                min={1}
-                max={10}
-                value={periodsPerWeek}
-                onChange={(e) => setPeriodsPerWeek(parseInt(e.target.value))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="mode">{t('assignmentMode')}</Label>
-              <Select value={assignmentMode} onValueChange={(v: 'replace' | 'merge') => setAssignmentMode(v)}>
-                <SelectTrigger id="mode">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="replace">{t('replaceExisting')}</SelectItem>
-                  <SelectItem value="merge">{t('mergeWithExisting')}</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                {assignmentMode === 'replace' ? t('replaceDescription') : t('mergeDescription')}
-              </p>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="mode">{t('assignmentMode')}</Label>
+            <Select value={assignmentMode} onValueChange={(v: 'replace' | 'merge') => setAssignmentMode(v)}>
+              <SelectTrigger id="mode">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="replace">{t('replaceExisting')}</SelectItem>
+                <SelectItem value="merge">{t('mergeWithExisting')}</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {assignmentMode === 'replace' ? t('replaceDescription') : t('mergeDescription')}
+            </p>
           </div>
 
           <div className="flex justify-end pt-4">
@@ -316,7 +376,16 @@ export default function SubjectAssignmentPage() {
                   <p><strong>{t('stream')}:</strong> {stream === 'natural_science' ? t('naturalScience') : t('socialScience')}</p>
                 )}
                 <p><strong>{t('subjectsCount')}:</strong> {selectedSubjects.length}</p>
-                <p><strong>{t('periodsPerWeek')}:</strong> {periodsPerWeek}</p>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">{t('periodsPerWeek')}:</p>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                    {selectedSubjects.map((subject) => (
+                      <li key={subject.id}>
+                        {subject.code}: {subject.periods_per_week} {t('periodsPerWeekLabel')}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </DialogDescription>
           </DialogHeader>

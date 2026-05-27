@@ -13,7 +13,7 @@ const API_BASE_URL =
 
 export const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 60_000,  // Increased to 60s for slow queries
+  timeout: 120_000,  // Temporarily increased to 120s for debugging bulk assignment
   headers: {
     'Content-Type': 'application/json',
   },
