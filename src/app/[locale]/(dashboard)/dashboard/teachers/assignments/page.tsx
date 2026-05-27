@@ -107,7 +107,7 @@ export default function TeacherAssignmentPage() {
     queryKey: ['section-assignments', selectedSection],
     queryFn: async () => {
       if (!selectedSection) return [];
-      const { data } = await axiosInstance.get(`/teachers/section/${selectedSection}/teacher-subject`);
+      const { data } = await axiosInstance.get(`/teachers/sections/${selectedSection}/teacher-subject`);
       return data || [];
     },
     enabled: !!selectedSection,

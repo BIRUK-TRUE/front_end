@@ -29,7 +29,7 @@ export function useTeacherWorkload(teacherId: string) {
     queryKey: ['teacher-workload', teacherId],
     queryFn: async () => {
       const { data } = await axiosInstance.get<TeacherWorkloadStats>(
-        `/teachers/teachers/${teacherId}/workload`
+        `/teachers/${teacherId}/workload`
       );
       return data;
     },

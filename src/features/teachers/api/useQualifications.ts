@@ -44,7 +44,7 @@ export function useTeacherQualifications(teacherId: string) {
     queryKey: ['teacher-qualifications', teacherId],
     queryFn: async () => {
       const { data } = await axiosInstance.get<TeacherQualification[]>(
-        `/teachers/teachers/${teacherId}/qualifications`
+        `/teachers/${teacherId}/qualifications`
       );
       return data;
     },

@@ -120,15 +120,18 @@ function StudentsPage() {
       accessorKey: 'full_name',
       header: tc('name'),
       cell: ({ row }) => (
-        <div className="flex items-center gap-3">
+        <Link 
+          href={`/dashboard/students/${row.original.id}`}
+          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+        >
           <Avatar className="h-9 w-9">
             <AvatarFallback>{getInitials(row.original.full_name)}</AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-medium">{row.original.full_name}</p>
+            <p className="font-medium text-foreground hover:text-primary transition-colors">{row.original.full_name}</p>
             <p className="font-mono text-xs text-muted-foreground">{row.original.registration_number}</p>
           </div>
-        </div>
+        </Link>
       ),
     },
     {
