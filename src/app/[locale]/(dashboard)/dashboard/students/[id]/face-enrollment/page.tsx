@@ -116,7 +116,7 @@ export default function FaceEnrollmentPage() {
       }
 
       // Add descriptor to collection
-      const descriptor = Array.from(detection.descriptor);
+      const descriptor = Array.from(detection.descriptor) as number[];
       const newDescriptors = [...capturedDescriptors, descriptor];
       setCapturedDescriptors(newDescriptors);
       

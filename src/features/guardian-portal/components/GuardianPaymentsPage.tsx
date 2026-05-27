@@ -59,7 +59,7 @@ export function GuardianPaymentsPage() {
               <SelectContent>
                 {children.map((child) => (
                   <SelectItem key={child.id} value={child.id}>
-                    {child.fullName}
+                    {child.full_name}
                   </SelectItem>
                 ))}
               </SelectContent>
