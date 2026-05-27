@@ -178,6 +178,8 @@
     "invalidEmail": "ልክ ያልሆነ ኢሜይል",
     "passwordRequired": "የይለፍ ቃል ያስፈልጋል",
     "tokenRequired": "የእልባት ቲከን ያስፈልጋል",
+    "invalidResetLink": "ይህ የይለፍ ቃል ዳግም ማስጀመሪያ ማገናኛ ልክ አይደለም ወይም ጊዜው አልፎበታል።",
+    "requestNewLink": "አዲስ ዳግም ማስጀመሪያ ማገናኛ ጠይቅ",
     "passwordStrength": "የይለፍ ቃል ጥንካሬ",
     "weak": "ደካማ",
     "fair": "ፍትሃዊ",

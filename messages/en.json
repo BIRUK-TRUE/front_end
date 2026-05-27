@@ -173,6 +173,8 @@
     "invalidEmail": "Invalid email address",
     "passwordRequired": "Password is required",
     "tokenRequired": "Reset token is required",
+    "invalidResetLink": "This password reset link is invalid or has expired.",
+    "requestNewLink": "Request a new reset link",
     "passwordStrength": "Password Strength",
     "weak": "Weak",
     "fair": "Fair",

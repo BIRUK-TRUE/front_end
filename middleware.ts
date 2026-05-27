@@ -38,11 +38,23 @@ function parseRoles(rawRoles: string | undefined) {
   }
 }
 
+const LOCALELESS_AUTH_PATHS = ['/login', '/forgot-password', '/reset-password'];
+
+function redirectToDefaultLocale(request: NextRequest, pathname: string) {
+  const url = request.nextUrl.clone();
+  url.pathname = `/${routing.defaultLocale}${pathname}`;
+  return NextResponse.redirect(url);
+}
+
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname === '/') {
     return NextResponse.redirect(new URL(`/${routing.defaultLocale}/login`, request.url));
+  }
+
+  if (LOCALELESS_AUTH_PATHS.includes(pathname)) {
+    return redirectToDefaultLocale(request, pathname);
   }
 
   const response = intlMiddleware(request);
@@ -94,5 +106,5 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/(en|am)/:path*'],
+  matcher: ['/((?!api|_next|.*\\..*).*)'],
 };
