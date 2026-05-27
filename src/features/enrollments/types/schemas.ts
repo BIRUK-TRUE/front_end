@@ -7,10 +7,13 @@ import { z } from 'zod';
  */
 export const enrollmentSchema = z.object({
   student_id: z.string().uuid("Invalid Student ID"),
-  academic_year_id: z.string().optional(),
-  class_id: z.string().optional(),
+  academic_year_id: z.string().min(1, "Academic year is required"),
+  class_id: z.string().min(1, "Class is required"),
   section_id: z.string().uuid("Invalid Section ID"),
   enrollment_date: z.string().min(1, "Enrollment date is required"),
+  enrollment_type: z.enum(['new', 'transfer', 'promoted', 'repeated']).default('new'),
+  status: z.enum(['active', 'inactive', 'withdrawn', 'transferred', 'graduated', 'promoted']).default('active'),
+  remarks: z.string().optional(),
 });
 
 export type EnrollmentForm = z.infer<typeof enrollmentSchema>;

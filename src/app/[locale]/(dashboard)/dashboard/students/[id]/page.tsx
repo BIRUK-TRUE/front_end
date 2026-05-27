@@ -189,10 +189,12 @@ function StudentDetailPage() {
                 <EnrollmentWizard
                   studentId={id}
                   studentName={student.full_name}
+                  studentRegistrationNumber={student.registration_number}
                   onSubmit={async (data) => {
                     await enrollStudent.mutateAsync(data);
                     setIsEnrollModalOpen(false);
                   }}
+                  onCancel={() => setIsEnrollModalOpen(false)}
                   isLoading={enrollStudent.isPending}
                 />
               </DialogContent>
