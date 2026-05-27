@@ -378,16 +378,21 @@ export default function AcademicYearDetailPage() {
                       const yearEnd = new Date(year.end_date).getTime();
                       const termStart = new Date(term.start_date).getTime();
                       const termEnd = new Date(term.end_date).getTime();
-                      
+
                       const totalDuration = yearEnd - yearStart;
-                      const startOffset = ((termStart - yearStart) / totalDuration) * 100;
-                      const width = ((termEnd - termStart) / totalDuration) * 100;
+                      const startOffset =
+                        ((termStart - yearStart) / totalDuration) * 100;
+                      const width =
+                        ((termEnd - termStart) / totalDuration) * 100;
 
                       return (
                         <div
                           key={term.id}
                           className="absolute top-[-8px] h-4 rounded-full bg-primary transition-all hover:bg-primary/80 cursor-pointer group"
-                          style={{ left: `${startOffset}%`, width: `${width}%` }}
+                          style={{
+                            left: `${startOffset}%`,
+                            width: `${width}%`,
+                          }}
                           title={`${term.name}: ${new Date(term.start_date).toLocaleDateString()} - ${new Date(term.end_date).toLocaleDateString()}`}
                         >
                           <div className="opacity-0 group-hover:opacity-100 absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-xs py-1 px-2 rounded shadow-md whitespace-nowrap z-10 pointer-events-none">
@@ -398,8 +403,18 @@ export default function AcademicYearDetailPage() {
                     })}
                   </div>
                   <div className="flex justify-between text-[10px] text-muted-foreground mt-2">
-                    <span>{new Date(year.start_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                    <span>{new Date(year.end_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                    <span>
+                      {new Date(year.start_date).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+                    <span>
+                      {new Date(year.end_date).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -600,6 +615,22 @@ export default function AcademicYearDetailPage() {
                             >
                               {ta("gradeLevel")} {classItem.grade_level}
                             </Badge>
+                            {classItem.stream === "natural_science" && (
+                              <Badge
+                                variant="outline"
+                                className="font-normal text-xs bg-emerald-50 text-emerald-700 border-emerald-200"
+                              >
+                                🔬 Natural Science
+                              </Badge>
+                            )}
+                            {classItem.stream === "social_science" && (
+                              <Badge
+                                variant="outline"
+                                className="font-normal text-xs bg-blue-50 text-blue-700 border-blue-200"
+                              >
+                                📚 Social Science
+                              </Badge>
+                            )}
                           </div>
                           <div className="text-sm text-muted-foreground flex items-center gap-4">
                             <span className="flex items-center gap-1">

@@ -221,7 +221,8 @@
     "infrastructure": "Infrastructure",
     "promotions": "Promotions",
     "teacherAssignments": "Teacher Assignments",
-    "workloadDashboard": "Workload Dashboard"
+    "workloadDashboard": "Workload Dashboard",
+    "bulkImport": "Bulk Import"
   },
   "faceScan": {
     "title": "Face Recognition",

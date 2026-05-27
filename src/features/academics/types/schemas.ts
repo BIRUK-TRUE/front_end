@@ -58,6 +58,22 @@ export const classSchema = z.object({
   stream: z.enum(['natural_science', 'social_science']).optional().nullable(),
   description: z.string().max(255).optional().nullable(),
   capacity: z.number().positive("Must be a positive number").optional().nullable()
+}).superRefine((data, ctx) => {
+  const needsStream = data.grade_level === 11 || data.grade_level === 12;
+  if (needsStream && !data.stream) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Grade ${data.grade_level} requires a stream: Natural Science or Social Science`,
+      path: ['stream'],
+    });
+  }
+  if (!needsStream && data.stream) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Stream is only allowed for grades 11 and 12',
+      path: ['stream'],
+    });
+  }
 });
 
 export type ClassForm = z.infer<typeof classSchema>;

@@ -35,7 +35,11 @@ export function TeacherDashboardHome({ teacherId, teacherName }: Props) {
       <Card>
         <CardContent className="pt-6">
           <p className="text-sm text-destructive">{t("error")}</p>
-          <Button onClick={() => stats.refetch()} variant="outline" className="mt-2">
+          <Button
+            onClick={() => stats.refetch()}
+            variant="outline"
+            className="mt-2"
+          >
             {tc("retry")}
           </Button>
         </CardContent>
@@ -57,7 +61,8 @@ export function TeacherDashboardHome({ teacherId, teacherName }: Props) {
             {t("welcome", { name: teacherName })}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {t("todayDate", { date: format(new Date(), "PPP") })} • {data.currentTermName}
+            {t("todayDate", { date: format(new Date(), "PPP") })} •{" "}
+            {data.currentTermName}
           </p>
         </CardContent>
       </Card>
@@ -65,28 +70,39 @@ export function TeacherDashboardHome({ teacherId, teacherName }: Props) {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm font-medium text-muted-foreground">{t("stats.classesToday")}</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              {t("stats.classesToday")}
+            </p>
             <p className="text-2xl font-bold">{data.todayClasses}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm font-medium text-muted-foreground">{t("stats.totalStudents")}</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              {t("stats.totalStudents")}
+            </p>
             <p className="text-2xl font-bold">{data.totalStudents}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm font-medium text-muted-foreground">{t("stats.attendanceDone")}</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              {t("stats.attendanceDone")}
+            </p>
             <p className="text-2xl font-bold">
-              {data.attendanceTakenToday.taken}/{data.attendanceTakenToday.total}
+              {data.attendanceTakenToday.taken}/
+              {data.attendanceTakenToday.total}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm font-medium text-muted-foreground">{t("stats.pendingGrades")}</p>
-            <p className="text-2xl font-bold text-orange-600">{data.pendingGrades}</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              {t("stats.pendingGrades")}
+            </p>
+            <p className="text-2xl font-bold text-orange-600">
+              {data.pendingGrades}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -126,7 +142,10 @@ export function TeacherDashboardHome({ teacherId, teacherName }: Props) {
           ) : (
             <div className="space-y-3">
               {data.recentActivity.slice(0, 5).map((activity) => (
-                <div key={activity.id} className="flex items-center justify-between rounded-lg border p-3">
+                <div
+                  key={activity.id}
+                  className="flex items-center justify-between rounded-lg border p-3"
+                >
                   <div>
                     <p className="font-medium">
                       {activity.className} - {activity.sectionName}
@@ -136,7 +155,9 @@ export function TeacherDashboardHome({ teacherId, teacherName }: Props) {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-muted-foreground">{activity.submittedAt}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {activity.submittedAt}
+                    </p>
                   </div>
                 </div>
               ))}

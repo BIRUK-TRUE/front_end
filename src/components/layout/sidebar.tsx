@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import { useTranslations } from 'next-intl';
-import { usePathname } from '@/i18n/navigation';
-import { Link } from '@/i18n/navigation';
-import { usePermissions } from '@/hooks/use-permissions';
-import { useAuthStore } from '@/lib/store/auth-store';
-import { useUnreadNotifications } from '@/features/notifications/api/useNotifications';
-import { cn } from '@/lib/utils';
+import { useMemo } from "react";
+import { useTranslations } from "next-intl";
+import { usePathname } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
+import { usePermissions } from "@/hooks/use-permissions";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { useUnreadNotifications } from "@/features/notifications/api/useNotifications";
+import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Users,
@@ -35,11 +35,12 @@ import {
   ShieldAlert,
   Activity,
   ArrowRightLeft,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { useSchoolInfo } from '@/hooks/use-settings';
+  Upload,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { useSchoolInfo } from "@/hooks/use-settings";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -61,8 +62,8 @@ export function Sidebar({
   onToggleCollapse,
   onClose,
 }: SidebarProps) {
-  const t = useTranslations('nav');
-  const tc = useTranslations('common');
+  const t = useTranslations("nav");
+  const tc = useTranslations("common");
   const pathname = usePathname();
   const {
     canViewUsers,
@@ -83,52 +84,52 @@ export function Sidebar({
     isStudent,
     isGuardian,
   } = usePermissions();
-  
+
   const { user } = useAuthStore();
-  const { data: unreadCount } = useUnreadNotifications(user?.id || '');
+  const { data: unreadCount } = useUnreadNotifications(user?.id || "");
   const { data: schoolInfo } = useSchoolInfo();
 
   // Teacher-specific nav items (shown only to teachers)
   const teacherNavItems: NavItem[] = [
     {
-      href: '/dashboard/teacher',
-      label: t('dashboard'),
+      href: "/dashboard/teacher",
+      label: t("dashboard"),
       icon: LayoutDashboard,
       show: isTeacher,
     },
     {
-      href: '/dashboard/teacher/my-classes',
-      label: t('myClasses'),
+      href: "/dashboard/teacher/my-classes",
+      label: t("myClasses"),
       icon: School,
       show: canViewOwnClasses,
     },
     {
-      href: '/dashboard/teacher/attendance',
-      label: t('attendance'),
+      href: "/dashboard/teacher/attendance",
+      label: t("attendance"),
       icon: ClipboardCheck,
       show: canTakeAttendance,
     },
     {
-      href: '/dashboard/attendance/face-scan',
-      label: t('faceScan'),
+      href: "/dashboard/attendance/face-scan",
+      label: t("faceScan"),
       icon: ScanFace,
       show: canTakeAttendance,
     },
     {
-      href: '/dashboard/teacher/grades',
-      label: t('grades'),
+      href: "/dashboard/teacher/grades",
+      label: t("grades"),
       icon: Award,
       show: canEnterGrades,
     },
     {
-      href: '/dashboard/teacher/schedule',
-      label: t('mySchedule'),
+      href: "/dashboard/teacher/schedule",
+      label: t("mySchedule"),
       icon: CalendarClock,
       show: canViewOwnSchedule,
     },
     {
-      href: '/dashboard/teacher/analytics',
-      label: t('myClassAnalytics'),
+      href: "/dashboard/teacher/analytics",
+      label: t("myClassAnalytics"),
       icon: TrendingUp,
       show: canViewTeacherAnalytics,
     },
@@ -137,32 +138,32 @@ export function Sidebar({
   // Student-specific nav items (shown only to students)
   const studentNavItems: NavItem[] = [
     {
-      href: '/dashboard/student',
-      label: t('dashboard'),
+      href: "/dashboard/student",
+      label: t("dashboard"),
       icon: LayoutDashboard,
       show: isStudent,
     },
     {
-      href: '/dashboard/student/my-attendance',
-      label: t('myAttendance'),
+      href: "/dashboard/student/my-attendance",
+      label: t("myAttendance"),
       icon: CalendarCheck,
       show: isStudent,
     },
     {
-      href: '/dashboard/student/my-grades',
-      label: t('myGrades'),
+      href: "/dashboard/student/my-grades",
+      label: t("myGrades"),
       icon: BookOpen,
       show: isStudent,
     },
     {
-      href: '/dashboard/student/my-schedule',
-      label: t('mySchedule'),
+      href: "/dashboard/student/my-schedule",
+      label: t("mySchedule"),
       icon: Clock,
       show: isStudent,
     },
     {
-      href: '/dashboard/student/my-profile',
-      label: t('myProfile'),
+      href: "/dashboard/student/my-profile",
+      label: t("myProfile"),
       icon: User,
       show: isStudent,
     },
@@ -171,26 +172,26 @@ export function Sidebar({
   // Guardian-specific nav items (shown only to guardians)
   const guardianNavItems: NavItem[] = [
     {
-      href: '/dashboard/guardian',
-      label: t('dashboard'),
+      href: "/dashboard/guardian",
+      label: t("dashboard"),
       icon: LayoutDashboard,
       show: isGuardian,
     },
     {
-      href: '/dashboard/guardian/notifications',
-      label: t('notifications'),
+      href: "/dashboard/guardian/notifications",
+      label: t("notifications"),
       icon: Bell,
       show: isGuardian,
     },
     {
-      href: '/dashboard/guardian/payments',
-      label: t('payments'),
+      href: "/dashboard/guardian/payments",
+      label: t("payments"),
       icon: Wallet,
       show: isGuardian,
     },
     {
-      href: '/dashboard/guardian/profile',
-      label: t('settings'),
+      href: "/dashboard/guardian/profile",
+      label: t("settings"),
       icon: Settings,
       show: isGuardian,
     },
@@ -199,129 +200,135 @@ export function Sidebar({
   // Admin/Registrar/Director nav items
   const adminNavItems: NavItem[] = [
     {
-      href: '/dashboard',
-      label: t('dashboard'),
+      href: "/dashboard",
+      label: t("dashboard"),
       icon: LayoutDashboard,
       show: !isTeacher, // Hide from teachers who use /dashboard/teacher
     },
     {
-      href: '/dashboard/analytics',
-      label: t('analytics'),
+      href: "/dashboard/analytics",
+      label: t("analytics"),
       icon: BarChart3,
       show: canViewAnalytics,
     },
     {
-      href: '/dashboard/users',
-      label: t('users'),
+      href: "/dashboard/users",
+      label: t("users"),
       icon: Users,
       show: canViewUsers,
     },
     {
-      href: '/dashboard/directors',
-      label: t('directors'),
+      href: "/dashboard/directors",
+      label: t("directors"),
       icon: UserCheck,
       show: canViewUsers,
     },
     {
-      href: '/dashboard/students',
-      label: t('students'),
+      href: "/dashboard/students",
+      label: t("students"),
       icon: GraduationCap,
       show: canManageStudents,
     },
     {
-      href: '/dashboard/academics/years',
-      label: t('academics'),
+      href: "/dashboard/academics/years",
+      label: t("academics"),
       icon: Building2,
       show: canManageAcademics,
     },
     {
-      href: '/dashboard/academics/subjects',
-      label: t('subjects'),
+      href: "/dashboard/academics/subjects",
+      label: t("subjects"),
       icon: BookOpen,
       show: canManageAcademics,
     },
     {
-      href: '/dashboard/academics/subject-assignment',
-      label: t('subjectAssignment'),
+      href: "/dashboard/academics/subject-assignment",
+      label: t("subjectAssignment"),
       icon: BookOpen,
       show: canManageAcademics,
     },
     {
-      href: '/dashboard/academics/infrastructure',
-      label: t('infrastructure'),
+      href: "/dashboard/academics/infrastructure",
+      label: t("infrastructure"),
       icon: Building2,
       show: canManageAcademics,
     },
     {
-      href: '/dashboard/enrollments',
-      label: t('enrollments'),
+      href: "/dashboard/enrollments",
+      label: t("enrollments"),
       icon: History,
       show: canManageEnrollments,
     },
     {
-      href: '/dashboard/promotions',
-      label: t('promotions'),
+      href: "/dashboard/promotions",
+      label: t("promotions"),
       icon: ArrowRightLeft,
       show: canManageAcademics,
     },
     {
-      href: '/dashboard/schedule',
-      label: t('schedule'),
+      href: "/dashboard/schedule",
+      label: t("schedule"),
       icon: CalendarClock,
       show: (canManageStudents || canManageAcademics) && !isTeacher,
     },
     {
-      href: '/dashboard/teachers',
-      label: t('teachers'),
+      href: "/dashboard/teachers",
+      label: t("teachers"),
       icon: BookOpen,
       show: canManageTeachers,
     },
     {
-      href: '/dashboard/teachers/assignments',
-      label: t('teacherAssignments'),
+      href: "/dashboard/teachers/assignments",
+      label: t("teacherAssignments"),
       icon: UserCheck,
       show: canManageTeachers,
     },
     {
-      href: '/dashboard/teachers/workload',
-      label: t('workloadDashboard'),
+      href: "/dashboard/teachers/workload",
+      label: t("workloadDashboard"),
       icon: Activity,
       show: canManageTeachers,
     },
     {
-      href: '/dashboard/guardians',
-      label: t('guardians'),
+      href: "/dashboard/guardians",
+      label: t("guardians"),
       icon: UserCheck,
       show: canManageGuardians,
     },
     {
-      href: '/dashboard/attendance',
-      label: t('attendance'),
+      href: "/dashboard/bulk-import",
+      label: t("bulkImport"),
+      icon: Upload,
+      show: (canManageStudents || canManageTeachers) && !isTeacher,
+    },
+    {
+      href: "/dashboard/attendance",
+      label: t("attendance"),
       icon: ClipboardCheck,
       show: (canManageStudents || canManageTeachers) && !isTeacher,
     },
     {
-      href: '/dashboard/attendance/face-scan',
-      label: t('faceScan'),
+      href: "/dashboard/attendance/face-scan",
+      label: t("faceScan"),
       icon: ScanFace,
       show: (canManageStudents || canManageTeachers) && !isTeacher,
     },
     {
-      href: '/dashboard/attendance/face-enrollment',
-      label: t('faceEnrollment'),
+      href: "/dashboard/attendance/face-enrollment",
+      label: t("faceEnrollment"),
       icon: ScanFace,
       show: (canManageStudents || canManageTeachers) && !isTeacher,
     },
     {
-      href: '/dashboard/grades',
-      label: t('grades'),
+      href: "/dashboard/grades",
+      label: t("grades"),
       icon: Award,
       show: (canManageStudents || canManageTeachers) && !isTeacher,
     },
     // Notification section (admin/director only)
     {
-      href: '/dashboard/notifications',
-      label: t('notifications'),
+      href: "/dashboard/notifications",
+      label: t("notifications"),
       icon: Bell,
       show: canManageNotifications,
     },
@@ -338,23 +345,23 @@ export function Sidebar({
 
   const bottomItems: NavItem[] = [
     {
-      href: '/dashboard/profile',
-      label: t('myProfile'),
+      href: "/dashboard/profile",
+      label: t("myProfile"),
       icon: User,
       show: !isStudent && !isGuardian,
     },
     {
-      href: '/dashboard/settings',
-      label: t('settings'),
+      href: "/dashboard/settings",
+      label: t("settings"),
       icon: Settings,
       show: canAccessSettings,
     },
   ];
 
   const notificationSubNavHrefs = [
-    '/dashboard/notifications/compose',
-    '/dashboard/notifications/alert-rules',
-    '/dashboard/notifications/history',
+    "/dashboard/notifications/compose",
+    "/dashboard/notifications/alert-rules",
+    "/dashboard/notifications/history",
   ];
 
   const allNavHrefs = useMemo(() => {
@@ -378,23 +385,29 @@ export function Sidebar({
   ]);
 
   const isActive = (href: string) => {
-    if (href === '/dashboard') return pathname === '/dashboard';
+    if (href === "/dashboard") return pathname === "/dashboard";
     if (!pathname.startsWith(href)) return false;
 
     const matchingHrefs = allNavHrefs.filter(
-      (navHref) => navHref !== '/dashboard' && pathname.startsWith(navHref)
+      (navHref) => navHref !== "/dashboard" && pathname.startsWith(navHref),
     );
 
     if (matchingHrefs.length === 0) return true;
 
     const bestMatch = matchingHrefs.reduce((longest, current) =>
-      current.length > longest.length ? current : longest
+      current.length > longest.length ? current : longest,
     );
 
     return bestMatch === href;
   };
 
-  const NavLink = ({ item, showBadge }: { item: NavItem; showBadge?: boolean }) => {
+  const NavLink = ({
+    item,
+    showBadge,
+  }: {
+    item: NavItem;
+    showBadge?: boolean;
+  }) => {
     if (!item.show) return null;
     const Icon = item.icon;
     const active = isActive(item.href);
@@ -407,25 +420,29 @@ export function Sidebar({
           if (window.innerWidth < 1024) onClose();
         }}
         className={cn(
-          'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all min-h-[44px]',
-          'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-          'focus-visible:outline-2 focus-visible:outline-ring',
+          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all min-h-[44px]",
+          "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+          "focus-visible:outline-2 focus-visible:outline-ring",
           active
-            ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm'
-            : 'text-sidebar-foreground/70'
+            ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+            : "text-sidebar-foreground/70",
         )}
-        aria-current={active ? 'page' : undefined}
+        aria-current={active ? "page" : undefined}
       >
         <div className="relative">
           <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
           {showBadge && unreadCount && unreadCount > 0 && (
             <Badge
               className={cn(
-                'absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px] font-bold',
-                unreadCount > 5 ? 'bg-red-500' : unreadCount > 2 ? 'bg-orange-500' : 'bg-blue-500'
+                "absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px] font-bold",
+                unreadCount > 5
+                  ? "bg-red-500"
+                  : unreadCount > 2
+                    ? "bg-orange-500"
+                    : "bg-blue-500",
               )}
             >
-              {unreadCount > 9 ? '9+' : unreadCount}
+              {unreadCount > 9 ? "9+" : unreadCount}
             </Badge>
           )}
         </div>
@@ -448,12 +465,12 @@ export function Sidebar({
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-sidebar transition-all duration-300',
-          'lg:relative lg:z-auto',
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
-          isCollapsed ? 'w-[68px]' : 'w-64'
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-sidebar transition-all duration-300",
+          "lg:relative lg:z-auto",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          isCollapsed ? "w-[68px]" : "w-64",
         )}
-        aria-label={t('mainNavigation')}
+        aria-label={t("mainNavigation")}
       >
         {/* Logo */}
         <div className="flex min-h-[64px] items-center justify-between border-b px-4 py-3">
@@ -463,7 +480,7 @@ export function Sidebar({
                 <GraduationCap className="h-4 w-4" aria-hidden="true" />
               </div>
               <span className="text-sm font-semibold leading-tight text-sidebar-foreground break-words line-clamp-2">
-                {schoolInfo?.school_name || 'SMS'}
+                {schoolInfo?.school_name || "SMS"}
               </span>
             </div>
           )}
@@ -478,7 +495,7 @@ export function Sidebar({
             size="sm"
             className="lg:hidden min-h-[44px] min-w-[44px]"
             onClick={onClose}
-            aria-label={tc('closeSidebar')}
+            aria-label={tc("closeSidebar")}
           >
             <X className="h-5 w-5" />
           </Button>
@@ -486,12 +503,12 @@ export function Sidebar({
 
         {/* Navigation */}
         <ScrollArea className="flex-1 px-3 py-4 overflow-y-auto">
-          <nav className="space-y-1" aria-label={t('mainNavigation')}>
+          <nav className="space-y-1" aria-label={t("mainNavigation")}>
             {navItems.map((item) => (
               <NavLink
                 key={`${item.href}-${item.label}`}
                 item={item}
-                showBadge={item.href === '/dashboard/notifications'}
+                showBadge={item.href === "/dashboard/notifications"}
               />
             ))}
           </nav>
@@ -500,24 +517,38 @@ export function Sidebar({
           {canManageNotifications && !isCollapsed && (
             <div className="mt-1 ml-3 pl-3 border-l border-border space-y-0.5">
               {[
-                { href: '/dashboard/notifications/compose', label: t('sendNotification'), icon: Send },
-                { href: '/dashboard/notifications/alert-rules', label: t('alertRules'), icon: ShieldAlert },
-                { href: '/dashboard/notifications/history', label: t('notificationHistory'), icon: History },
+                {
+                  href: "/dashboard/notifications/compose",
+                  label: t("sendNotification"),
+                  icon: Send,
+                },
+                {
+                  href: "/dashboard/notifications/alert-rules",
+                  label: t("alertRules"),
+                  icon: ShieldAlert,
+                },
+                {
+                  href: "/dashboard/notifications/history",
+                  label: t("notificationHistory"),
+                  icon: History,
+                },
               ].map(({ href, label, icon: Icon }) => {
                 const active = isActive(href);
                 return (
                   <Link
                     key={href}
                     href={href}
-                    onClick={() => { if (window.innerWidth < 1024) onClose(); }}
+                    onClick={() => {
+                      if (window.innerWidth < 1024) onClose();
+                    }}
                     className={cn(
-                      'flex items-center gap-2 rounded-md px-2 py-2 text-xs font-medium transition-all min-h-[36px]',
-                      'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                      "flex items-center gap-2 rounded-md px-2 py-2 text-xs font-medium transition-all min-h-[36px]",
+                      "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                       active
-                        ? 'bg-sidebar-primary/60 text-sidebar-primary-foreground'
-                        : 'text-sidebar-foreground/60'
+                        ? "bg-sidebar-primary/60 text-sidebar-primary-foreground"
+                        : "text-sidebar-foreground/60",
                     )}
-                    aria-current={active ? 'page' : undefined}
+                    aria-current={active ? "page" : undefined}
                   >
                     <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                     <span>{label}</span>
@@ -542,12 +573,14 @@ export function Sidebar({
             size="sm"
             className="w-full min-h-[44px] justify-center"
             onClick={onToggleCollapse}
-            aria-label={isCollapsed ? tc('expandSidebar') : tc('collapseSidebar')}
+            aria-label={
+              isCollapsed ? tc("expandSidebar") : tc("collapseSidebar")
+            }
           >
             <ChevronLeft
               className={cn(
-                'h-4 w-4 transition-transform',
-                isCollapsed && 'rotate-180'
+                "h-4 w-4 transition-transform",
+                isCollapsed && "rotate-180",
               )}
               aria-hidden="true"
             />

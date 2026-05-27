@@ -226,7 +226,8 @@
     "infrastructure": "መሠረተ ልማት",
     "promotions": "ደረጃ ማሳደግ",
     "teacherAssignments": "የመምህር መመደብ",
-    "workloadDashboard": "የሥራ ጫና ዳሽቦርድ"
+    "workloadDashboard": "የሥራ ጫና ዳሽቦርድ",
+    "bulkImport": "ጅምላ ማስመጣት"
   },
   "roles": {
     "admin": "አስተዳዳሪ",
