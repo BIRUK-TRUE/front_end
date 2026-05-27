@@ -78,6 +78,8 @@ interface DetectionBox {
 }
 
 import { loadFaceApiModels } from '@/lib/face/load-models';
+
+export function FaceAttendanceStation({
   sectionId,
   sectionName,
   onClose,
