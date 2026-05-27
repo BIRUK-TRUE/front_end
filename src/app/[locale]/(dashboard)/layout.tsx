@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { TopBar } from '@/components/layout/top-bar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { CommandMenu } from '@/components/layout/command-menu';
+import { ChatWidget } from '@/components/assistant/chat-widget';
 
 export default function DashboardLayout({
   children,
@@ -37,6 +38,7 @@ export default function DashboardLayout({
         </div>
       </div>
       <CommandMenu />
+      <ChatWidget />
     </ProtectedRoute>
   );
 }

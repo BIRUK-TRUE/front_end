@@ -2553,5 +2553,26 @@
     "noSubjectsAssigned": "No subjects assigned to this class",
     "mandatory": "Mandatory",
     "periodsPerWeekLabel": "periods/week"
+  },
+  "assistant": {
+    "title": "SMS Assistant",
+    "subtitle": "Ask about the system",
+    "online": "Online · Ready to help",
+    "welcome": "Hello! I'm your SMS assistant. I can guide you through enrollment, attendance, grades, payments, and more. How can I help you today?",
+    "placeholder": "Type your question...",
+    "send": "Send message",
+    "open": "Open assistant",
+    "close": "Close assistant",
+    "minimize": "Minimize assistant",
+    "thinking": "Thinking...",
+    "error": "Sorry, something went wrong. Please try again.",
+    "quickPrompts": "Quick questions",
+    "poweredBy": "Powered by Gemini AI",
+    "prompts": {
+      "enroll": "How do I enroll a student?",
+      "attendance": "How do I take attendance?",
+      "grades": "How do I enter grades?",
+      "payments": "How do guardians pay fees?"
+    }
   }
 }
