@@ -27,8 +27,6 @@ export function useFaceAttendance(sectionId?: string) {
     queryKey: queryKeys.faceRecognition.descriptors(sectionId || ''),
     queryFn: async (): Promise<FaceDescriptor[]> => {
       if (!sectionId) return [];
-      // BACKEND REQUIRED: GET /face-recognition/descriptors?sectionId={id}
-      // Expected response: { studentId, descriptors: number[][] }[]
       const { data } = await axiosInstance.get(`/face-recognition/descriptors?sectionId=${sectionId}`);
       return data;
     },

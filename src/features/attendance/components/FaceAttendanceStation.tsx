@@ -77,12 +77,7 @@ interface DetectionBox {
   };
 }
 
-// Load face-api models (prefer local if exists, else CDN)
-const MODEL_URL = "/models";
-const FALLBACK_MODEL_URL =
-  "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model";
-
-export function FaceAttendanceStation({
+import { loadFaceApiModels } from '@/lib/face/load-models';
   sectionId,
   sectionName,
   onClose,
@@ -154,32 +149,15 @@ export function FaceAttendanceStation({
 
   // Load Models
   useEffect(() => {
-    const loadModels = async () => {
-      try {
-        const faceapi = await import("face-api.js");
+    loadFaceApiModels()
+      .then((faceapi) => {
         setFaceApi(faceapi);
-
-        const loadFrom = async (url: string) => {
-          await Promise.all([
-            faceapi.nets.tinyFaceDetector.loadFromUri(url),
-            faceapi.nets.faceLandmark68Net.loadFromUri(url),
-            faceapi.nets.faceRecognitionNet.loadFromUri(url),
-          ]);
-        };
-
-        try {
-          await loadFrom(MODEL_URL);
-        } catch {
-          console.warn("Local models not found, falling back to CDN");
-          await loadFrom(FALLBACK_MODEL_URL);
-        }
-
         setIsModelLoading(false);
-      } catch (error) {
+      })
+      .catch(() => {
         toast.error(t("loadModelsFailed"));
-      }
-    };
-    loadModels();
+        setIsModelLoading(false);
+      });
   }, [t]);
 
   // Handle Fullscreen

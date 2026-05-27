@@ -2,54 +2,24 @@
  * Extract face descriptors from an image file using face-api.js.
  */
 
-const MODEL_URL = "/models";
-const FALLBACK_MODEL_URL =
-  "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model";
-
-let modelsLoaded = false;
-
-async function ensureFaceModelsLoaded() {
-  if (modelsLoaded) return;
-
-  const faceapi = await import("face-api.js");
-
-  const loadFrom = async (url: string) => {
-    await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(url),
-      faceapi.nets.faceLandmark68Net.loadFromUri(url),
-      faceapi.nets.faceRecognitionNet.loadFromUri(url),
-    ]);
-  };
-
-  try {
-    await loadFrom(MODEL_URL);
-  } catch {
-    await loadFrom(FALLBACK_MODEL_URL);
-  }
-
-  modelsLoaded = true;
-  return faceapi;
-}
+import { loadFaceApiModels } from "./load-models";
 
 export async function extractFaceDescriptorsFromFile(
   file: File,
 ): Promise<number[][]> {
-  const faceapi = await ensureFaceModelsLoaded();
-  if (!faceapi) {
-    throw new Error("Failed to load face recognition models");
-  }
+  const faceapi = await loadFaceApiModels();
 
   const image = await faceapi.bufferToImage(file);
-  const detection = await faceapi
-    .detectSingleFace(image, new faceapi.TinyFaceDetectorOptions())
+  const detections = await faceapi
+    .detectAllFaces(image, new faceapi.TinyFaceDetectorOptions())
     .withFaceLandmarks()
-    .withFaceDescriptor();
+    .withFaceDescriptors();
 
-  if (!detection) {
+  if (!detections.length) {
     throw new Error("No face detected in the image");
   }
 
-  return [Array.from(detection.descriptor)];
+  return detections.map((detection) => Array.from(detection.descriptor));
 }
 
 export async function extractFaceDescriptorsFromDataUrl(

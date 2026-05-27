@@ -2,15 +2,17 @@
 
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Camera, Upload, Check, AlertCircle, ArrowLeft, Users, Loader2 } from 'lucide-react';
+import { Camera, Upload, ArrowLeft, Users, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAcademicYears } from '@/features/academics/api/useAcademicYears';
 import { useClasses, useClass } from '@/features/academics/api/useClasses';
 import { useRecognizeFaces } from '@/hooks/use-face-recognition';
+import { useAcademicSettings } from '@/hooks/use-settings';
+import { axiosInstance } from '@/lib/api/axios';
+import { confidenceToDistanceThreshold } from '@/lib/face/load-models';
 import { useRouter } from '@/i18n/navigation';
 import { toast } from 'sonner';
 
@@ -25,10 +27,12 @@ export default function ClassroomPhotoPage() {
   const [selectedSectionId, setSelectedSectionId] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { data: yearsData } = useAcademicYears(1, 50);
   const { data: classesData } = useClasses(selectedYearId, 1, 100);
   const { data: classDetail } = useClass(selectedClassId);
+  const { data: academicSettings } = useAcademicSettings();
   const recognizeFaces = useRecognizeFaces();
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,29 +46,75 @@ export default function ClassroomPhotoPage() {
   const handleUpload = async () => {
     if (!photo || !selectedSectionId) return;
 
+    setIsProcessing(true);
+
     try {
-      // Extract face descriptors from the classroom photo
       const { extractFaceDescriptorsFromFile } = await import('@/lib/face/extract-descriptors');
       const descriptors = await extractFaceDescriptorsFromFile(photo);
 
-      if (!descriptors?.length) {
-        toast.error("No faces detected in the image. Please try a clearer photo.");
+      if (!descriptors.length) {
+        toast.error('No faces detected in the image. Please try a clearer photo.');
         return;
       }
 
-      recognizeFaces.mutate({ sectionId: selectedSectionId, descriptors }, {
-        onSuccess: (data) => {
-          toast.success(`Recognized ${data.recognizedCount} students. Attendance draft created.`);
-          router.push('/dashboard/attendance');
-        },
-        onError: () => {
-          toast.error("Failed to process image. Ensure it's a clear photo of the classroom.");
-        }
+      const threshold = confidenceToDistanceThreshold(
+        academicSettings?.confidence_threshold,
+      );
+
+      const result = await recognizeFaces.mutateAsync({
+        sectionId: selectedSectionId,
+        descriptors,
+        threshold,
       });
+
+      if (!result.matches.length) {
+        toast.error('No enrolled students matched in this photo.');
+        return;
+      }
+
+      const timestamp = new Date().toISOString();
+      let marked = 0;
+      let skipped = 0;
+
+      for (const match of result.matches) {
+        try {
+          await axiosInstance.post('/attendance/mark-by-face', {
+            studentId: match.studentId,
+            sectionId: selectedSectionId,
+            timestamp,
+            confidence: Math.round(match.confidence * 100),
+            method: 'face_recognition',
+          });
+          marked += 1;
+        } catch (error: unknown) {
+          const status = (error as { response?: { status?: number } })?.response
+            ?.status;
+          if (status === 409) {
+            skipped += 1;
+          }
+        }
+      }
+
+      if (marked > 0) {
+        toast.success(
+          `Marked ${marked} student${marked === 1 ? '' : 's'} present` +
+            (skipped ? ` (${skipped} already marked)` : ''),
+        );
+        router.push('/dashboard/attendance');
+      } else if (skipped > 0) {
+        toast.info('All matched students were already marked for today.');
+        router.push('/dashboard/attendance');
+      } else {
+        toast.error('Recognition succeeded but attendance could not be saved.');
+      }
     } catch {
-      toast.error("Failed to extract faces from the image. Please try again.");
+      toast.error('Failed to process image. Ensure it is a clear photo of the classroom.');
+    } finally {
+      setIsProcessing(false);
     }
   };
+
+  const isBusy = isProcessing || recognizeFaces.isPending;
 
   return (
     <div className="container mx-auto py-8 max-w-3xl animate-fade-in">
@@ -89,7 +139,7 @@ export default function ClassroomPhotoPage() {
               <Select value={selectedYearId} onValueChange={(v) => { setSelectedYearId(v); setSelectedClassId(''); setSelectedSectionId(''); }}>
                 <SelectTrigger><SelectValue placeholder={tc('selectYear')} /></SelectTrigger>
                 <SelectContent>
-                  {yearsData?.items?.map((y: any) => <SelectItem key={y.id} value={y.id}>{y.name}</SelectItem>)}
+                  {yearsData?.items?.map((y: { id: string; name: string }) => <SelectItem key={y.id} value={y.id}>{y.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -98,7 +148,7 @@ export default function ClassroomPhotoPage() {
               <Select value={selectedClassId} onValueChange={(v) => { setSelectedClassId(v); setSelectedSectionId(''); }} disabled={!selectedYearId}>
                 <SelectTrigger><SelectValue placeholder={tc('selectClass')} /></SelectTrigger>
                 <SelectContent>
-                  {classesData?.items?.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  {classesData?.items?.map((c: { id: string; name: string }) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -109,7 +159,7 @@ export default function ClassroomPhotoPage() {
             <Select value={selectedSectionId} onValueChange={setSelectedSectionId} disabled={!selectedClassId}>
               <SelectTrigger><SelectValue placeholder={tc('selectSection')} /></SelectTrigger>
               <SelectContent>
-                {classDetail?.sections?.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                {classDetail?.sections?.map((s: { id: string; name: string }) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -155,10 +205,10 @@ export default function ClassroomPhotoPage() {
         <CardFooter>
           <Button 
             className="w-full h-12 text-lg gap-2" 
-            disabled={!photo || !selectedSectionId || recognizeFaces.isPending}
+            disabled={!photo || !selectedSectionId || isBusy}
             onClick={handleUpload}
           >
-            {recognizeFaces.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
+            {isBusy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
             {ta('submitAttendance')}
           </Button>
         </CardFooter>

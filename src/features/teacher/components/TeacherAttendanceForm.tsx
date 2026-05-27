@@ -198,6 +198,7 @@ export function TeacherAttendanceForm({ teacherId }: { teacherId: string }) {
           {sectionId && isScanning && (
             <div className="mb-6">
               <FaceRecognitionScanner 
+                sectionId={sectionId}
                 students={rows.map(s => ({
                   id: s.id,
                   name: s.fullName,

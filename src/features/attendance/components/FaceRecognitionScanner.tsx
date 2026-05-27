@@ -8,15 +8,18 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Camera, ScanFace, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { AttendanceStatus } from '../types';
-
-interface StudentFace {
-  id: string;
-  name: string;
-  registrationNumber: string;
-  descriptor: Float32Array;
-}
+import {
+  useFaceAttendance,
+  type FaceDescriptor,
+} from '../hooks/useFaceAttendance';
+import { useAcademicSettings } from '@/hooks/use-settings';
+import {
+  confidenceToDistanceThreshold,
+  loadFaceApiModels,
+} from '@/lib/face/load-models';
 
 interface FaceRecognitionScannerProps {
+  sectionId: string;
   students: Array<{
     id: string;
     name: string;
@@ -26,10 +29,8 @@ interface FaceRecognitionScannerProps {
   markedStudents: Set<string>;
 }
 
-// Load face-api models from CDN or local
-const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model';
-
 export function FaceRecognitionScanner({
+  sectionId,
   students,
   onAttendanceMarked,
   markedStudents,
@@ -39,100 +40,63 @@ export function FaceRecognitionScanner({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isModelLoading, setIsModelLoading] = useState(true);
   const [isCameraActive, setIsCameraActive] = useState(false);
-  const [detectedStudent, setDetectedStudent] = useState<StudentFace | null>(null);
-  const [faceApi, setFaceApi] = useState<any>(null);
-  const [registeredFaces, setRegisteredFaces] = useState<StudentFace[]>([]);
+  const [detectedStudentId, setDetectedStudentId] = useState<string | null>(null);
+  const [faceApi, setFaceApi] = useState<Awaited<
+    ReturnType<typeof loadFaceApiModels>
+  > | null>(null);
   const detectionIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastMarkedRef = useRef<string | null>(null);
 
-  // Load face-api library dynamically
+  const { descriptors, isLoading: isLoadingDescriptors } =
+    useFaceAttendance(sectionId);
+  const { data: academicSettings } = useAcademicSettings();
+
+  const distanceThreshold = confidenceToDistanceThreshold(
+    academicSettings?.confidence_threshold,
+  );
+
+  const studentMap = useCallback(
+    () => new Map(students.map((s) => [s.id, s])),
+    [students],
+  );
+
   useEffect(() => {
-    const loadFaceApi = async () => {
-      try {
-        const faceapi = await import('face-api.js');
+    loadFaceApiModels()
+      .then((faceapi) => {
         setFaceApi(faceapi);
-        
-        // Load models
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-        ]);
-        
         setIsModelLoading(false);
-        toast.success(t('modelsLoaded'));
-      } catch (error) {
+      })
+      .catch(() => {
         toast.error(t('loadModelsFailed'));
         setIsModelLoading(false);
-      }
-    };
+      });
+  }, [t]);
 
-    loadFaceApi();
-  }, []);
-
-  // Initialize registered faces from student data
   useEffect(() => {
-    const loadEnrolledFaces = async () => {
-      try {
-        // Fetch enrolled faces from backend for each student
-        const enrolledFaces: StudentFace[] = [];
-        
-        for (const student of students) {
-          try {
-            // Check if student has enrolled face data
-            const response = await fetch(`/api/v1/face-recognition/enrollment-status/${student.id}`);
-            if (response.ok) {
-              const data = await response.json();
-              if (data.is_enrolled && data.descriptor) {
-                enrolledFaces.push({
-                  id: student.id,
-                  name: student.name,
-                  registrationNumber: student.registration_number,
-                  descriptor: new Float32Array(data.descriptor),
-                });
-              }
-            }
-          } catch (error) {
-            console.warn(`Failed to load face data for student ${student.id}:`, error);
-          }
-        }
-        
-        setRegisteredFaces(enrolledFaces);
-        
-        if (enrolledFaces.length === 0) {
-          toast.info(t('noEnrolledFaces') || 'No students have enrolled faces. Please enroll faces first.');
-        } else {
-          toast.success(`${enrolledFaces.length} enrolled faces loaded`);
-        }
-      } catch (error) {
-        console.error('Failed to load enrolled faces:', error);
-        toast.error(t('loadFacesFailed') || 'Failed to load enrolled faces');
-      }
-    };
-
-    if (students.length > 0) {
-      loadEnrolledFaces();
+    if (!isLoadingDescriptors && descriptors.length === 0 && sectionId) {
+      toast.info(
+        t('noEnrolledFaces') ||
+          'No students have enrolled faces. Please enroll faces first.',
+      );
     }
-  }, [students, t]);
+  }, [descriptors.length, isLoadingDescriptors, sectionId, t]);
 
-  // Start camera
   const startCamera = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: 640, height: 480 },
         audio: false,
       });
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setIsCameraActive(true);
-        toast.success(t('cameraStarted'));
       }
-    } catch (error) {
+    } catch {
       toast.error(t('cameraAccessFailed'));
     }
-  }, []);
+  }, [t]);
 
-  // Stop camera
   const stopCamera = useCallback(() => {
     const stream = videoRef.current?.srcObject as MediaStream;
     stream?.getTracks().forEach((track) => track.stop());
@@ -145,62 +109,77 @@ export function FaceRecognitionScanner({
     }
   }, []);
 
-  // Face detection loop
   useEffect(() => {
-    if (!isCameraActive || !faceApi || !videoRef.current || !canvasRef.current) return;
+    if (
+      !isCameraActive ||
+      !faceApi ||
+      !videoRef.current ||
+      !canvasRef.current ||
+      descriptors.length === 0
+    ) {
+      return;
+    }
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
+    const lookup = studentMap();
 
     const detectFaces = async () => {
       if (video.paused || video.ended) return;
 
       try {
-        // Detect faces
         const detections = await faceApi
           .detectAllFaces(video, new faceApi.TinyFaceDetectorOptions())
           .withFaceLandmarks()
           .withFaceDescriptors();
 
-        // Clear canvas
         ctx?.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Match faces
-        if (detections.length > 0 && registeredFaces.length > 0) {
-          const detection = detections[0];
-          const descriptor = detection.descriptor;
-
-          // Find best match
-          let bestMatch: StudentFace | null = null;
-          let bestDistance = Infinity;
-
-          for (const student of registeredFaces) {
-            const distance = faceApi.euclideanDistance(descriptor, student.descriptor);
-            if (distance < bestDistance && distance < 0.6) {
-              bestDistance = distance;
-              bestMatch = student;
-            }
-          }
-
-          if (bestMatch && bestMatch.id !== detectedStudent?.id) {
-            setDetectedStudent(bestMatch);
-            
-            // Auto-mark attendance if not already marked
-            if (!markedStudents.has(bestMatch.id)) {
-              onAttendanceMarked(bestMatch.id, AttendanceStatus.PRESENT);
-              toast.success(`Attendance marked for ${bestMatch.name}`);
-            }
-          }
-
-          // Draw detection box
-          const dims = faceApi.matchDimensions(canvas, video, true);
-          const resizedDetections = faceApi.resizeResults(detections, dims);
-          faceApi.draw.drawDetections(canvas, resizedDetections);
-          faceApi.draw.drawFaceLandmarks(canvas, resizedDetections);
+        if (detections.length === 0) {
+          setDetectedStudentId(null);
+          return;
         }
-      } catch (error) {
-        // Silently handle detection errors to avoid spam
+
+        const detection = detections[0];
+        const descriptor = detection.descriptor;
+
+        let bestStudentId = '';
+        let bestDistance = 1.0;
+
+        descriptors.forEach((student: FaceDescriptor) => {
+          student.descriptors.forEach((storedDescriptor: number[]) => {
+            const dist = faceApi.euclideanDistance(descriptor, storedDescriptor);
+            if (dist < bestDistance) {
+              bestDistance = dist;
+              bestStudentId = student.student_id;
+            }
+          });
+        });
+
+        if (bestStudentId && bestDistance < distanceThreshold) {
+          setDetectedStudentId(bestStudentId);
+
+          if (
+            bestStudentId !== lastMarkedRef.current &&
+            !markedStudents.has(bestStudentId)
+          ) {
+            const student = lookup.get(bestStudentId);
+            if (student) {
+              onAttendanceMarked(bestStudentId, AttendanceStatus.PRESENT);
+              lastMarkedRef.current = bestStudentId;
+              toast.success(`Attendance marked for ${student.name}`);
+            }
+          }
+        } else {
+          setDetectedStudentId(null);
+        }
+
+        const dims = faceApi.matchDimensions(canvas, video, true);
+        const resizedDetections = faceApi.resizeResults(detections, dims);
+        faceApi.draw.drawDetections(canvas, resizedDetections);
+      } catch {
+        // Avoid spamming toasts on transient detection errors
       }
     };
 
@@ -211,14 +190,30 @@ export function FaceRecognitionScanner({
         clearInterval(detectionIntervalRef.current);
       }
     };
-  }, [isCameraActive, faceApi, registeredFaces, detectedStudent, markedStudents, onAttendanceMarked]);
+  }, [
+    isCameraActive,
+    faceApi,
+    descriptors,
+    distanceThreshold,
+    markedStudents,
+    onAttendanceMarked,
+    studentMap,
+  ]);
 
-  if (isModelLoading) {
+  const detectedStudent = detectedStudentId
+    ? studentMap().get(detectedStudentId)
+    : null;
+
+  if (isModelLoading || isLoadingDescriptors) {
     return (
       <Card>
         <CardContent className="p-8 flex flex-col items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">Loading face recognition models...</p>
+          <p className="text-muted-foreground">
+            {isModelLoading
+              ? 'Loading face recognition models...'
+              : 'Loading enrolled faces...'}
+          </p>
         </CardContent>
       </Card>
     );
@@ -243,11 +238,11 @@ export function FaceRecognitionScanner({
                 {t('inactive')}
               </Badge>
             )}
+            <Badge variant="secondary">{descriptors.length} enrolled</Badge>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Camera Preview */}
         <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
           <video
             ref={videoRef}
@@ -270,11 +265,14 @@ export function FaceRecognitionScanner({
           )}
         </div>
 
-        {/* Controls */}
         <div className="flex items-center justify-between">
           <div className="flex gap-2">
             {!isCameraActive ? (
-              <Button onClick={startCamera} className="gap-2">
+              <Button
+                onClick={startCamera}
+                className="gap-2"
+                disabled={descriptors.length === 0}
+              >
                 <Camera className="h-4 w-4" />
                 Start Camera
               </Button>
@@ -286,23 +284,15 @@ export function FaceRecognitionScanner({
             )}
           </div>
 
-          {/* Detection Status */}
           {detectedStudent && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg">
               <CheckCircle2 className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">{detectedStudent.name}</span>
               <Badge variant="outline" className="text-xs">
-                {detectedStudent.registrationNumber}
+                {detectedStudent.registration_number}
               </Badge>
             </div>
           )}
-        </div>
-
-        {/* Instructions */}
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p>• Position your face in the center of the camera</p>
-          <p>• Ensure good lighting for best recognition</p>
-          <p>• Attendance will be marked automatically when recognized</p>
         </div>
       </CardContent>
     </Card>
