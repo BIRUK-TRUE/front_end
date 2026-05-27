@@ -21,11 +21,11 @@ import {
 } from "lucide-react";
 import { useAcademicYears } from "@/features/academics/api/useAcademicYears";
 import { reportsService } from "@/lib/api/reports.service";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export default function ReportsPage() {
   const t = useTranslations("reports");
-  const { toast } = useToast();
+
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [reportType, setReportType] = useState<string>("overview");
   const [isExporting, setIsExporting] = useState<string | null>(null);
@@ -89,16 +89,13 @@ export default function ReportsPage() {
       window.URL.revokeObjectURL(downloadUrl);
       document.body.removeChild(a);
       
-      toast({
-        title: "Export successful",
+      toast.success("Export successful", {
         description: `${type} data has been exported successfully.`,
       });
     } catch (error) {
       console.error("Export error:", error);
-      toast({
-        title: "Export failed",
+      toast.error("Export failed", {
         description: `Failed to export ${type} data. Please try again.`,
-        variant: "destructive",
       });
     } finally {
       setIsExporting(null);
