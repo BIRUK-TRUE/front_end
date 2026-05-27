@@ -290,7 +290,12 @@ export default function SubjectAssignmentPage() {
         />
       )}
 
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+      <Dialog open={showConfirmDialog} onOpenChange={(open) => {
+        // Prevent closing dialog while mutation is pending
+        if (!bulkAssignMutation.isPending) {
+          setShowConfirmDialog(open);
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -316,12 +321,29 @@ export default function SubjectAssignmentPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowConfirmDialog(false)}
+              disabled={bulkAssignMutation.isPending}
+            >
               {tc('cancel')}
             </Button>
-            <Button onClick={confirmAssignment} className="gap-2">
-              <CheckCircle2 className="h-4 w-4" />
-              {tc('confirm')}
+            <Button 
+              onClick={confirmAssignment} 
+              disabled={bulkAssignMutation.isPending}
+              className="gap-2"
+            >
+              {bulkAssignMutation.isPending ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  <span>{tc('loading')}</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  {tc('confirm')}
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
