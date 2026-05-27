@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +20,7 @@ import {
 } from "lucide-react";
 import { useAcademicYears } from "@/features/academics/api/useAcademicYears";
 import { reportsService } from "@/lib/api/reports.service";
+import { useReportsData } from "@/hooks/useReportsData";
 import { toast } from "sonner";
 
 export default function ReportsPage() {
@@ -33,30 +33,19 @@ export default function ReportsPage() {
   const { data: academicYearsData } = useAcademicYears(1, 100);
   const academicYears = academicYearsData?.items || [];
 
-  // Fetch real stats from backend
-  const { data: stats, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['reports', 'summary', selectedYear],
-    queryFn: () => reportsService.getSummary({ 
-      ...(selectedYear && { classId: selectedYear })
-    }),
-  });
+  // Use optimized data fetching hook
+  const {
+    stats,
+    isInitialLoading,
+    gradeDistribution,
+    attendanceTrend,
+  } = useReportsData({ selectedYear, reportType });
 
-  // Fetch grade distribution
-  const { data: gradeDistribution } = useQuery({
-    queryKey: ['reports', 'grade-distribution', selectedYear],
-    queryFn: () => reportsService.getGradeDistribution({
-      ...(selectedYear && { classId: selectedYear })
-    }),
-  });
-
-  // Fetch attendance trend (last 30 days)
-  const { data: attendanceTrend } = useQuery({
-    queryKey: ['reports', 'attendance-trend', selectedYear],
-    queryFn: () => reportsService.getAttendanceTrend({
-      days: 30,
-      ...(selectedYear && { classId: selectedYear })
-    }),
-  });
+  // Memoize computed values
+  const presentToday = useMemo(() => {
+    if (!stats?.total_students || !stats?.attendance_rate) return 0;
+    return Math.round(stats.total_students * stats.attendance_rate / 100);
+  }, [stats?.total_students, stats?.attendance_rate]);
 
   const handleExport = async (type: string) => {
     setIsExporting(type);
@@ -134,7 +123,7 @@ export default function ReportsPage() {
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoadingStats ? (
+            {isInitialLoading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
               <>
@@ -153,7 +142,7 @@ export default function ReportsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoadingStats ? (
+            {isInitialLoading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
               <>
@@ -172,7 +161,7 @@ export default function ReportsPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoadingStats ? (
+            {isInitialLoading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
               <>
@@ -189,7 +178,7 @@ export default function ReportsPage() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoadingStats ? (
+            {isInitialLoading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
               <>
@@ -283,7 +272,7 @@ export default function ReportsPage() {
                 <div className="rounded-lg border p-4">
                   <div className="text-sm font-medium text-muted-foreground">{t("collected")}</div>
                   <div className="mt-2 text-2xl font-bold text-green-600">
-                    {isLoadingStats ? (
+                    {isInitialLoading ? (
                       <Skeleton className="h-8 w-24" />
                     ) : (
                       `${stats?.total_students || 0} students`
@@ -294,7 +283,7 @@ export default function ReportsPage() {
                 <div className="rounded-lg border p-4">
                   <div className="text-sm font-medium text-muted-foreground">{t("pending")}</div>
                   <div className="mt-2 text-2xl font-bold text-orange-600">
-                    {isLoadingStats ? (
+                    {isInitialLoading ? (
                       <Skeleton className="h-8 w-24" />
                     ) : (
                       `${stats?.pending_payments || 0}`
@@ -305,7 +294,7 @@ export default function ReportsPage() {
                 <div className="rounded-lg border p-4">
                   <div className="text-sm font-medium text-muted-foreground">{t("collectionRate")}</div>
                   <div className="mt-2 text-2xl font-bold text-blue-600">
-                    {isLoadingStats ? (
+                    {isInitialLoading ? (
                       <Skeleton className="h-8 w-24" />
                     ) : (
                       `${stats?.attendance_rate?.toFixed(1) || 0}%`
@@ -347,7 +336,7 @@ export default function ReportsPage() {
                       <div className="text-sm text-muted-foreground">{t("allSubjects")}</div>
                     </div>
                   </div>
-                  {isLoadingStats ? (
+                  {isInitialLoading ? (
                     <Skeleton className="h-8 w-16" />
                   ) : (
                     <div className="text-2xl font-bold">{stats?.average_grade?.toFixed(1) || 0}%</div>
@@ -412,7 +401,7 @@ export default function ReportsPage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="rounded-lg border p-4">
                     <div className="text-sm font-medium text-muted-foreground">{t("overallAttendance")}</div>
-                    {isLoadingStats ? (
+                    {isInitialLoading ? (
                       <Skeleton className="h-10 w-24 mt-2" />
                     ) : (
                       <>
@@ -424,13 +413,11 @@ export default function ReportsPage() {
                   
                   <div className="rounded-lg border p-4">
                     <div className="text-sm font-medium text-muted-foreground">{t("presentToday")}</div>
-                    {isLoadingStats ? (
+                    {isInitialLoading ? (
                       <Skeleton className="h-10 w-24 mt-2" />
                     ) : (
                       <>
-                        <div className="mt-2 text-3xl font-bold">
-                          {Math.round((stats?.total_students || 0) * (stats?.attendance_rate || 0) / 100)}
-                        </div>
+                        <div className="mt-2 text-3xl font-bold">{presentToday}</div>
                         <div className="mt-1 text-xs text-muted-foreground">
                           of {stats?.total_students || 0} students
                         </div>

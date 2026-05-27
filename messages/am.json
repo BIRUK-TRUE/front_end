@@ -190,7 +190,13 @@
     "updating": "በማዘመን ላይ...",
     "resetting": "በማዘምን ላይ...",
     "resetPasswordFailed": "የይለፍ ቃሉን መቀየር አልተሳካም",
-    "changePasswordFailed": "የይለፍ ቃሉን መቀየር አልተሳካም። እባክዎ የአሁኑን የይለፍ ቃል ያረጋግጡ።"
+    "changePasswordFailed": "የይለፍ ቃሉን መቀየር አልተሳካም። እባክዎ የአሁኑን የይለፍ ቃል ያረጋግጡ።",
+    "unauthorized": {
+      "title": "መዳረሻ ተከልክሏል",
+      "message": "ይህንን ገጽ ለመድረስ ፍቃድ የለዎትም። ይህ ስህተት ነው ብለው ካመኑ እባክዎ አስተዳዳሪዎን ያነጋግሩ።",
+      "yourRole": "የእርስዎ ሚና፡ {role}",
+      "goToDashboard": "ወደ ዳሽቦርድ ሂድ"
+    }
   },
   "nav": {
     "dashboard": "ዳሽቦርድ",

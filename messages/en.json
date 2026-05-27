@@ -185,7 +185,13 @@
     "updating": "Updating...",
     "resetting": "Resetting...",
     "resetPasswordFailed": "Failed to reset password",
-    "changePasswordFailed": "Failed to change password. Please check your current password."
+    "changePasswordFailed": "Failed to change password. Please check your current password.",
+    "unauthorized": {
+      "title": "Access Denied",
+      "message": "You don't have permission to access this page. Please contact your administrator if you believe this is an error.",
+      "yourRole": "Your role: {role}",
+      "goToDashboard": "Go to Dashboard"
+    }
   },
   "nav": {
     "dashboard": "Dashboard",
