@@ -42,17 +42,28 @@ export default function ClassroomPhotoPage() {
   const handleUpload = async () => {
     if (!photo || !selectedSectionId) return;
 
-    recognizeFaces.mutate({ sectionId: selectedSectionId, photo }, {
-      onSuccess: (data) => {
-        toast.success(`Recognized ${data.count} students. Attendance draft created.`);
-        // Redirect to attendance page with the section and date selected?
-        // For now just go back
-        router.push('/dashboard/attendance');
-      },
-      onError: () => {
-        toast.error("Failed to process image. Ensure it's a clear photo of the classroom.");
+    try {
+      // Extract face descriptors from the classroom photo
+      const { extractFaceDescriptorsFromFile } = await import('@/lib/face/extract-descriptors');
+      const descriptors = await extractFaceDescriptorsFromFile(photo);
+
+      if (!descriptors?.length) {
+        toast.error("No faces detected in the image. Please try a clearer photo.");
+        return;
       }
-    });
+
+      recognizeFaces.mutate({ sectionId: selectedSectionId, descriptors }, {
+        onSuccess: (data) => {
+          toast.success(`Recognized ${data.recognizedCount} students. Attendance draft created.`);
+          router.push('/dashboard/attendance');
+        },
+        onError: () => {
+          toast.error("Failed to process image. Ensure it's a clear photo of the classroom.");
+        }
+      });
+    } catch {
+      toast.error("Failed to extract faces from the image. Please try again.");
+    }
   };
 
   return (
