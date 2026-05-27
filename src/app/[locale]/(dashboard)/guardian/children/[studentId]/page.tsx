@@ -2,37 +2,37 @@
 
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { useAuthStore } from "@/lib/store/auth-store";
 import { useAuthReady } from "@/hooks/use-auth-ready";
 import { useMyChildren } from "@/features/guardian-portal/hooks/useMyChildren";
-import { useChildDetails } from "@/features/guardian-portal/hooks/useChildDetails";
 import { ChildDetailTabs } from "@/features/guardian-portal/components/ChildDetailTabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+import type { ChildDetails } from "@/features/guardian-portal/types";
 
 export default function ChildDetailPage() {
   const params = useParams();
   const studentId = params.studentId as string;
-  const tc = useTranslations("common");
   const t = useTranslations("guardianPortal.childDetail");
-  
-  // CRITICAL IDOR SECURITY CHECK (Check Group 10.1)
-  const { user } = useAuthStore();
   const authReady = useAuthReady();
-  const guardianId = user?.id ?? '';
-  
-  // 1. Fetch guardian's linked children
-  const { data: children, isLoading: isLoadingChildren } = useMyChildren();
-  
-  // 2. Verify studentId from URL is in guardian's children list
-  const isAuthorized = children?.some(child => child.id === studentId);
-  
-  // 3. Only fetch child data if authorized
-  const { data: child, isLoading: isLoadingChild, isError } = useChildDetails(studentId);
 
-  if (!authReady || isLoadingChildren) {
+  const { data: children, isLoading, isError } = useMyChildren();
+
+  const matchedChild = children?.find(
+    (child) => String(child.id) === String(studentId),
+  );
+
+  const child: ChildDetails | undefined = matchedChild
+    ? {
+        ...matchedChild,
+        guardian_owned: true,
+        enrollment_date: "",
+        academic_year: "",
+      }
+    : undefined;
+
+  if (!authReady || isLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-10 w-64" />
@@ -42,37 +42,7 @@ export default function ChildDetailPage() {
     );
   }
 
-  // 4. If not authorized: show 403 unauthorized message, fetch nothing
-  if (!isAuthorized) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
-        <div className="h-16 w-16 rounded-full bg-orange-100 flex items-center justify-center">
-          <AlertCircle className="h-8 w-8 text-orange-600" />
-        </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-bold">{t("accessDenied")}</h2>
-          <p className="text-muted-foreground max-w-md">
-            {t("accessDeniedDesc")}
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href="/dashboard/guardian">{t("returnToDashboard")}</Link>
-        </Button>
-      </div>
-    );
-  }
-
-  if (isLoadingChild) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-96 w-full" />
-      </div>
-    );
-  }
-
-  if (isError || !child) {
+  if (isError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
         <div className="h-16 w-16 rounded-full bg-red-100 flex items-center justify-center">
@@ -91,6 +61,25 @@ export default function ChildDetailPage() {
     );
   }
 
+  if (!child) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
+        <div className="h-16 w-16 rounded-full bg-orange-100 flex items-center justify-center">
+          <AlertCircle className="h-8 w-8 text-orange-600" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold">{t("accessDenied")}</h2>
+          <p className="text-muted-foreground max-w-md">
+            {t("accessDeniedDesc")}
+          </p>
+        </div>
+        <Button asChild variant="outline">
+          <Link href="/dashboard/guardian">{t("returnToDashboard")}</Link>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex items-center gap-4">
@@ -100,7 +89,7 @@ export default function ChildDetailPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{child.fullName}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{child.full_name}</h1>
           <p className="text-muted-foreground">{t("detailedView")}</p>
         </div>
       </div>

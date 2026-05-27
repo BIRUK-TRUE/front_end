@@ -1,16 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  User, 
-  Calendar, 
-  GraduationCap, 
-  Wallet, 
+import {
+  User,
+  Calendar,
+  GraduationCap,
+  Wallet,
   Clock,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 import type { ChildDetails } from "../types";
 import { GuardianAttendanceView } from "./GuardianAttendanceView";
@@ -62,28 +61,44 @@ export function ChildDetailTabs({ child }: Props) {
             <CardContent className="space-y-6">
               <div className="flex items-center gap-6">
                 <div className="h-24 w-24 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-3xl font-bold border-2 border-primary/20 overflow-hidden">
-                  {child.photoUrl ? (
-                    <img src={child.photoUrl} alt={child.fullName} className="h-full w-full object-cover" />
+                  {child.photo_url ? (
+                    <img
+                      src={child.photo_url}
+                      alt={child.full_name}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
-                    child.fullName.slice(0, 2).toUpperCase()
+                    (child.full_name ?? "?").slice(0, 2).toUpperCase()
                   )}
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-2xl font-bold">{child.fullName}</h3>
-                  <p className="text-muted-foreground">{child.studentId} • {child.className} - {child.sectionName}</p>
-                  <p className="text-xs bg-primary/10 text-primary w-fit px-2 py-0.5 rounded-full font-bold uppercase tracking-wider mt-2">
-                    {child.academicYear}
+                  <h3 className="text-2xl font-bold">{child.full_name}</h3>
+                  <p className="text-muted-foreground">
+                    {child.student_id} • {child.class_name} - {child.section_name}
                   </p>
+                  {child.academic_year ? (
+                    <p className="text-xs bg-primary/10 text-primary w-fit px-2 py-0.5 rounded-full font-bold uppercase tracking-wider mt-2">
+                      {child.academic_year}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-6 border-t pt-6">
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{t("overviewTab.enrollmentDate")}</p>
-                  <p className="font-medium">{new Date(child.enrollmentDate).toLocaleDateString()}</p>
+                  <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t("overviewTab.enrollmentDate")}
+                  </p>
+                  <p className="font-medium">
+                    {child.enrollment_date
+                      ? new Date(child.enrollment_date).toLocaleDateString()
+                      : "—"}
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{t("overviewTab.status")}</p>
+                  <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t("overviewTab.status")}
+                  </p>
                   <p className="font-medium text-green-600">{t("overviewTab.active")}</p>
                 </div>
               </div>
@@ -94,17 +109,25 @@ export function ChildDetailTabs({ child }: Props) {
             <Card className="shadow-sm border-l-4 border-l-primary">
               <CardContent className="pt-6 space-y-4">
                 <div className="space-y-1">
-                  <p className="text-sm font-bold uppercase text-muted-foreground tracking-tighter">{t("overviewTab.attendanceRate")}</p>
+                  <p className="text-sm font-bold uppercase text-muted-foreground tracking-tighter">
+                    {t("overviewTab.attendanceRate")}
+                  </p>
                   <div className="flex items-end justify-between">
-                    <span className="text-4xl font-black text-primary">{child.attendanceRate}%</span>
-                    <span className="text-sm text-muted-foreground mb-1">{t("overviewTab.target")}</span>
+                    <span className="text-4xl font-black text-primary">
+                      {child.attendance_rate}%
+                    </span>
+                    <span className="text-sm text-muted-foreground mb-1">
+                      {t("overviewTab.target")}
+                    </span>
                   </div>
                 </div>
-                <Progress value={child.attendanceRate} className="h-2" />
-                {child.attendanceRate < 75 && (
+                <Progress value={child.attendance_rate} className="h-2" />
+                {child.attendance_rate < 75 && (
                   <div className="flex items-center gap-2 p-2 bg-red-50 text-red-700 rounded-md border border-red-100">
                     <AlertCircle className="h-4 w-4" />
-                    <span className="text-[10px] font-bold">{t("overviewTab.belowMinimum")}</span>
+                    <span className="text-[10px] font-bold">
+                      {t("overviewTab.belowMinimum")}
+                    </span>
                   </div>
                 )}
               </CardContent>
@@ -113,13 +136,19 @@ export function ChildDetailTabs({ child }: Props) {
             <Card className="shadow-sm border-l-4 border-l-blue-500">
               <CardContent className="pt-6 space-y-4">
                 <div className="space-y-1">
-                  <p className="text-sm font-bold uppercase text-muted-foreground tracking-tighter">{t("overviewTab.currentAcademicAvg")}</p>
+                  <p className="text-sm font-bold uppercase text-muted-foreground tracking-tighter">
+                    {t("overviewTab.currentAcademicAvg")}
+                  </p>
                   <div className="flex items-end justify-between">
-                    <span className="text-4xl font-black text-blue-600">{child.gradeAverage}%</span>
-                    <span className="text-sm text-muted-foreground mb-1">{t("overviewTab.rawScoreSum")}</span>
+                    <span className="text-4xl font-black text-blue-600">
+                      {child.grade_average}%
+                    </span>
+                    <span className="text-sm text-muted-foreground mb-1">
+                      {t("overviewTab.rawScoreSum")}
+                    </span>
                   </div>
                 </div>
-                <Progress value={child.gradeAverage} className="h-2 bg-blue-100" />
+                <Progress value={child.grade_average} className="h-2 bg-blue-100" />
               </CardContent>
             </Card>
           </div>
@@ -135,7 +164,7 @@ export function ChildDetailTabs({ child }: Props) {
       </TabsContent>
 
       <TabsContent value="fees">
-        <GuardianFeesView studentId={child.id} studentName={child.fullName} />
+        <GuardianFeesView studentId={child.id} studentName={child.full_name} />
       </TabsContent>
 
       <TabsContent value="schedule">

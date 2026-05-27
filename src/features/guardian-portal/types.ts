@@ -26,9 +26,9 @@ export interface GuardianAlert {
 }
 
 export interface ChildDetails extends ChildSummary {
-  guardianOwned: boolean;
-  enrollmentDate: string;
-  academicYear: string;
+  guardian_owned?: boolean;
+  enrollment_date?: string;
+  academic_year?: string;
 }
 
 export interface FeeBreakdown {

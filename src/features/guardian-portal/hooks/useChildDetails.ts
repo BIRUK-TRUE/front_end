@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { axiosInstance as api } from '@/lib/api/axios';
 import { queryKeys } from '@/lib/api/query-keys';
-import { useAuthStore } from '@/lib/store/auth-store';
 import { useAuthReady } from '@/hooks/use-auth-ready';
 import type { ChildDetails } from '../types';
 import type { AttendanceRecord, PaginatedResponse } from '../../student-portal/types';
+import { useMyChildren } from './useMyChildren';
 
 interface AttendanceFilters {
   page?: number;
@@ -20,21 +20,32 @@ interface GradeFilters {
   yearId?: string;
 }
 
+function toChildDetails(child: NonNullable<ReturnType<typeof useMyChildren>['data']>[number]): ChildDetails {
+  return {
+    ...child,
+    guardian_owned: true,
+    enrollment_date: '',
+    academic_year: '',
+  };
+}
+
 /**
- * Get child/student details.
- * Backend: GET /students/{id}
+ * Get child details for a guardian-linked student.
+ * Reuses the guardian children list (same dashboard payload) to avoid duplicate API calls.
  */
 export function useChildDetails(studentId: string) {
-  const authReady = useAuthReady();
+  const childrenQuery = useMyChildren();
 
-  return useQuery({
-    queryKey: queryKeys.guardianPortal.childDetails(studentId),
-    queryFn: async (): Promise<ChildDetails> => {
-      const { data } = await api.get(`/students/${studentId}`);
-      return data;
-    },
-    enabled: authReady && !!studentId,
-  });
+  const matched = childrenQuery.data?.find(
+    (child) => String(child.id) === String(studentId),
+  );
+
+  return {
+    ...childrenQuery,
+    data: matched ? toChildDetails(matched) : undefined,
+    isError: childrenQuery.isError,
+    isLoading: childrenQuery.isLoading,
+  };
 }
 
 /**
@@ -54,7 +65,7 @@ export function useChildAttendance(studentId: string, filters: AttendanceFilters
             page: filters.page ?? 1,
             size: filters.size ?? 50,
           },
-        }
+        },
       );
       return data;
     },
@@ -83,7 +94,6 @@ export function useChildGrades(studentId: string, filters: GradeFilters) {
         );
         return data;
       } catch {
-        // Guardian may not have direct access to this endpoint
         return { items: [], subjects: [] };
       }
     },
@@ -94,9 +104,6 @@ export function useChildGrades(studentId: string, filters: GradeFilters) {
 /**
  * Get child schedule.
  * Backend: GET /schedule/section/{section_id}
- *
- * Since we need the section_id (not student_id), this requires
- * first fetching the student's enrollment to determine their section.
  */
 export function useChildSchedule(studentId: string) {
   const authReady = useAuthReady();
@@ -105,13 +112,12 @@ export function useChildSchedule(studentId: string) {
     queryKey: queryKeys.guardianPortal.schedule(studentId),
     queryFn: async () => {
       try {
-        // Get student's current enrollment to find section
         const { data: enrollments } = await api.get(
           `/enrollments/student/${studentId}`,
         );
         const items = enrollments?.items ?? (Array.isArray(enrollments) ? enrollments : []);
         const activeEnrollment = items.find(
-          (e: Record<string, unknown>) => e.status === 'active'
+          (e: Record<string, unknown>) => e.status === 'active',
         );
 
         if (!activeEnrollment?.section_id) return [];
