@@ -126,10 +126,19 @@ export function useQualifiedTeachers(subjectId: string, gradeLevel: number, stre
         params.append('stream', stream);
       }
       
-      const { data } = await axiosInstance.get<TeacherQualification[]>(
-        `/teachers/subjects/${subjectId}/qualified-teachers?${params}`
-      );
-      return data;
+      console.log('Fetching qualified teachers for subject:', subjectId, 'grade:', gradeLevel, 'stream:', stream);
+      try {
+        const { data } = await axiosInstance.get<TeacherQualification[]>(
+          `/teachers/subjects/${subjectId}/qualified-teachers?${params}`
+        );
+        console.log('Qualified teachers response:', data);
+        return data;
+      } catch (error: any) {
+        console.error('Error fetching qualified teachers:', error);
+        console.error('Error response:', error.response);
+        console.error('Error detail:', error.response?.data?.detail);
+        throw error;
+      }
     },
     enabled: !!subjectId && gradeLevel >= 0,
   });

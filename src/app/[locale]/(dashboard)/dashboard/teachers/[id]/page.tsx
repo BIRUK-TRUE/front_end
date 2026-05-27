@@ -23,6 +23,7 @@ import { useTerms } from '@/features/academics/api/useTerms';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmptyState } from '@/components/shared/empty-state';
 import { useState } from 'react';
+import { TeacherQualifications } from '@/features/teachers/components/TeacherQualifications';
 
 function TeacherDetailPage() {
   const t = useTranslations('teachers');
@@ -99,10 +100,14 @@ function TeacherDetailPage() {
       />
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full max-w-[600px] grid-cols-3">
+        <TabsList className="grid w-full max-w-[800px] grid-cols-4">
           <TabsTrigger value="profile" className="gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">{tc('profile')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="qualifications" className="gap-2">
+            <GraduationCap className="h-4 w-4" />
+            <span className="hidden sm:inline">Qualifications</span>
           </TabsTrigger>
           <TabsTrigger value="classes" className="gap-2">
             <Briefcase className="h-4 w-4" />
@@ -156,6 +161,10 @@ function TeacherDetailPage() {
               </Card>
             )}
           </div>
+        </TabsContent>
+
+        <TabsContent value="qualifications" className="space-y-6 outline-none">
+          <TeacherQualifications teacherId={id} />
         </TabsContent>
 
         <TabsContent value="classes" className="space-y-6 outline-none">

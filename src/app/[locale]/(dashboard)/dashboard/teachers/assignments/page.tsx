@@ -72,32 +72,56 @@ export default function TeacherAssignmentPage() {
   const [selectedTeacher, setSelectedTeacher] = useState<string>('');
 
   // Fetch classes
-  const { data: classes } = useQuery({
+  const { data: classes, isLoading: isLoadingClasses, error: classesError } = useQuery({
     queryKey: ['classes'],
     queryFn: async () => {
-      const { data } = await axiosInstance.get('/academics/classes');
-      return data.items || [];
+      try {
+        const { data } = await axiosInstance.get('/academics/classes');
+        console.log('Classes response:', data);
+        return data.items || [];
+      } catch (error) {
+        console.error('Error fetching classes:', error);
+        throw error;
+      }
     },
   });
 
   // Fetch sections for selected class
-  const { data: sections } = useQuery({
+  const { data: sections, isLoading: isLoadingSections, error: sectionsError } = useQuery({
     queryKey: ['sections', selectedClass],
     queryFn: async () => {
       if (!selectedClass) return [];
-      const { data } = await axiosInstance.get(`/academics/classes/${selectedClass}/sections`);
-      return data.items || [];
+      try {
+        const { data } = await axiosInstance.get(`/academics/classes/${selectedClass}/sections`);
+        console.log('Sections response:', data);
+        return data || [];  // Returns array directly, not wrapped in items
+      } catch (error) {
+        console.error('Error fetching sections:', error);
+        throw error;
+      }
     },
     enabled: !!selectedClass,
   });
 
   // Fetch subjects for selected class
-  const { data: classSubjects } = useQuery({
+  const { data: classSubjects, isLoading: isLoadingSubjects, error: subjectsError } = useQuery({
     queryKey: ['class-subjects', selectedClass],
     queryFn: async () => {
       if (!selectedClass) return [];
-      const { data } = await axiosInstance.get(`/academics/classes/${selectedClass}/subjects`);
-      return data || [];
+      try {
+        const { data } = await axiosInstance.get(`/academics/classes/${selectedClass}/subjects`);
+        console.log('Class subjects response:', data);
+        // Transform ClassSubjectResponse to Subject-like structure for display
+        return (data || []).map((cs: any) => ({
+          id: cs.subject_id,
+          code: cs.subject_code,
+          name: cs.subject_name,
+          ...cs  // Keep all original fields
+        }));
+      } catch (error) {
+        console.error('Error fetching class subjects:', error);
+        throw error;
+      }
     },
     enabled: !!selectedClass,
   });
@@ -117,7 +141,7 @@ export default function TeacherAssignmentPage() {
   const currentClass = classes?.find((c: any) => c.id === selectedClass);
   const currentSubject = classSubjects?.find((s: Subject) => s.id === selectedSubject);
 
-  const { data: qualifiedTeachers } = useQualifiedTeachers(
+  const { data: qualifiedTeachers, isLoading: isLoadingTeachers, error: teachersError } = useQualifiedTeachers(
     selectedSubject || '',
     currentClass?.grade_level || 0,
     currentClass?.stream || undefined
@@ -182,6 +206,9 @@ export default function TeacherAssignmentPage() {
   };
 
   const openAssignmentDialog = (subjectId: string) => {
+    console.log('Opening assignment dialog for subject:', subjectId);
+    console.log('Current class:', currentClass);
+    console.log('Current subject:', classSubjects?.find((s: Subject) => s.id === subjectId));
     setSelectedSubject(subjectId);
     setAssignmentDialogOpen(true);
   };
@@ -216,36 +243,72 @@ export default function TeacherAssignmentPage() {
             {/* Class Selection */}
             <div className="grid gap-2">
               <Label>Class/Grade *</Label>
-              <Select value={selectedClass} onValueChange={setSelectedClass}>
+              <Select value={selectedClass} onValueChange={setSelectedClass} disabled={isLoadingClasses}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select class" />
+                  <SelectValue placeholder={
+                    isLoadingClasses 
+                      ? "Loading classes..." 
+                      : classesError 
+                        ? "Error loading classes" 
+                        : "Select class"
+                  } />
                 </SelectTrigger>
                 <SelectContent>
-                  {classes?.map((cls: any) => (
-                    <SelectItem key={cls.id} value={cls.id}>
-                      Grade {cls.grade_level} - {cls.name}
-                      {cls.stream && ` (${cls.stream.replace('_', ' ')})`}
-                    </SelectItem>
-                  ))}
+                  {classes && classes.length > 0 ? (
+                    classes.map((cls: any) => (
+                      <SelectItem key={cls.id} value={cls.id}>
+                        Grade {cls.grade_level} - {cls.name}
+                        {cls.stream && ` (${cls.stream.replace('_', ' ')})`}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    !isLoadingClasses && !classesError && (
+                      <SelectItem value="no-classes" disabled>
+                        No classes available
+                      </SelectItem>
+                    )
+                  )}
                 </SelectContent>
               </Select>
+              {classesError && (
+                <p className="text-sm text-destructive">Failed to load classes</p>
+              )}
             </div>
 
             {/* Section Selection */}
             <div className="grid gap-2">
               <Label>Section *</Label>
-              <Select value={selectedSection} onValueChange={setSelectedSection}>
+              <Select value={selectedSection} onValueChange={setSelectedSection} disabled={!selectedClass || isLoadingSections}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select section" />
+                  <SelectValue placeholder={
+                    !selectedClass 
+                      ? "Select class first" 
+                      : isLoadingSections 
+                        ? "Loading sections..." 
+                        : sectionsError 
+                          ? "Error loading sections" 
+                          : "Select section"
+                  } />
                 </SelectTrigger>
                 <SelectContent>
-                  {sections?.map((section: Section) => (
-                    <SelectItem key={section.id} value={section.id}>
-                      {section.name} (Capacity: {section.capacity})
-                    </SelectItem>
-                  ))}
+                  {sections && sections.length > 0 ? (
+                    sections.map((section: Section) => (
+                      <SelectItem key={section.id} value={section.id}>
+                        {section.name} (Capacity: {section.capacity})
+                      </SelectItem>
+                    ))
+                  ) : (
+                    !isLoadingSections && !sectionsError && selectedClass && (
+                      <SelectItem value="no-sections" disabled>
+                        No sections available for this class
+                      </SelectItem>
+                    )
+                  )}
                 </SelectContent>
               </Select>
+              {sectionsError && (
+                <p className="text-sm text-destructive">Failed to load sections</p>
+              )}
             </div>
           </div>
 
@@ -262,7 +325,7 @@ export default function TeacherAssignmentPage() {
       </Card>
 
       {/* Assignment Matrix */}
-      {selectedSection && classSubjects && classSubjects.length > 0 && (
+      {selectedSection && (
         <Card>
           <CardHeader>
             <CardTitle>Teacher Assignments</CardTitle>
@@ -271,6 +334,15 @@ export default function TeacherAssignmentPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {isLoadingSubjects ? (
+              <div className="flex items-center justify-center py-8">
+                <p className="text-muted-foreground">Loading subjects...</p>
+              </div>
+            ) : subjectsError ? (
+              <div className="flex items-center justify-center py-8">
+                <p className="text-destructive">Failed to load subjects</p>
+              </div>
+            ) : classSubjects && classSubjects.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -354,6 +426,11 @@ export default function TeacherAssignmentPage() {
                 })}
               </TableBody>
             </Table>
+            ) : (
+              <div className="flex items-center justify-center py-8">
+                <p className="text-muted-foreground">No subjects assigned to this class</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -373,7 +450,25 @@ export default function TeacherAssignmentPage() {
             <div className="space-y-2">
               <Label>Qualified Teachers</Label>
               <div className="border rounded-lg divide-y max-h-[300px] overflow-y-auto">
-                {qualifiedTeachers?.length === 0 ? (
+                {isLoadingTeachers ? (
+                  <div className="p-4 text-center text-muted-foreground">
+                    Loading qualified teachers...
+                  </div>
+                ) : teachersError ? (
+                  <div className="p-4 text-center">
+                    <p className="text-destructive font-medium">Failed to load qualified teachers</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {(teachersError as any)?.response?.data?.detail || 'Unknown error occurred'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Check browser console for more details
+                    </p>
+                  </div>
+                ) : !selectedSubject ? (
+                  <div className="p-4 text-center text-muted-foreground">
+                    Please select a subject first
+                  </div>
+                ) : qualifiedTeachers?.length === 0 ? (
                   <div className="p-4 text-center text-muted-foreground">
                     No qualified teachers found for this subject and grade level
                   </div>
