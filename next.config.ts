@@ -5,7 +5,17 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   experimental: {
-    optimizePackageImports: ['lucide-react', 'recharts', 'date-fns'],
+    optimizePackageImports: [
+      'lucide-react',
+      'recharts',
+      'date-fns',
+      'face-api.js',
+      'jspdf',
+      'html-to-image',
+      '@tanstack/react-query',
+      '@tanstack/react-table',
+      'zod',
+    ],
   },
   allowedDevOrigins: [
     'localhost',
