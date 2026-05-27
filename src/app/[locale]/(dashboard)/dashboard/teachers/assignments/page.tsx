@@ -63,6 +63,78 @@ interface TeacherAssignment {
   subject_name: string;
 }
 
+// Fallback component: show all active teachers when no qualifications are set up
+function AllTeachersFallback({
+  selectedTeacher,
+  setSelectedTeacher,
+}: {
+  selectedTeacher: string;
+  setSelectedTeacher: (id: string) => void;
+}) {
+  const { data: allTeachers, isLoading } = useQuery({
+    queryKey: ['all-active-teachers'],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get('/teachers?page=1&size=100&status=active');
+      return data.items || [];
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        Loading all teachers...
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="p-3 bg-yellow-50 dark:bg-yellow-950/30 border-b">
+        <div className="flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+              No qualifications set up
+            </p>
+            <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-0.5">
+              Showing all active teachers. Set up teacher qualifications for better filtering.
+            </p>
+          </div>
+        </div>
+      </div>
+      {allTeachers && allTeachers.length > 0 ? (
+        allTeachers.map((teacher: any) => {
+          const isSelected = selectedTeacher === teacher.id;
+          return (
+            <div
+              key={teacher.id}
+              className={`p-3 cursor-pointer hover:bg-muted transition-colors ${
+                isSelected ? 'bg-primary/10' : ''
+              }`}
+              onClick={() => setSelectedTeacher(teacher.id)}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{teacher.user?.full_name || teacher.full_name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {teacher.employee_id}
+                    {teacher.specialization && ` • ${teacher.specialization}`}
+                  </p>
+                </div>
+                {isSelected && <CheckCircle className="h-5 w-5 text-primary" />}
+              </div>
+            </div>
+          );
+        })
+      ) : (
+        <div className="p-4 text-center text-muted-foreground">
+          No active teachers found
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function TeacherAssignmentPage() {
   const queryClient = useQueryClient();
   const [selectedClass, setSelectedClass] = useState<string>('');
@@ -113,10 +185,10 @@ export default function TeacherAssignmentPage() {
         console.log('Class subjects response:', data);
         // Transform ClassSubjectResponse to Subject-like structure for display
         return (data || []).map((cs: any) => ({
+          ...cs,  // Spread first so explicit overrides below take precedence
           id: cs.subject_id,
           code: cs.subject_code,
           name: cs.subject_name,
-          ...cs  // Keep all original fields
         }));
       } catch (error) {
         console.error('Error fetching class subjects:', error);
@@ -468,12 +540,8 @@ export default function TeacherAssignmentPage() {
                   <div className="p-4 text-center text-muted-foreground">
                     Please select a subject first
                   </div>
-                ) : qualifiedTeachers?.length === 0 ? (
-                  <div className="p-4 text-center text-muted-foreground">
-                    No qualified teachers found for this subject and grade level
-                  </div>
-                ) : (
-                  qualifiedTeachers?.map((qual: any) => {
+                ) : qualifiedTeachers && qualifiedTeachers.length > 0 ? (
+                  qualifiedTeachers.map((qual: any) => {
                     const isSelected = selectedTeacher === qual.teacher_id;
                     return (
                       <div
@@ -496,6 +564,11 @@ export default function TeacherAssignmentPage() {
                       </div>
                     );
                   })
+                ) : (
+                  <AllTeachersFallback
+                    selectedTeacher={selectedTeacher}
+                    setSelectedTeacher={setSelectedTeacher}
+                  />
                 )}
               </div>
             </div>
