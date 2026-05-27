@@ -1,6 +1,6 @@
 import createMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
-import { routing } from './src/i18n/routing';
+import { routing } from '@/i18n/routing';
 
 const intlMiddleware = createMiddleware({
   ...routing,
@@ -41,18 +41,15 @@ function parseRoles(rawRoles: string | undefined) {
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Handle root path - redirect to default locale
   if (pathname === '/') {
-    return NextResponse.redirect(new URL(`/${routing.defaultLocale}`, request.url));
+    return NextResponse.redirect(new URL(`/${routing.defaultLocale}/login`, request.url));
   }
 
   const response = intlMiddleware(request);
-  
-  // Check if user is accessing just the locale root (e.g., /en or /am)
+
   const localeMatch = pathname.match(/^\/([a-z]{2})\/?$/i);
   if (localeMatch) {
     const locale = localeMatch[1];
-    // Redirect to login page for the locale
     return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
   }
 
@@ -61,7 +58,6 @@ export default function middleware(request: NextRequest) {
   }
 
   const locale = getLocaleFromPath(pathname);
-  // Protect /dashboard/* AND the standalone /guardian/* route group
   const isProtectedRoute =
     pathname.startsWith(`/${locale}/dashboard`) ||
     pathname.startsWith(`/${locale}/guardian`);
@@ -98,5 +94,5 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next|.*\\..*).*)'],
+  matcher: ['/', '/(en|am)/:path*'],
 };
