@@ -190,7 +190,15 @@ export function TeacherQualifications({ teacherId }: TeacherQualificationsProps)
   };
 
   const handleSubmit = () => {
+    console.log('=== SUBMIT START ===');
+    console.log('subjectId:', subjectId);
+    console.log('subjectId type:', typeof subjectId);
+    console.log('minGrade:', minGrade);
+    console.log('maxGrade:', maxGrade);
+    console.log('competency:', competency);
+    
     if (!subjectId) {
+      console.error('ERROR: No subject selected');
       toast.error('Please select a subject');
       return;
     }
@@ -198,37 +206,45 @@ export function TeacherQualifications({ teacherId }: TeacherQualificationsProps)
     // Validate subject_id is a valid UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(subjectId)) {
-      toast.error('Invalid subject ID format');
-      console.error('Subject ID is not a valid UUID:', subjectId);
+      console.error('ERROR: Invalid UUID format:', subjectId);
+      toast.error('Invalid subject ID format. Please select a subject from the dropdown.');
       return;
     }
 
     // Validate grade levels
     if (minGrade > maxGrade) {
+      console.error('ERROR: Min grade > Max grade');
       toast.error('Min grade level cannot be greater than max grade level');
+      return;
+    }
+
+    if (minGrade < 0 || minGrade > 12 || maxGrade < 0 || maxGrade > 12) {
+      console.error('ERROR: Grade level out of range');
+      toast.error('Grade levels must be between 0 and 12');
       return;
     }
 
     const payload = {
       subject_id: subjectId,
-      min_grade_level: minGrade,
-      max_grade_level: maxGrade,
+      min_grade_level: Number(minGrade),
+      max_grade_level: Number(maxGrade),
       competency_level: competency,
       allowed_streams: streams ? streams.split(',').map(s => s.trim()).filter(s => s.length > 0) : null,
-      years_experience: experience ? parseInt(experience) : null,
+      years_experience: experience ? Number(experience) : null,
       notes: notes || null,
     };
 
-    console.log('Submitting qualification payload:', payload);
+    console.log('Final payload:', JSON.stringify(payload, null, 2));
     console.log('Teacher ID:', teacherId);
 
     if (editingQual) {
-      console.log('Updating qualification:', editingQual.id);
+      console.log('Mode: UPDATE');
       updateMutation.mutate({ qualId: editingQual.id, payload });
     } else {
-      console.log('Adding new qualification');
+      console.log('Mode: CREATE');
       addMutation.mutate(payload);
     }
+    console.log('=== SUBMIT END ===');
   };
 
   const handleDelete = (qualId: string) => {
@@ -351,23 +367,35 @@ export function TeacherQualifications({ teacherId }: TeacherQualificationsProps)
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Subject *</Label>
-              <Select value={subjectId} onValueChange={setSubjectId} disabled={subjectsLoading}>
+              <Select 
+                value={subjectId || undefined} 
+                onValueChange={(value) => {
+                  console.log('Subject selected:', value);
+                  setSubjectId(value);
+                }}
+                disabled={subjectsLoading || !subjects || subjects.length === 0}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder={
                     subjectsLoading 
                       ? "Loading subjects..." 
                       : subjectsError 
                         ? "Error loading subjects" 
-                        : "Select a subject"
+                        : !subjects || subjects.length === 0
+                          ? "No subjects available"
+                          : "Select a subject"
                   } />
                 </SelectTrigger>
                 <SelectContent>
                   {subjects && subjects.length > 0 ? (
-                    subjects.map((subj) => (
-                      <SelectItem key={subj.id} value={subj.id}>
-                        {subj.code} - {subj.name}
-                      </SelectItem>
-                    ))
+                    subjects.map((subj) => {
+                      console.log('Rendering subject option:', subj.id, subj.code, subj.name);
+                      return (
+                        <SelectItem key={subj.id} value={subj.id}>
+                          {subj.code} - {subj.name}
+                        </SelectItem>
+                      );
+                    })
                   ) : (
                     !subjectsLoading && !subjectsError && (
                       <SelectItem value="no-subjects" disabled>
@@ -379,6 +407,9 @@ export function TeacherQualifications({ teacherId }: TeacherQualificationsProps)
               </Select>
               {subjectsError && (
                 <p className="text-sm text-destructive">Failed to load subjects</p>
+              )}
+              {!subjectsLoading && (!subjects || subjects.length === 0) && !subjectsError && (
+                <p className="text-sm text-muted-foreground">No subjects found in the system</p>
               )}
             </div>
 
